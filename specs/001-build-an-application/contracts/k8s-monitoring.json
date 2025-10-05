@@ -1,0 +1,628 @@
+{
+  "title": "Kubernetes Monitoring API Contract",
+  "version": "1.0.0",
+  "description": "API contract for Kubernetes cluster monitoring and management",
+  "operations": {
+    "get_pods": {
+      "method": "GET",
+      "path": "/k8s/pods",
+      "description": "Get all Kubernetes pods across all namespaces",
+      "request": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "description": "Specific namespace (optional, default: all)",
+            "default": ""
+          },
+          "labelSelector": {
+            "type": "string",
+            "description": "Label selector for filtering pods",
+            "default": ""
+          },
+          "fieldSelector": {
+            "type": "string",
+            "description": "Field selector for filtering pods",
+            "default": ""
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "pods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/schemas/KubernetesPod"
+            }
+          }
+        },
+        "required": ["success", "pods"]
+      }
+    },
+    "get_pod_logs": {
+      "method": "GET",
+      "path": "/k8s/pods/{namespace}/{pod}/logs",
+      "description": "Get logs for a specific pod",
+      "request": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "description": "Pod namespace"
+          },
+          "pod": {
+            "type": "string",
+            "description": "Pod name"
+          },
+          "container": {
+            "type": "string",
+            "description": "Container name (optional for single container pods)"
+          },
+          "follow": {
+            "type": "boolean",
+            "description": "Follow log stream",
+            "default": false
+          },
+          "tailLines": {
+            "type": "integer",
+            "description": "Number of lines to show from end",
+            "default": 100
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Show logs since timestamp"
+          }
+        },
+        "required": ["namespace", "pod"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "logs": {
+            "type": "string",
+            "description": "Log content or stream identifier"
+          },
+          "stream_id": {
+            "type": ["string", "null"],
+            "description": "Stream identifier for follow mode"
+          }
+        },
+        "required": ["success"]
+      }
+    },
+    "get_nodes": {
+      "method": "GET",
+      "path": "/k8s/nodes",
+      "description": "Get all Kubernetes nodes",
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/schemas/KubernetesNode"
+            }
+          }
+        },
+        "required": ["success", "nodes"]
+      }
+    },
+    "get_cluster_info": {
+      "method": "GET",
+      "path": "/k8s/cluster",
+      "description": "Get Kubernetes cluster information",
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "cluster": {
+            "$ref": "#/schemas/KubernetesCluster"
+          }
+        },
+        "required": ["success"]
+      }
+    },
+    "port_forward": {
+      "method": "POST",
+      "path": "/k8s/port-forward",
+      "description": "Forward port from pod to host",
+      "request": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "description": "Pod namespace"
+          },
+          "pod": {
+            "type": "string",
+            "description": "Pod name"
+          },
+          "container": {
+            "type": "string",
+            "description": "Container name"
+          },
+          "containerPort": {
+            "type": "integer",
+            "description": "Container port to forward"
+          },
+          "hostPort": {
+            "type": "integer",
+            "description": "Host port to bind to"
+          }
+        },
+        "required": ["namespace", "pod", "containerPort", "hostPort"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          },
+          "forwarding_id": {
+            "type": ["string", "null"],
+            "description": "Port forwarding session identifier"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    },
+    "stop_port_forward": {
+      "method": "DELETE",
+      "path": "/k8s/port-forward/{forwarding_id}",
+      "description": "Stop port forwarding session",
+      "request": {
+        "type": "object",
+        "properties": {
+          "forwarding_id": {
+            "type": "string",
+            "description": "Port forwarding session identifier"
+          }
+        },
+        "required": ["forwarding_id"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    }
+  },
+  "schemas": {
+    "KubernetesCluster": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Kubernetes version"
+        },
+        "nodeCount": {
+          "type": "integer",
+          "description": "Number of nodes"
+        },
+        "podCount": {
+          "type": "integer",
+          "description": "Total number of pods"
+        },
+        "serviceCount": {
+          "type": "integer",
+          "description": "Total number of services"
+        },
+        "namespaceCount": {
+          "type": "integer",
+          "description": "Total number of namespaces"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Kubernetes API endpoint"
+        },
+        "kubeconfigPath": {
+          "type": "string",
+          "description": "Path to kubeconfig file"
+        }
+      },
+      "required": ["version", "nodeCount", "podCount", "endpoint", "kubeconfigPath"]
+    },
+    "KubernetesNode": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Node name"
+        },
+        "status": {
+          "$ref": "#/schemas/NodeStatus"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Node roles"
+        },
+        "version": {
+          "type": "string",
+          "description": "Kubernetes version"
+        },
+        "osImage": {
+          "type": "string",
+          "description": "Operating system image"
+        },
+        "kernelVersion": {
+          "type": "string",
+          "description": "Kernel version"
+        },
+        "containerRuntime": {
+          "type": "string",
+          "description": "Container runtime"
+        },
+        "cpuAllocatable": {
+          "type": "number",
+          "description": "Allocatable CPU cores"
+        },
+        "memoryAllocatableMB": {
+          "type": "number",
+          "description": "Allocatable memory in MB"
+        },
+        "podsAllocatable": {
+          "type": "integer",
+          "description": "Maximum pods"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Node creation timestamp"
+        }
+      },
+      "required": ["name", "status", "roles", "version", "createdAt"]
+    },
+    "NodeStatus": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["Ready", "NotReady", "Unknown"],
+          "description": "Node state"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/schemas/NodeCondition"
+          },
+          "description": "Node conditions"
+        }
+      },
+      "required": ["state"]
+    },
+    "NodeCondition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Condition type"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["True", "False", "Unknown"],
+          "description": "Condition status"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for condition"
+        },
+        "message": {
+          "type": "string",
+          "description": "Condition message"
+        },
+        "lastTransitionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last transition time"
+        }
+      },
+      "required": ["type", "status"]
+    },
+    "KubernetesPod": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Pod name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Pod namespace"
+        },
+        "status": {
+          "$ref": "#/schemas/PodStatus"
+        },
+        "phase": {
+          "$ref": "#/schemas/PodPhase"
+        },
+        "nodeName": {
+          "type": "string",
+          "description": "Node where pod is running"
+        },
+        "podIP": {
+          "type": ["string", "null"],
+          "description": "Pod IP address"
+        },
+        "containerCount": {
+          "type": "integer",
+          "description": "Number of containers"
+        },
+        "restartCount": {
+          "type": "integer",
+          "description": "Total restart count"
+        },
+        "cpuUsage": {
+          "type": ["number", "null"],
+          "description": "Current CPU usage percentage"
+        },
+        "memoryUsageMB": {
+          "type": ["number", "null"],
+          "description": "Current memory usage in MB"
+        },
+        "containers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/schemas/KubernetesContainer"
+          },
+          "description": "Pod containers"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Pod creation timestamp"
+        },
+        "startedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Pod start timestamp"
+        }
+      },
+      "required": ["name", "namespace", "status", "phase", "containerCount", "restartCount", "createdAt"]
+    },
+    "PodStatus": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["Pending", "Running", "Succeeded", "Failed", "Unknown"],
+          "description": "Pod phase"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/schemas/PodCondition"
+          },
+          "description": "Pod conditions"
+        },
+        "containerStatuses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/schemas/ContainerStatus"
+          },
+          "description": "Container statuses"
+        }
+      },
+      "required": ["phase"]
+    },
+    "PodPhase": {
+      "type": "string",
+      "enum": ["Pending", "Running", "Succeeded", "Failed", "Unknown"],
+      "description": "Pod lifecycle phase"
+    },
+    "PodCondition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Condition type"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["True", "False", "Unknown"],
+          "description": "Condition status"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for condition"
+        },
+        "message": {
+          "type": "string",
+          "description": "Condition message"
+        },
+        "lastTransitionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last transition time"
+        }
+      },
+      "required": ["type", "status"]
+    },
+    "ContainerStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Container name"
+        },
+        "ready": {
+          "type": "boolean",
+          "description": "Container ready status"
+        },
+        "restartCount": {
+          "type": "integer",
+          "description": "Container restart count"
+        },
+        "image": {
+          "type": "string",
+          "description": "Container image"
+        },
+        "state": {
+          "$ref": "#/schemas/ContainerState"
+        }
+      },
+      "required": ["name", "ready", "restartCount", "image", "state"]
+    },
+    "ContainerState": {
+      "type": "object",
+      "properties": {
+        "running": {
+          "type": ["object", "null"],
+          "properties": {
+            "startedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "waiting": {
+          "type": ["object", "null"],
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
+          }
+        },
+        "terminated": {
+          "type": ["object", "null"],
+          "properties": {
+            "exitCode": {
+              "type": "integer"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "finishedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "KubernetesContainer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Container name"
+        },
+        "image": {
+          "type": "string",
+          "description": "Container image"
+        },
+        "status": {
+          "$ref": "#/schemas/ContainerStatus"
+        },
+        "restartCount": {
+          "type": "integer",
+          "description": "Container restart count"
+        },
+        "cpuUsage": {
+          "type": ["number", "null"],
+          "description": "Current CPU usage percentage"
+        },
+        "memoryUsageMB": {
+          "type": ["number", "null"],
+          "description": "Current memory usage in MB"
+        },
+        "startedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Container start timestamp"
+        }
+      },
+      "required": ["name", "image", "status", "restartCount"]
+    }
+  },
+  "events": {
+    "pod_updated": {
+      "description": "Emitted when pod status changes",
+      "payload": {
+        "type": "object",
+        "properties": {
+          "pod": {
+            "$ref": "#/schemas/KubernetesPod"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["pod", "timestamp"]
+      }
+    },
+    "log_stream": {
+      "description": "Emitted for pod log streaming",
+      "payload": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "description": "Log stream identifier"
+          },
+          "namespace": {
+            "type": "string",
+            "description": "Pod namespace"
+          },
+          "pod": {
+            "type": "string",
+            "description": "Pod name"
+          },
+          "container": {
+            "type": "string",
+            "description": "Container name"
+          },
+          "log_line": {
+            "type": "string",
+            "description": "Log line content"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["stream_id", "namespace", "pod", "log_line", "timestamp"]
+      }
+    }
+  }
+}

@@ -1,0 +1,274 @@
+{
+  "title": "VM Operations API Contract",
+  "version": "1.0.0",
+  "description": "API contract for Lima VM lifecycle management operations",
+  "operations": {
+    "start_vm": {
+      "method": "POST",
+      "path": "/vm/start",
+      "description": "Start the Lima VM instance",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          }
+        },
+        "required": ["instance"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          },
+          "vm_status": {
+            "$ref": "#/schemas/VMStatus"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    },
+    "stop_vm": {
+      "method": "POST",
+      "path": "/vm/stop",
+      "description": "Stop the Lima VM instance",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Force stop the VM",
+            "default": false
+          }
+        },
+        "required": ["instance"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          },
+          "vm_status": {
+            "$ref": "#/schemas/VMStatus"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    },
+    "suspend_vm": {
+      "method": "POST",
+      "path": "/vm/suspend",
+      "description": "Suspend the Lima VM instance",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          }
+        },
+        "required": ["instance"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          },
+          "vm_status": {
+            "$ref": "#/schemas/VMStatus"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    },
+    "get_vm_status": {
+      "method": "GET",
+      "path": "/vm/status",
+      "description": "Get current VM status",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          }
+        },
+        "required": ["instance"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "vm": {
+            "$ref": "#/schemas/VirtualMachine"
+          }
+        },
+        "required": ["success"]
+      }
+    },
+    "list_vms": {
+      "method": "GET",
+      "path": "/vm/list",
+      "description": "List all Lima VM instances",
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "vms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/schemas/VirtualMachine"
+            }
+          }
+        },
+        "required": ["success", "vms"]
+      }
+    }
+  },
+  "schemas": {
+    "VirtualMachine": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique VM identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "VM instance name"
+        },
+        "status": {
+          "$ref": "#/schemas/VMStatus"
+        },
+        "arch": {
+          "type": "string",
+          "enum": ["x86_64", "arm64"],
+          "description": "CPU architecture"
+        },
+        "memoryMB": {
+          "type": "integer",
+          "minimum": 2048,
+          "maximum": 32768,
+          "description": "Memory in megabytes"
+        },
+        "cpus": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "Number of CPU cores"
+        },
+        "diskSizeGB": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 500,
+          "description": "Disk size in gigabytes"
+        },
+        "sshLocalPort": {
+          "type": "integer",
+          "description": "Local SSH port"
+        },
+        "directory": {
+          "type": "string",
+          "description": "VM configuration directory"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "VM creation timestamp"
+        },
+        "lastStarted": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Last start timestamp"
+        },
+        "lastStopped": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Last stop timestamp"
+        }
+      },
+      "required": ["id", "name", "status", "arch", "memoryMB", "cpus", "diskSizeGB", "directory", "createdAt"]
+    },
+    "VMStatus": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["Stopped", "Starting", "Running", "Stopping", "Suspending", "Suspended", "Resuming", "Error", "Unknown"],
+          "description": "Current VM state"
+        },
+        "hostAgentPID": {
+          "type": ["integer", "null"],
+          "description": "Host agent process ID"
+        },
+        "qemuPID": {
+          "type": ["integer", "null"],
+          "description": "QEMU process ID"
+        },
+        "sshLocalPort": {
+          "type": ["integer", "null"],
+          "description": "Local SSH port"
+        }
+      },
+      "required": ["state"]
+    }
+  },
+  "events": {
+    "vm_status_changed": {
+      "description": "Emitted when VM status changes",
+      "payload": {
+        "type": "object",
+        "properties": {
+          "vm_id": {
+            "type": "string",
+            "description": "VM identifier"
+          },
+          "old_status": {
+            "$ref": "#/schemas/VMStatus"
+          },
+          "new_status": {
+            "$ref": "#/schemas/VMStatus"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["vm_id", "old_status", "new_status", "timestamp"]
+      }
+    }
+  }
+}

@@ -1,0 +1,445 @@
+{
+  "title": "Configuration Management API Contract",
+  "version": "1.0.0",
+  "description": "API contract for VM configuration file management",
+  "operations": {
+    "get_config": {
+      "method": "GET",
+      "path": "/config",
+      "description": "Get current VM configuration",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          }
+        },
+        "required": ["instance"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "config": {
+            "$ref": "#/schemas/ConfigurationFile"
+          }
+        },
+        "required": ["success"]
+      }
+    },
+    "update_config": {
+      "method": "PUT",
+      "path": "/config",
+      "description": "Update VM configuration",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          },
+          "content": {
+            "type": "string",
+            "description": "YAML configuration content"
+          },
+          "validate_only": {
+            "type": "boolean",
+            "description": "Only validate configuration, don't apply",
+            "default": false
+          }
+        },
+        "required": ["instance", "content"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          },
+          "validation": {
+            "$ref": "#/schemas/ValidationResult"
+          },
+          "config": {
+            "$ref": "#/schemas/ConfigurationFile"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    },
+    "validate_config": {
+      "method": "POST",
+      "path": "/config/validate",
+      "description": "Validate VM configuration without applying",
+      "request": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "YAML configuration content"
+          }
+        },
+        "required": ["content"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "validation": {
+            "$ref": "#/schemas/ValidationResult"
+          }
+        },
+        "required": ["success", "validation"]
+      }
+    },
+    "get_config_history": {
+      "method": "GET",
+      "path": "/config/history",
+      "description": "Get configuration version history",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of history entries",
+            "default": 50
+          }
+        },
+        "required": ["instance"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/schemas/ConfigurationHistory"
+            }
+          }
+        },
+        "required": ["success", "history"]
+      }
+    },
+    "restore_config": {
+      "method": "POST",
+      "path": "/config/restore",
+      "description": "Restore configuration from history",
+      "request": {
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Configuration version to restore"
+          }
+        },
+        "required": ["instance", "version"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          },
+          "config": {
+            "$ref": "#/schemas/ConfigurationFile"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    },
+    "get_config_templates": {
+      "method": "GET",
+      "path": "/config/templates",
+      "description": "Get available configuration templates",
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/schemas/ConfigTemplate"
+            }
+          }
+        },
+        "required": ["success", "templates"]
+      }
+    },
+    "create_config_from_template": {
+      "method": "POST",
+      "path": "/config/templates/{template_name}/use",
+      "description": "Create configuration from template",
+      "request": {
+        "type": "object",
+        "properties": {
+          "template_name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "instance": {
+            "type": "string",
+            "description": "VM instance name",
+            "default": "lima-vm-manager"
+          },
+          "overrides": {
+            "type": "object",
+            "description": "Configuration overrides"
+          }
+        },
+        "required": ["template_name", "instance"]
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Operation success status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success or error message"
+          },
+          "config": {
+            "$ref": "#/schemas/ConfigurationFile"
+          }
+        },
+        "required": ["success", "message"]
+      }
+    }
+  },
+  "schemas": {
+    "ConfigurationFile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Configuration identifier"
+        },
+        "filename": {
+          "type": "string",
+          "description": "Configuration filename"
+        },
+        "content": {
+          "type": "string",
+          "description": "YAML configuration content"
+        },
+        "isValid": {
+          "type": "boolean",
+          "description": "Configuration validation status"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Validation error messages"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Configuration creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification timestamp"
+        }
+      },
+      "required": ["id", "filename", "content", "isValid", "createdAt", "updatedAt"]
+    },
+    "ConfigurationHistory": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "History entry identifier"
+        },
+        "version": {
+          "type": "integer",
+          "description": "Configuration version"
+        },
+        "content": {
+          "type": "string",
+          "description": "Historical configuration content"
+        },
+        "changeDescription": {
+          "type": "string",
+          "description": "Description of changes made"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "History entry creation timestamp"
+        }
+      },
+      "required": ["id", "version", "content", "createdAt"]
+    },
+    "ValidationResult": {
+      "type": "object",
+      "properties": {
+        "isValid": {
+          "type": "boolean",
+          "description": "Validation result"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Validation error messages"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Validation warning messages"
+        }
+      },
+      "required": ["isValid"]
+    },
+    "ConfigTemplate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Template name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Template description"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["development", "production", "testing", "minimal"],
+          "description": "Template category"
+        },
+        "content": {
+          "type": "string",
+          "description": "Template YAML content"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/schemas/TemplateVariable"
+          },
+          "description": "Template variables"
+        }
+      },
+      "required": ["name", "description", "category", "content"]
+    },
+    "TemplateVariable": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean"],
+          "description": "Variable type"
+        },
+        "description": {
+          "type": "string",
+          "description": "Variable description"
+        },
+        "default": {
+          "type": ["string", "number", "boolean", "null"],
+          "description": "Default value"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether variable is required"
+        }
+      },
+      "required": ["name", "type", "description", "required"]
+    }
+  },
+  "events": {
+    "config_changed": {
+      "description": "Emitted when configuration is updated",
+      "payload": {
+        "type": "object",
+        "properties": {
+          "config_id": {
+            "type": "string",
+            "description": "Configuration identifier"
+          },
+          "old_content": {
+            "type": "string",
+            "description": "Old configuration content"
+          },
+          "new_content": {
+            "type": "string",
+            "description": "New configuration content"
+          },
+          "change_description": {
+            "type": "string",
+            "description": "Description of changes"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["config_id", "new_content", "timestamp"]
+      }
+    },
+    "config_validated": {
+      "description": "Emitted when configuration is validated",
+      "payload": {
+        "type": "object",
+        "properties": {
+          "config_id": {
+            "type": "string",
+            "description": "Configuration identifier"
+          },
+          "validation": {
+            "$ref": "#/schemas/ValidationResult"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["config_id", "validation", "timestamp"]
+      }
+    }
+  }
+}
