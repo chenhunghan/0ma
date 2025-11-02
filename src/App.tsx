@@ -6,10 +6,24 @@ import "./App.css";
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [limaVersion, setLimaVersion] = useState<string>("");
+  const [limaError, setLimaError] = useState<string>("");
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
+  }
+
+  async function checkLima() {
+    try {
+      setLimaError("");
+      const version = await invoke<string>("lima_version");
+      setLimaVersion(version);
+    } catch (error) {
+      console.error("Error checking lima:", error);
+      setLimaVersion("");
+      setLimaError(String(error));
+    }
   }
 
   return (
@@ -44,6 +58,16 @@ function App() {
         <button type="submit">Greet</button>
       </form>
       <p>{greetMsg}</p>
+
+      <div className="row">
+        <button onClick={checkLima}>Check Lima</button>
+        {limaVersion && (
+          <p>✓ Lima version: {limaVersion}</p>
+        )}
+        {limaError && (
+          <p style={{ color: 'red' }}>✗ Error: {limaError}</p>
+        )}
+      </div>
     </main>
   );
 }
