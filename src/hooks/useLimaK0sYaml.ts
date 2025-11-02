@@ -28,6 +28,22 @@ export function useLimaK0sYaml() {
     },
   });
 
+  // Write Lima k0s YAML with variable replacement
+  const writeLimaK0sYamlWithVarsMutation = useMutation({
+    mutationFn: async ({ content, instanceName }: { content: string; instanceName: string }) => {
+      await invoke("write_lima_k0s_yaml_with_vars", { content, instanceName });
+    },
+    onSuccess: async () => {
+      // Invalidate and refetch the Lima k0s YAML after writing
+      await queryClient.invalidateQueries({ queryKey: ["lima_k0s_yaml"] });
+    },
+  });
+
+  // Get kubeconfig path for an instance
+  const getKubeconfigPath = async (instanceName: string) => {
+    return await invoke<string>("get_kubeconfig_path", { instanceName });
+  };
+
   // Get Lima k0s YAML path
   const {
     data: limaK0sYamlPath,
@@ -59,12 +75,14 @@ export function useLimaK0sYaml() {
     isLoadingLimaK0sYaml,
     refetchLimaK0sYaml,
     writeLimaK0sYaml: writeLimaK0sYamlMutation.mutate,
-    isWritingLimaK0sYaml: writeLimaK0sYamlMutation.isPending,
-    writeLimaK0sYamlError: writeLimaK0sYamlMutation.error,
+    writeLimaK0sYamlWithVars: writeLimaK0sYamlWithVarsMutation.mutate,
+    isWritingLimaK0sYaml: writeLimaK0sYamlMutation.isPending || writeLimaK0sYamlWithVarsMutation.isPending,
+    writeLimaK0sYamlError: writeLimaK0sYamlMutation.error || writeLimaK0sYamlWithVarsMutation.error,
     limaK0sYamlPath,
     limaK0sYamlPathError,
     isLoadingLimaK0sYamlPath,
     fetchLimaK0sYamlPath,
+    getKubeconfigPath,
     resetLimaK0sYaml: resetLimaK0sYamlMutation.mutate,
     isResettingLimaK0sYaml: resetLimaK0sYamlMutation.isPending,
     resetLimaK0sYamlError: resetLimaK0sYamlMutation.error,

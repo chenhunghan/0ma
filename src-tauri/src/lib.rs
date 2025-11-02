@@ -84,7 +84,9 @@ pub fn run() {
             yaml_handler::reset_lima_k8s_yaml,
             yaml_handler::read_lima_k0s_yaml,
             yaml_handler::write_lima_k0s_yaml,
+            yaml_handler::write_lima_k0s_yaml_with_vars,
             yaml_handler::get_lima_k0s_yaml_path_cmd,
+            yaml_handler::get_kubeconfig_path,
             yaml_handler::reset_lima_k0s_yaml
         ])
         .run(tauri::generate_context!())
