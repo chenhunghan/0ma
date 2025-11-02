@@ -92,6 +92,28 @@ pub fn reset_lima_k8s_yaml(app: AppHandle) -> Result<(), String> {
     reset_yaml(&app, "lima-k8s.yaml", "k8s.yaml")
 }
 
+// Lima k0s YAML specific commands
+#[tauri::command]
+pub fn read_lima_k0s_yaml(app: AppHandle) -> Result<String, String> {
+    read_yaml(&app, "lima-k0s.yaml", "k0s.yaml")
+}
+
+#[tauri::command]
+pub fn write_lima_k0s_yaml(app: AppHandle, content: String) -> Result<(), String> {
+    write_yaml(&app, "lima-k0s.yaml", content)
+}
+
+#[tauri::command]
+pub fn get_lima_k0s_yaml_path_cmd(app: AppHandle) -> Result<String, String> {
+    let path = get_yaml_path(&app, "lima-k0s.yaml")?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn reset_lima_k0s_yaml(app: AppHandle) -> Result<(), String> {
+    reset_yaml(&app, "lima-k0s.yaml", "k0s.yaml")
+}
+
 // Example: You can easily add more YAML handlers like this:
 // 
 // #[tauri::command]
