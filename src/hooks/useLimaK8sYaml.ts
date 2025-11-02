@@ -29,9 +29,18 @@ export function useLimaK8sYaml() {
   });
 
   // Get Lima k8s YAML path
-  const getLimaK8sYamlPath = async () => {
-    return await invoke<string>("get_lima_k8s_yaml_path_cmd");
-  };
+  const {
+    data: limaK8sYamlPath,
+    error: limaK8sYamlPathError,
+    isLoading: isLoadingLimaK8sYamlPath,
+    refetch: fetchLimaK8sYamlPath,
+  } = useQuery({
+    queryKey: ["lima_k8s_yaml_path"],
+    queryFn: async () => {
+      return await invoke<string>("get_lima_k8s_yaml_path_cmd");
+    },
+    enabled: false, // Don't auto-fetch on mount
+  });
 
   return {
     limaK8sYamlContent,
@@ -41,6 +50,9 @@ export function useLimaK8sYaml() {
     writeLimaK8sYaml: writeLimaK8sYamlMutation.mutate,
     isWritingLimaK8sYaml: writeLimaK8sYamlMutation.isPending,
     writeLimaK8sYamlError: writeLimaK8sYamlMutation.error,
-    getLimaK8sYamlPath,
+    limaK8sYamlPath,
+    limaK8sYamlPathError,
+    isLoadingLimaK8sYamlPath,
+    fetchLimaK8sYamlPath,
   };
 }
