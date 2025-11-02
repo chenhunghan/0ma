@@ -17,6 +17,9 @@ export function App() {
     limaK8sYamlPathError,
     isLoadingLimaK8sYamlPath,
     fetchLimaK8sYamlPath,
+    resetLimaK8sYaml,
+    isResettingLimaK8sYaml,
+    resetLimaK8sYamlError,
   } = useLimaK8sYaml();
 
   const handleWriteTest = () => {
@@ -67,6 +70,21 @@ export function App() {
           >
             {isWritingLimaK8sYaml ? "Writing..." : "Test Write (Add Timestamp)"}
           </button>
+
+          <button 
+            onClick={() => resetLimaK8sYaml()} 
+            disabled={isResettingLimaK8sYaml}
+            style={{ 
+              background: "#ff6b6b", 
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "4px",
+              cursor: isResettingLimaK8sYaml ? "not-allowed" : "pointer"
+            }}
+          >
+            {isResettingLimaK8sYaml ? "Resetting..." : "Reset to Default"}
+          </button>
         </div>
 
         {limaK8sYamlPath && (
@@ -85,6 +103,10 @@ export function App() {
 
         {writeLimaK8sYamlError && (
           <p style={{ color: "red" }}>✗ Write Error: {String(writeLimaK8sYamlError)}</p>
+        )}
+
+        {resetLimaK8sYamlError && (
+          <p style={{ color: "red" }}>✗ Reset Error: {String(resetLimaK8sYamlError)}</p>
         )}
 
         {limaK8sYamlContent && (

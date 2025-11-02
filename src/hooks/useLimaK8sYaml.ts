@@ -42,6 +42,17 @@ export function useLimaK8sYaml() {
     enabled: false, // Don't auto-fetch on mount
   });
 
+  // Reset Lima k8s YAML to bundled version
+  const resetLimaK8sYamlMutation = useMutation({
+    mutationFn: async () => {
+      await invoke("reset_lima_k8s_yaml");
+    },
+    onSuccess: async () => {
+      // Invalidate and refetch the Lima k8s YAML after resetting
+      await queryClient.invalidateQueries({ queryKey: ["lima_k8s_yaml"] });
+    },
+  });
+
   return {
     limaK8sYamlContent,
     limaK8sYamlError,
@@ -54,5 +65,8 @@ export function useLimaK8sYaml() {
     limaK8sYamlPathError,
     isLoadingLimaK8sYamlPath,
     fetchLimaK8sYamlPath,
+    resetLimaK8sYaml: resetLimaK8sYamlMutation.mutate,
+    isResettingLimaK8sYaml: resetLimaK8sYamlMutation.isPending,
+    resetLimaK8sYamlError: resetLimaK8sYamlMutation.error,
   };
 }

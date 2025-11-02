@@ -60,3 +60,22 @@ pub fn get_lima_k8s_yaml_path_cmd(app: AppHandle) -> Result<String, String> {
     let path = get_lima_k8s_yaml_path(&app)?;
     Ok(path.to_string_lossy().to_string())
 }
+
+#[tauri::command]
+pub fn reset_lima_k8s_yaml(app: AppHandle) -> Result<(), String> {
+    let lima_k8s_yaml_path = get_lima_k8s_yaml_path(&app)?;
+
+    // Get the bundled resource path
+    let resource_path = app
+        .path()
+        .resource_dir()
+        .map_err(|e| format!("Failed to get resource directory: {}", e))?
+        .join("resources")
+        .join("k8s.yaml");
+
+    // Copy the bundled k8s.yaml to the app data directory, overwriting existing file
+    fs::copy(&resource_path, &lima_k8s_yaml_path)
+        .map_err(|e| format!("Failed to reset lima-k8s.yaml: {}", e))?;
+
+    Ok(())
+}

@@ -49,7 +49,8 @@ pub fn run() {
             lima_version,
             yaml_handler::read_lima_k8s_yaml,
             yaml_handler::write_lima_k8s_yaml,
-            yaml_handler::get_lima_k8s_yaml_path_cmd
+            yaml_handler::get_lima_k8s_yaml_path_cmd,
+            yaml_handler::reset_lima_k8s_yaml
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
