@@ -201,12 +201,20 @@ export function useLimaInstance() {
     });
   };
 
+  const setCurrentInstance = (instanceName: string) => {
+    setInstanceStatus(prev => ({
+      ...prev,
+      currentInstanceName: instanceName,
+    }));
+  };
+
   return {
     instanceStatus,
     startInstance,
     stopInstance,
     deleteInstance,
     clearStatus,
+    setCurrentInstance,
     isCreatingInstance: instanceStatus.isStarting,
   };
 }

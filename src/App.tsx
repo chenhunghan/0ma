@@ -29,24 +29,14 @@ export function App() {
     resetLimaError,
   } = useLimaYaml();
 
-  const { instanceStatus, startInstance, stopInstance, deleteInstance, clearStatus: clearInstanceStatus, isCreatingInstance } = useLimaInstance();
+  const { instanceStatus, startInstance, stopInstance, deleteInstance, clearStatus: clearInstanceStatus, setCurrentInstance, isCreatingInstance } = useLimaInstance();
   const { instances: registeredInstances } = useInstanceRegistry();
 
   const [showEditor, setShowEditor] = useState(false);
   const [editableConfig, setEditableConfig] = useState<LimaConfig | null>(null);
   const [instanceName, setInstanceName] = useState<string>("");
 
-  // On app startup, if there's no current instance tracked in memory,
-  // try to restore the most recently created instance from the registry
-  useEffect(() => {
-    if (!instanceStatus.currentInstanceName && registeredInstances.length > 0) {
-      // Clear any stale status on startup
-      clearInstanceStatus();
-      // Note: We could load the last instance into currentInstanceName here
-      // but it's better to let the user explicitly select which instance to work with
-    }
-  }, [registeredInstances, instanceStatus.currentInstanceName, clearInstanceStatus]);
-
+  
   // Convert config to YAML for display
   const [yamlDisplay, setYamlDisplay] = useState<string>("");
 
@@ -271,37 +261,89 @@ export function App() {
         {/* Registered Instances Section */}
         {registeredInstances.length > 0 && (
           <div style={{ marginTop: "15px", padding: "10px", background: "#e8f5e8", border: "1px solid #c3e6cb", borderRadius: "4px" }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>ZeroMa-Managed Instances:</h4>
+            <h4 style={{ margin: "0 0 10px 0" }}>
+  ZeroMa-Managed Instances ({registeredInstances.length}):
+</h4>
             <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
               {registeredInstances
                 .sort((a, b) => parseInt(b.created_at) - parseInt(a.created_at))
-                .map((instance) => (
-                  <div
-                    key={instance.name}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "5px 10px",
-                      background: instance.name === instanceStatus.currentInstanceName ? "#d4edda" : "white",
-                      borderRadius: "3px",
-                      border: instance.name === instanceStatus.currentInstanceName ? "1px solid #c3e6cb" : "1px solid #dee2e6"
-                    }}
-                  >
-                    <span>
-                      <strong>{instance.name}</strong>
-                      <small style={{ marginLeft: "10px", color: "#666" }}>
-                        Created: {new Date(parseInt(instance.created_at) * 1000).toLocaleString()}
-                      </small>
-                    </span>
-                    {instance.name === instanceStatus.currentInstanceName && (
-                      <span style={{ fontSize: "12px", color: "#155724", fontWeight: "bold" }}>
-                        [Active]
-                      </span>
-                    )}
-                  </div>
-                ))}
+                .map((instance) => {
+                  const isInstanceRunning = instance.status === "Running";
+                  const isInstanceStopped = instance.status === "Stopped";
+                  const isSelected = instance.name === instanceStatus.currentInstanceName;
+
+                  // Determine background color based on status
+                  let bgColor = "white";
+                  if (isInstanceStopped) bgColor = "#fff3cd"; // Light yellow for Stopped
+                  else if (isInstanceRunning) bgColor = "#d4edda"; // Light green for Running
+
+                  return (
+                    <div
+                      key={instance.name}
+                      onClick={() => setCurrentInstance(instance.name)}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "8px 10px",
+                        background: isSelected ? bgColor : bgColor,
+                        borderRadius: "3px",
+                        border: isSelected ? "2px solid #007bff" : "1px solid #dee2e6",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s, border-color 0.2s"
+                      }}
+                      onMouseOver={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = "#f8f9fa";
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = bgColor;
+                        }
+                      }}
+                      title={isSelected ? "Currently selected instance" : "Click to select this instance"}
+                    >
+                      <div>
+                        <strong>{instance.name}</strong>
+                        <small style={{ marginLeft: "10px", color: "#666" }}>
+                          Created: {new Date(parseInt(instance.created_at) * 1000).toLocaleString()}
+                        </small>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        {/* Status badge */}
+                        <span style={{
+                          fontSize: "11px",
+                          padding: "2px 6px",
+                          borderRadius: "3px",
+                          fontWeight: "bold",
+                          backgroundColor: isInstanceRunning ? "#28a745" :
+                                          isInstanceStopped ? "#ffc107" : "#6c757d",
+                          color: "white"
+                        }}>
+                          {instance.status || "Unknown"}
+                        </span>
+
+                        {/* Active/Click indicator */}
+                        {isSelected && (
+                          <span style={{ fontSize: "12px", color: "#007bff", fontWeight: "bold" }}>
+                            [Active]
+                          </span>
+                        )}
+                        {!isSelected && (
+                          <span style={{ fontSize: "12px", color: "#6c757d" }}>
+                            Click to select
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
+            <small style={{ marginTop: "8px", color: "#666", fontSize: "12px", fontStyle: "italic" }}>
+              Click on an instance to select it for stop/delete operations.
+              Status is checked from Lima automatically and non-existent instances are removed.
+            </small>
           </div>
         )}
 

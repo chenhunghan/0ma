@@ -5,6 +5,7 @@ export interface InstanceInfo {
   name: string;
   created_at: string;
   config_path: string;
+  status?: string;
 }
 
 export function useInstanceRegistry() {
