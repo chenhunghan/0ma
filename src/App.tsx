@@ -7,6 +7,7 @@ import { LimaConfig } from "./types/lima-config";
 import { useState, useEffect } from "react";
 import { LimaConfigEditor } from "./components/LimaConfigEditor";
 import { QuickConfigEditor } from "./components/QuickConfigEditor";
+import { ask } from "@tauri-apps/plugin-dialog";
 
 export function App() {
   const { limaVersion, limaVersionError, isLoadingLimaVersion, checkLimaVersion } =
@@ -31,6 +32,19 @@ export function App() {
 
   const { instanceStatus, startInstance, stopInstance, deleteInstance, clearStatus: clearInstanceStatus, setCurrentInstance, isCreatingInstance } = useLimaInstance();
   const { instances: registeredInstances, isLoading: loadingInstances, loadInstances: refreshInstances } = useInstanceRegistry();
+
+  // Wrapper function for delete that triggers refresh after successful deletion
+  const handleDeleteInstance = async (instanceName: string) => {
+    console.log('App.tsx: handleDeleteInstance called for', instanceName);
+    try {
+      await deleteInstance(instanceName);
+      console.log('App.tsx: deleteInstance returned, refreshing...');
+      // Refresh the instance registry after deletion
+      refreshInstances();
+    } catch (error) {
+      console.error('App.tsx: Error in handleDeleteInstance:', error);
+    }
+  };
 
   const [showEditor, setShowEditor] = useState(false);
   const [editableConfig, setEditableConfig] = useState<LimaConfig | null>(null);
@@ -342,6 +356,46 @@ export function App() {
                         }}>
                           {instance.status || "Unknown"}
                         </span>
+
+                        {/* Delete button for each instance */}
+                        <button
+                          onClick={async (e) => {
+                            console.log(`Delete button clicked for instance: ${instance.name}`);
+                            e.stopPropagation(); // Prevent selecting the instance
+                            try {
+                              const confirmed = await ask(
+                                `Are you sure you want to delete instance "${instance.name}"?`,
+                                {
+                                  title: "Confirm Delete Instance",
+                                  kind: "warning"
+                                }
+                              );
+                              console.log('User response:', confirmed);
+                              if (confirmed) {
+                                console.log('User confirmed deletion, calling handleDeleteInstance');
+                                handleDeleteInstance(instance.name);
+                              } else {
+                                console.log('User cancelled deletion');
+                              }
+                            } catch (error) {
+                              console.error('Error showing dialog:', error);
+                            }
+                          }}
+                          disabled={instanceStatus.isStarting}
+                          style={{
+                            padding: "2px 8px",
+                            background: "#dc3545",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "3px",
+                            cursor: instanceStatus.isStarting ? "not-allowed" : "pointer",
+                            fontSize: "11px",
+                            opacity: instanceStatus.isStarting ? 0.6 : 1
+                          }}
+                          title={`Delete instance ${instance.name}`}
+                        >
+                          🗑️
+                        </button>
 
                         {/* Active/Click indicator */}
                         {isSelected && (

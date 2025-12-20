@@ -463,7 +463,7 @@ pub async fn delete_lima_instance(
     tokio::spawn(async move {
         // Run limactl delete command
         let child = TokioCommand::new("limactl")
-            .args(["delete", &instance_name_clone])
+            .args(["delete", "--tty=false", &instance_name_clone])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
