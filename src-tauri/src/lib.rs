@@ -2,6 +2,9 @@ use std::process::Command;
 use std::path::Path;
 
 mod yaml_handler;
+mod lima_config;
+#[cfg(test)]
+mod structured_example;
 
 /// Find the lima executable in common installation paths
 fn find_lima_executable() -> Option<String> {
@@ -78,15 +81,16 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             lima_version,
-            yaml_handler::read_lima_k8s_yaml,
-            yaml_handler::write_lima_k8s_yaml,
-            yaml_handler::get_lima_k8s_yaml_path_cmd,
-            yaml_handler::reset_lima_k8s_yaml,
-            yaml_handler::read_lima_k0s_yaml,
-            yaml_handler::write_lima_k0s_yaml,
-            yaml_handler::write_lima_k0s_yaml_with_vars,
-            yaml_handler::get_lima_k0s_yaml_path_cmd,
+            yaml_handler::read_lima_yaml,
+            yaml_handler::write_lima_yaml,
+            yaml_handler::write_lima_yaml_with_vars,
+            yaml_handler::get_lima_yaml_path_cmd,
+            yaml_handler::reset_lima_yaml,
             yaml_handler::get_kubeconfig_path,
+            yaml_handler::convert_config_to_yaml,
+            yaml_handler::create_lima_instance,
+            yaml_handler::stop_lima_instance,
+            yaml_handler::delete_lima_instance,
             yaml_handler::reset_lima_k0s_yaml
         ])
         .run(tauri::generate_context!())

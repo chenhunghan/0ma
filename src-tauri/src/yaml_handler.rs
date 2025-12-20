@@ -1,8 +1,10 @@
 use std::fs;
 use std::path::PathBuf;
-use tauri::AppHandle;
-use tauri::Manager;
-use serde_yml::Value;
+use std::process::Stdio;
+use tauri::{AppHandle, Manager, Emitter};
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::Command as TokioCommand;
+use crate::lima_config::{LimaConfig, TemplateVars};
 
 /// Get the kubeconfig directory path
 /// /Users/you/Library/Application Support/chh.zeroma/kubeconfig
@@ -21,38 +23,9 @@ fn get_kubeconfig_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(kubeconfig_dir)
 }
 
-/// Replace template variables copyToHost[0].host to path
-/// e.g. /Users/you/Library/Application Support/chh.zeroma/kubeconfig/[instance_name].yaml
-fn replace_yaml_variables(
-    app: &AppHandle,
-    content: &str,
-    instance_name: &str,
-) -> Result<String, String> {
-    let kubeconfig_dir = get_kubeconfig_dir(app)?;
-    let kubeconfig_path = kubeconfig_dir.join(format!("{}.yaml", instance_name));
-    
-    // Parse the YAML content
-    let mut yaml: Value = serde_yml::from_str(content)
-        .map_err(|e| format!("Failed to parse YAML: {}", e))?;
-    
-    // Navigate to copyToHost[0].host and replace the template variable
-    if let Some(copy_to_host) = yaml.get_mut("copyToHost") {
-        if let Some(array) = copy_to_host.as_sequence_mut() {
-            if let Some(first_item) = array.get_mut(0) {
-                if let Some(host_value) = first_item.get_mut("host") {
-                    // Replace the template variable with the actual path
-                    *host_value = Value::String(kubeconfig_path.to_string_lossy().to_string());
-                }
-            }
-        }
-    }
-    
-    // Serialize back to YAML string
-    serde_yml::to_string(&yaml)
-        .map_err(|e| format!("Failed to serialize YAML: {}", e))
-}
-
 /// Generic function to get the path to a YAML file in the app data directory
+/// This is where the app stores its managed YAML files
+/// e.g., /Users/you/Library/Application Support/chh.zeroma/lima.yaml
 fn get_yaml_path(app: &AppHandle, filename: &str) -> Result<PathBuf, String> {
     let app_data_dir = app
         .path()
@@ -119,55 +92,64 @@ fn reset_yaml(app: &AppHandle, app_filename: &str, resource_filename: &str) -> R
     Ok(())
 }
 
-// Lima k8s YAML specific commands
+// Lima YAML specific commands (using k0s)
 #[tauri::command]
-pub fn read_lima_k8s_yaml(app: AppHandle) -> Result<String, String> {
-    read_yaml(&app, "lima-k8s.yaml", "k8s.yaml")
+pub fn read_lima_yaml(app: AppHandle) -> Result<LimaConfig, String> {
+    let yaml_content = read_yaml(&app, "lima.yaml", "k0s.yaml")?;
+    LimaConfig::from_yaml(&yaml_content)
+        .map_err(|e| format!("Failed to parse YAML: {}", e))
 }
 
 #[tauri::command]
-pub fn write_lima_k8s_yaml(app: AppHandle, content: String) -> Result<(), String> {
-    write_yaml(&app, "lima-k8s.yaml", content)
+pub fn write_lima_yaml(app: AppHandle, config: LimaConfig) -> Result<(), String> {
+    let yaml_content = config.to_yaml_pretty()
+        .map_err(|e| format!("Failed to serialize YAML: {}", e))?;
+    write_yaml(&app, "lima.yaml", yaml_content)
 }
 
 #[tauri::command]
-pub fn get_lima_k8s_yaml_path_cmd(app: AppHandle) -> Result<String, String> {
-    let path = get_yaml_path(&app, "lima-k8s.yaml")?;
+pub fn get_lima_yaml_path_cmd(app: AppHandle) -> Result<String, String> {
+    let path = get_yaml_path(&app, "lima.yaml")?;
     Ok(path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
-pub fn reset_lima_k8s_yaml(app: AppHandle) -> Result<(), String> {
-    reset_yaml(&app, "lima-k8s.yaml", "k8s.yaml")
+pub fn reset_lima_yaml(app: AppHandle) -> Result<LimaConfig, String> {
+    reset_yaml(&app, "lima.yaml", "k0s.yaml")?;
+    read_lima_yaml(app)
 }
 
-// Lima k0s YAML specific commands
-#[tauri::command]
-pub fn read_lima_k0s_yaml(app: AppHandle) -> Result<String, String> {
-    read_yaml(&app, "lima-k0s.yaml", "k0s.yaml")
-}
-
-#[tauri::command]
-pub fn write_lima_k0s_yaml(app: AppHandle, content: String) -> Result<(), String> {
-    write_yaml(&app, "lima-k0s.yaml", content)
-}
-
-/// Write k0s YAML with variable replacement
+/// Write YAML with variable replacement
 /// This processes the content and replaces template variables with actual app paths
 #[tauri::command]
-pub fn write_lima_k0s_yaml_with_vars(
+pub fn write_lima_yaml_with_vars(
     app: AppHandle,
-    content: String,
+    mut config: LimaConfig,
     instance_name: String,
 ) -> Result<(), String> {
-    let processed_content = replace_yaml_variables(&app, &content, &instance_name)?;
-    write_yaml(&app, "lima-k0s.yaml", processed_content)
-}
+    // Get the kubeconfig directory path
+    let kubeconfig_dir = get_kubeconfig_dir(&app)?;
+    let kubeconfig_path = kubeconfig_dir.join(format!("{}.yaml", instance_name));
 
-#[tauri::command]
-pub fn get_lima_k0s_yaml_path_cmd(app: AppHandle) -> Result<String, String> {
-    let path = get_yaml_path(&app, "lima-k0s.yaml")?;
-    Ok(path.to_string_lossy().to_string())
+    // Create template variables
+    let vars = TemplateVars {
+        dir: kubeconfig_dir.parent().unwrap().to_string_lossy().to_string(),
+        home: std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string()),
+        user: std::env::var("USER").unwrap_or_else(|_| "user".to_string()),
+    };
+
+    // Update the first copyToHost entry with the specific kubeconfig path
+    if let Some(copy_to_host) = &mut config.copy_to_host {
+        if !copy_to_host.is_empty() {
+            copy_to_host[0].host = kubeconfig_path.to_string_lossy().to_string();
+        }
+    }
+
+    // Substitute other template variables
+    config.substitute_variables(&vars);
+
+    // Write the config
+    write_lima_yaml(app, config)
 }
 
 /// Get the kubeconfig path for a specific instance
@@ -179,30 +161,251 @@ pub fn get_kubeconfig_path(app: AppHandle, instance_name: String) -> Result<Stri
 }
 
 #[tauri::command]
-pub fn reset_lima_k0s_yaml(app: AppHandle) -> Result<(), String> {
-    reset_yaml(&app, "lima-k0s.yaml", "k0s.yaml")
+pub fn reset_lima_k0s_yaml(app: AppHandle) -> Result<LimaConfig, String> {
+    reset_lima_yaml(app)
 }
 
-// Example: You can easily add more YAML handlers like this:
-// 
-// #[tauri::command]
-// pub fn read_lima_docker_yaml(app: AppHandle) -> Result<String, String> {
-//     read_yaml(&app, "lima-docker.yaml", "docker.yaml")
-// }
-//
-// #[tauri::command]
-// pub fn write_lima_docker_yaml(app: AppHandle, content: String) -> Result<(), String> {
-//     write_yaml(&app, "lima-docker.yaml", content)
-// }
-//
-// #[tauri::command]
-// pub fn get_lima_docker_yaml_path_cmd(app: AppHandle) -> Result<String, String> {
-//     let path = get_yaml_path(&app, "lima-docker.yaml")?;
-//     Ok(path.to_string_lossy().to_string())
-// }
-//
-// #[tauri::command]
-// pub fn reset_lima_docker_yaml(app: AppHandle) -> Result<(), String> {
-//     reset_yaml(&app, "lima-docker.yaml", "docker.yaml")
-// }
+/// Convert LimaConfig to YAML string for display
+#[tauri::command]
+pub fn convert_config_to_yaml(config: LimaConfig) -> Result<String, String> {
+    config.to_yaml_pretty()
+        .map_err(|e| format!("Failed to convert config to YAML: {}", e))
+}
+
+/// Create a Lima instance using the managed configuration
+/// This handler uses the stored k0s config file and runs limactl start
+/// It streams the output back to the frontend via Tauri events
+#[tauri::command]
+pub async fn create_lima_instance(
+    app: AppHandle,
+    config: LimaConfig,
+    instance_name: Option<String>,
+) -> Result<String, String> {
+    let instance_name = instance_name.unwrap_or_else(|| config.name.clone().unwrap_or("default".to_string()));
+
+    // Write the config with variable substitution (required for k0s)
+    write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
+
+    // Get the path to the stored config file
+    let config_path = get_yaml_path(&app, "lima.yaml")
+        .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
+
+    // Emit start event
+    app.emit("lima-instance-start", &format!("Starting Lima instance '{}'...", instance_name))
+        .map_err(|e| format!("Failed to emit start event: {}", e))?;
+
+    // Spawn async task to run limactl and stream output
+    let app_handle = app.clone();
+    let instance_name_clone = instance_name.clone();
+    let config_path_clone = config_path.clone();
+
+    tokio::spawn(async move {
+        // Run limactl start command with the stored config file
+        let child = TokioCommand::new("limactl")
+            .args(["start", &config_path_clone.to_string_lossy()])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("Failed to start limactl process: {}", e));
+
+        let mut child = match child {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                return;
+            }
+        };
+
+        // Stream stdout
+        if let Some(stdout) = child.stdout.take() {
+            let app_handle_stdout = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stdout).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                }
+            });
+        }
+
+        // Stream stderr
+        if let Some(stderr) = child.stderr.take() {
+            let app_handle_stderr = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stderr).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                }
+            });
+        }
+
+        // Wait for process to complete
+        match child.wait().await {
+            Ok(status) => {
+                if status.success() {
+                    let success_msg = format!("Lima instance '{}' started successfully!", instance_name_clone);
+                    let _ = app_handle.emit("lima-instance-success", &success_msg);
+                } else {
+                    let error_msg = format!("Failed to start Lima instance. Exit code: {:?}", status.code());
+                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                }
+            }
+            Err(e) => {
+                let error_msg = format!("Failed to wait for limactl process: {}", e);
+                let _ = app_handle.emit("lima-instance-error", &error_msg);
+            }
+        }
+    });
+
+    Ok(instance_name)
+}
+
+/// Stop a Lima instance
+/// This handler runs limactl stop and streams the output back to the frontend via Tauri events
+#[tauri::command]
+pub async fn stop_lima_instance(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<String, String> {
+    // Emit stop event
+    app.emit("lima-instance-stop", &format!("Stopping Lima instance '{}'...", instance_name))
+        .map_err(|e| format!("Failed to emit stop event: {}", e))?;
+
+    // Spawn async task to run limactl and stream output
+    let app_handle = app.clone();
+    let instance_name_clone = instance_name.clone();
+
+    tokio::spawn(async move {
+        // Run limactl stop command
+        let child = TokioCommand::new("limactl")
+            .args(["stop", &instance_name_clone])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("Failed to start limactl stop process: {}", e));
+
+        let mut child = match child {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                return;
+            }
+        };
+
+        // Stream stdout
+        if let Some(stdout) = child.stdout.take() {
+            let app_handle_stdout = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stdout).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                }
+            });
+        }
+
+        // Stream stderr
+        if let Some(stderr) = child.stderr.take() {
+            let app_handle_stderr = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stderr).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                }
+            });
+        }
+
+        // Wait for process to complete
+        match child.wait().await {
+            Ok(status) => {
+                if status.success() {
+                    let success_msg = format!("Lima instance '{}' stopped successfully!", instance_name_clone);
+                    let _ = app_handle.emit("lima-instance-stop-success", &success_msg);
+                } else {
+                    let error_msg = format!("Failed to stop Lima instance. Exit code: {:?}", status.code());
+                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                }
+            }
+            Err(e) => {
+                let error_msg = format!("Failed to wait for limactl stop process: {}", e);
+                let _ = app_handle.emit("lima-instance-error", &error_msg);
+            }
+        }
+    });
+
+    Ok(instance_name)
+}
+
+/// Delete a Lima instance
+/// This handler runs limactl delete and streams the output back to the frontend via Tauri events
+#[tauri::command]
+pub async fn delete_lima_instance(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<String, String> {
+    // Emit delete event
+    app.emit("lima-instance-delete", &format!("Deleting Lima instance '{}'...", instance_name))
+        .map_err(|e| format!("Failed to emit delete event: {}", e))?;
+
+    // Spawn async task to run limactl and stream output
+    let app_handle = app.clone();
+    let instance_name_clone = instance_name.clone();
+
+    tokio::spawn(async move {
+        // Run limactl delete command
+        let child = TokioCommand::new("limactl")
+            .args(["delete", &instance_name_clone])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("Failed to start limactl delete process: {}", e));
+
+        let mut child = match child {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                return;
+            }
+        };
+
+        // Stream stdout
+        if let Some(stdout) = child.stdout.take() {
+            let app_handle_stdout = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stdout).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                }
+            });
+        }
+
+        // Stream stderr
+        if let Some(stderr) = child.stderr.take() {
+            let app_handle_stderr = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stderr).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                }
+            });
+        }
+
+        // Wait for process to complete
+        match child.wait().await {
+            Ok(status) => {
+                if status.success() {
+                    let success_msg = format!("Lima instance '{}' deleted successfully!", instance_name_clone);
+                    let _ = app_handle.emit("lima-instance-delete-success", &success_msg);
+                } else {
+                    let error_msg = format!("Failed to delete Lima instance. Exit code: {:?}", status.code());
+                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                }
+            }
+            Err(e) => {
+                let error_msg = format!("Failed to wait for limactl delete process: {}", e);
+                let _ = app_handle.emit("lima-instance-error", &error_msg);
+            }
+        }
+    });
+
+    Ok(instance_name)
+}
 
