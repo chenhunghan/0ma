@@ -30,7 +30,7 @@ export function App() {
   } = useLimaYaml();
 
   const { instanceStatus, startInstance, stopInstance, deleteInstance, clearStatus: clearInstanceStatus, setCurrentInstance, isCreatingInstance } = useLimaInstance();
-  const { instances: registeredInstances } = useInstanceRegistry();
+  const { instances: registeredInstances, isLoading: loadingInstances, loadInstances: refreshInstances } = useInstanceRegistry();
 
   const [showEditor, setShowEditor] = useState(false);
   const [editableConfig, setEditableConfig] = useState<LimaConfig | null>(null);
@@ -261,9 +261,28 @@ export function App() {
         {/* Registered Instances Section */}
         {registeredInstances.length > 0 && (
           <div style={{ marginTop: "15px", padding: "10px", background: "#e8f5e8", border: "1px solid #c3e6cb", borderRadius: "4px" }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>
-  ZeroMa-Managed Instances ({registeredInstances.length}):
-</h4>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 10px 0" }}>
+  <h4 style={{ margin: 0 }}>
+    ZeroMa-Managed Instances ({registeredInstances.length}):
+  </h4>
+  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <button
+      onClick={() => refreshInstances()}
+      disabled={loadingInstances}
+      style={{
+        padding: "4px 8px",
+        fontSize: "12px",
+        background: loadingInstances ? "#6c757d" : "#007bff",
+        color: "white",
+        border: "none",
+        borderRadius: "3px",
+        cursor: loadingInstances ? "not-allowed" : "pointer"
+      }}
+    >
+      {loadingInstances ? "Refreshing..." : "Refresh"}
+    </button>
+  </div>
+</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
               {registeredInstances
                 .sort((a, b) => parseInt(b.created_at) - parseInt(a.created_at))
@@ -341,8 +360,7 @@ export function App() {
                 })}
             </div>
             <small style={{ marginTop: "8px", color: "#666", fontSize: "12px", fontStyle: "italic" }}>
-              Click on an instance to select it for stop/delete operations.
-              Status is checked from Lima automatically and non-existent instances are removed.
+              Status auto-refreshes when you return to the window. Click Refresh for immediate update.
             </small>
           </div>
         )}

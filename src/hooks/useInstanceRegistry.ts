@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export interface InstanceInfo {
   name: string;
@@ -9,23 +9,24 @@ export interface InstanceInfo {
 }
 
 export function useInstanceRegistry() {
-  const [instances, setInstances] = useState<InstanceInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadInstances = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
+  const {
+    data: instances = [],
+    isLoading,
+    error,
+    refetch: loadInstances
+  } = useQuery({
+    queryKey: ["instances"],
+    queryFn: async () => {
       const registeredInstances = await invoke<InstanceInfo[]>("get_registered_instances");
-      setInstances(registeredInstances);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return registeredInstances;
+    },
+    staleTime: 5000, // Consider data stale after 5 seconds
+    refetchInterval: false, // Don't auto-refetch - we use event-based refreshes
+    refetchOnWindowFocus: true, // Let React Query handle window focus automatically (v5 uses visibilitychange)
+    refetchOnReconnect: true, // Auto-refetch when network reconnects
+  });
 
+  
   const isInstanceRegistered = async (instanceName: string): Promise<boolean> => {
     try {
       return await invoke<boolean>("is_instance_registered", { instanceName });
@@ -35,16 +36,12 @@ export function useInstanceRegistry() {
     }
   };
 
-  // Load instances on mount
-  useEffect(() => {
-    loadInstances();
-  }, []);
-
   return {
     instances,
     isLoading,
     error,
     loadInstances,
+    refreshInstances: loadInstances,
     isInstanceRegistered,
   };
 }
