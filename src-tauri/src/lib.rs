@@ -91,6 +91,8 @@ pub fn run() {
             yaml_handler::create_lima_instance,
             yaml_handler::stop_lima_instance,
             yaml_handler::delete_lima_instance,
+            yaml_handler::get_registered_instances,
+            yaml_handler::is_instance_registered,
             yaml_handler::reset_lima_k0s_yaml
         ])
         .run(tauri::generate_context!())

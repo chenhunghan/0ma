@@ -8,6 +8,7 @@ export interface LimaInstanceStatus {
   output: string[];
   error: string | null;
   success: string | null;
+  currentInstanceName: string | null;
 }
 
 export function useLimaInstance() {
@@ -16,6 +17,7 @@ export function useLimaInstance() {
     output: [],
     error: null,
     success: null,
+    currentInstanceName: null,
   });
 
   
@@ -123,16 +125,20 @@ export function useLimaInstance() {
     };
   }, []);
 
-  const startInstance = async (config: LimaConfig, instanceName?: string) => {
+  const startInstance = async (config: LimaConfig, instanceName: string) => {
     setInstanceStatus({
       isStarting: true,
       output: [],
       error: null,
       success: null,
+      currentInstanceName: instanceName,
     });
 
     try {
-      await invoke<string>("create_lima_instance", { config, instance_name: instanceName });
+      await invoke<string>("create_lima_instance", {
+        config,
+        instanceName
+      });
     } catch (error) {
       setInstanceStatus(prev => ({
         ...prev,
@@ -153,7 +159,7 @@ export function useLimaInstance() {
     }));
 
     try {
-      await invoke<string>("stop_lima_instance", { instance_name: instanceName });
+      await invoke<string>("stop_lima_instance", { instanceName });
     } catch (error) {
       setInstanceStatus(prev => ({
         ...prev,
@@ -174,7 +180,7 @@ export function useLimaInstance() {
     }));
 
     try {
-      await invoke<string>("delete_lima_instance", { instance_name: instanceName });
+      await invoke<string>("delete_lima_instance", { instanceName });
     } catch (error) {
       setInstanceStatus(prev => ({
         ...prev,
@@ -191,6 +197,7 @@ export function useLimaInstance() {
       output: [],
       error: null,
       success: null,
+      currentInstanceName: null,
     });
   };
 

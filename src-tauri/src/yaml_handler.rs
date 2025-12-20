@@ -1,10 +1,35 @@
 use std::fs;
 use std::path::PathBuf;
 use std::process::Stdio;
+use std::collections::HashMap;
 use tauri::{AppHandle, Manager, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
+use serde::{Deserialize, Serialize};
 use crate::lima_config::{LimaConfig, TemplateVars};
+
+/// Instance registry to track ZeroMa-managed instances
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstanceInfo {
+    pub name: String,
+    pub created_at: String,
+    pub config_path: String,
+}
+
+impl InstanceInfo {
+    pub fn new(name: String, config_path: String) -> Self {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        Self {
+            name,
+            created_at: timestamp.to_string(),
+            config_path,
+        }
+    }
+}
 
 /// Get the kubeconfig directory path
 /// /Users/you/Library/Application Support/chh.zeroma/kubeconfig
@@ -45,6 +70,61 @@ fn get_resource_path(app: &AppHandle, resource_filename: &str) -> Result<PathBuf
         .resource_dir()
         .map_err(|e| format!("Failed to get resource directory: {}", e))
         .map(|dir| dir.join("resources").join(resource_filename))
+}
+
+/// Get the path to the instance registry file
+fn get_instance_registry_path(app: &AppHandle) -> Result<PathBuf, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
+
+    Ok(app_data_dir.join("instances.json"))
+}
+
+/// Load the instance registry
+fn load_instance_registry(app: &AppHandle) -> Result<HashMap<String, InstanceInfo>, String> {
+    let registry_path = get_instance_registry_path(app)?;
+
+    if registry_path.exists() {
+        let content = fs::read_to_string(&registry_path)
+            .map_err(|e| format!("Failed to read instance registry: {}", e))?;
+        serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse instance registry: {}", e))
+    } else {
+        Ok(HashMap::new())
+    }
+}
+
+/// Save the instance registry
+fn save_instance_registry(app: &AppHandle, registry: &HashMap<String, InstanceInfo>) -> Result<(), String> {
+    let registry_path = get_instance_registry_path(app)?;
+
+    // Ensure parent directory exists
+    if let Some(parent) = registry_path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create instance registry directory: {}", e))?;
+    }
+
+    let content = serde_json::to_string_pretty(registry)
+        .map_err(|e| format!("Failed to serialize instance registry: {}", e))?;
+
+    fs::write(&registry_path, content)
+        .map_err(|e| format!("Failed to write instance registry: {}", e))
+}
+
+/// Register a new instance
+fn register_instance(app: &AppHandle, instance_info: InstanceInfo) -> Result<(), String> {
+    let mut registry = load_instance_registry(app)?;
+    registry.insert(instance_info.name.clone(), instance_info);
+    save_instance_registry(app, &registry)
+}
+
+/// Unregister an instance
+fn unregister_instance(app: &AppHandle, instance_name: &str) -> Result<(), String> {
+    let mut registry = load_instance_registry(app)?;
+    registry.remove(instance_name);
+    save_instance_registry(app, &registry)
 }
 
 /// Generic function to ensure a YAML file exists by copying from resources if needed
@@ -179,9 +259,9 @@ pub fn convert_config_to_yaml(config: LimaConfig) -> Result<String, String> {
 pub async fn create_lima_instance(
     app: AppHandle,
     config: LimaConfig,
-    instance_name: Option<String>,
+    instance_name: String,
 ) -> Result<String, String> {
-    let instance_name = instance_name.unwrap_or_else(|| config.name.clone().unwrap_or("default".to_string()));
+    // Use the provided instance name directly - it's required
 
     // Write the config with variable substitution (required for k0s)
     write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
@@ -189,6 +269,11 @@ pub async fn create_lima_instance(
     // Get the path to the stored config file
     let config_path = get_yaml_path(&app, "lima.yaml")
         .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
+
+    // Register the instance in our registry
+    let instance_info = InstanceInfo::new(instance_name.clone(), config_path.to_string_lossy().to_string());
+    register_instance(&app, instance_info)
+        .map_err(|e| format!("Failed to register instance: {}", e))?;
 
     // Emit start event
     app.emit("lima-instance-start", &format!("Starting Lima instance '{}'...", instance_name))
@@ -200,9 +285,13 @@ pub async fn create_lima_instance(
     let config_path_clone = config_path.clone();
 
     tokio::spawn(async move {
-        // Run limactl start command with the stored config file
+        // Run limactl start command with the stored config file and explicit instance name
         let child = TokioCommand::new("limactl")
-            .args(["start", &config_path_clone.to_string_lossy()])
+            .args([
+                "start",
+                "--name", &instance_name_clone,
+                &config_path_clone.to_string_lossy()
+            ])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -341,6 +430,10 @@ pub async fn delete_lima_instance(
     app: AppHandle,
     instance_name: String,
 ) -> Result<String, String> {
+    // Unregister the instance from our registry (we do this before attempting delete)
+    unregister_instance(&app, &instance_name)
+        .map_err(|e| format!("Failed to unregister instance: {}", e))?;
+
     // Emit delete event
     app.emit("lima-instance-delete", &format!("Deleting Lima instance '{}'...", instance_name))
         .map_err(|e| format!("Failed to emit delete event: {}", e))?;
@@ -409,3 +502,18 @@ pub async fn delete_lima_instance(
     Ok(instance_name)
 }
 
+
+
+/// Get all registered ZeroMa instances
+#[tauri::command]
+pub async fn get_registered_instances(app: AppHandle) -> Result<Vec<InstanceInfo>, String> {
+    let registry = load_instance_registry(&app)?;
+    Ok(registry.into_values().collect())
+}
+
+/// Check if an instance is registered
+#[tauri::command]
+pub async fn is_instance_registered(app: AppHandle, instance_name: String) -> Result<bool, String> {
+    let registry = load_instance_registry(&app)?;
+    Ok(registry.contains_key(&instance_name))
+}
