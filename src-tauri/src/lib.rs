@@ -6,20 +6,20 @@ mod lima_config;
 #[cfg(test)]
 mod structured_example;
 
+// Common paths where limactl might be installed
+// Note: We use limactl directly instead of lima wrapper script
+const COMMON_LIMA_EXEC_PATHS: &[&str] = &[
+      "/opt/homebrew/bin/limactl",
+      "/usr/local/bin/limactl",
+      "/opt/local/bin/limactl",
+      "/usr/bin/limactl",
+      "limactl",
+];
+
 /// Find the lima executable in common installation paths
 fn find_lima_executable() -> Option<String> {
-    // Common paths where limactl might be installed
-    // Note: We use limactl directly instead of lima wrapper script
-    let common_paths = vec![
-        "/opt/homebrew/bin/limactl",      // Apple Silicon Homebrew
-        "/usr/local/bin/limactl",         // Intel Mac Homebrew
-        "/opt/local/bin/limactl",         // MacPorts
-        "/usr/bin/limactl",               // System
-        "limactl",                        // Try PATH as fallback
-    ];
-
-    for path in common_paths {
-        if path == "limactl" {
+    for path in COMMON_LIMA_EXEC_PATHS {
+        if *path == "limactl" {
             // Try using PATH
             if Command::new(path).arg("--version").output().is_ok() {
                 return Some(path.to_string());
@@ -30,12 +30,6 @@ fn find_lima_executable() -> Option<String> {
     }
 
     None
-}
-
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 #[tauri::command]
@@ -80,7 +74,6 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            greet,
             lima_version,
             yaml_handler::read_lima_yaml,
             yaml_handler::write_lima_yaml,
