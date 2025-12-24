@@ -82,7 +82,6 @@ pub fn run() {
             lima_config_handler::reset_lima_yaml,
             lima_config_handler::get_kubeconfig_path,
             lima_config_handler::convert_config_to_yaml,
-            lima_config_handler::reset_lima_k0s_yaml,
             instance_registry::get_registered_instances,
             instance_registry::is_instance_registered,
             lima_instance::create_lima_instance,

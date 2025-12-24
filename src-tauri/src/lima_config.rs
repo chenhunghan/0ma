@@ -168,6 +168,72 @@ impl LimaConfig {
     }
 }
 
+/// Get the default k0s Lima configuration
+pub fn get_default_k0s_lima_config(app: &tauri::AppHandle, instance_name: &str) -> Result<LimaConfig, String> {
+    use crate::lima_config_handler::get_kubeconfig_path_internal;
+    
+    let kubeconfig_path = get_kubeconfig_path_internal(app, instance_name)?;
+    
+    Ok(LimaConfig {
+        minimum_lima_version: None,
+        vm_type: None,
+        cpus: None,
+        memory: None,
+        disk: None,
+        images: Some(vec![Image {
+            location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
+            arch: Some("aarch64".to_string()),
+            digest: None,
+        }]),
+        mounts: Some(vec![]),
+        containerd: Some(ContainerdConfig {
+            system: false,
+            user: false,
+        }),
+        provision: Some(vec![
+            Provision {
+                mode: "system".to_string(),
+                script: r#"#!/bin/bash
+set -eux -o pipefail
+command -v k0s >/dev/null 2>&1 && exit 0
+
+# install k0s prerequisites
+curl -sfL https://get.k0s.sh | sh
+"#.to_string(),
+            },
+            Provision {
+                mode: "system".to_string(),
+                script: r#"#!/bin/bash
+set -eux -o pipefail
+
+#  start k0s as a single node cluster
+if ! systemctl status k0scontroller >/dev/null 2>&1; then
+  k0s install controller --single
+fi
+
+systemctl start k0scontroller
+"#.to_string(),
+            },
+        ]),
+        probes: Some(vec![Probe {
+            description: "k0s to be running".to_string(),
+            script: r#"#!/bin/bash
+set -eux -o pipefail
+if ! timeout 30s bash -c "until sudo test -f /var/lib/k0s/pki/admin.conf; do sleep 3; done"; then
+  echo >&2 "k0s kubeconfig file has not yet been created"
+  exit 1
+fi
+"#.to_string(),
+            hint: Some("The k0s control plane is not ready yet.".to_string()),
+        }]),
+        copy_to_host: Some(vec![CopyToHost {
+            guest: "/var/lib/k0s/pki/admin.conf".to_string(),
+            host: kubeconfig_path.to_string_lossy().to_string(),
+            delete_on_stop: Some(true),
+        }]),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

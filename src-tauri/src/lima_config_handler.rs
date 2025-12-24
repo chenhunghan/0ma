@@ -1,40 +1,37 @@
 use tauri::AppHandle;
-use crate::lima_config::LimaConfig;
-use crate::yaml_handler::{get_instance_dir, get_yaml_path, read_yaml, write_yaml, reset_yaml};
+use crate::lima_config::{LimaConfig, get_default_k0s_lima_config};
+use crate::yaml_handler::{get_instance_dir, get_yaml_path, write_yaml};
 
-const MANAGED_DEFAULT_K0S_CONFIG_FILENAME: &str = "k0s.yaml";
 /// The standard filename for Lima configuration for an instance
 const LIMA_CONFIG_FILENAME: &str = "lima.yaml";
 /// The standard filename for kubeconfig file for an instance
 const KUBECONFIG_FILENAME: &str = "kubeconfig.yaml";
 
-// Read the Lima YAML configuration (LIMA_CONFIG_FILENAME) for a specific instance by instance name
+/// Read the Lima YAML configuration (LIMA_CONFIG_FILENAME) for a specific instance by instance name
+/// If the file does not exist, generate the default k0s config
 #[tauri::command]
 pub fn read_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
-    // Read the YAML content of instance's LIMA_CONFIG_FILENAME
-    // Falls back to copying from managed default MANAGED_DEFAULT_K0S_CONFIG_FILENAME if the config is not present
-    let yaml_content = read_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, MANAGED_DEFAULT_K0S_CONFIG_FILENAME)?;
-    LimaConfig::from_yaml(&yaml_content)
-        .map_err(|e| format!("Failed to parse YAML: {}", e))
+    let yaml_path = get_lima_yaml_path(&app, &instance_name)?;
+    
+    // If the file exists, read it
+    if yaml_path.exists() {
+        let yaml_content = std::fs::read_to_string(&yaml_path)
+            .map_err(|e| format!("Failed to read lima.yaml: {}", e))?;
+        return LimaConfig::from_yaml(&yaml_content)
+            .map_err(|e| format!("Failed to parse YAML: {}", e));
+    }
+    
+    // Otherwise, generate and return the default config
+    get_default_k0s_lima_config(&app, &instance_name)
 }
 
-/// Write YAML with and setup copy_to_host's kubeconfig path to app managed folder for a specific instance
+/// Write YAML with for a specific instance
 #[tauri::command]
 pub fn write_lima_yaml(
     app: AppHandle,
     mut config: LimaConfig,
     instance_name: String,
 ) -> Result<(), String> {
-    // Get the instance directory path
-    let instance_dir = get_instance_dir(&app, &instance_name)?;
-    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
-
-    // Update the first copyToHost entry with the specific kubeconfig path
-    if let Some(copy_to_host) = &mut config.copy_to_host {
-        if !copy_to_host.is_empty() {
-            copy_to_host[0].host = kubeconfig_path.to_string_lossy().to_string();
-        }
-    }
 
     // Write the config
     let yaml_content = config.to_yaml_pretty()
@@ -53,24 +50,30 @@ pub fn get_lima_yaml_path_cmd(app: AppHandle, instance_name: String) -> Result<S
     Ok(path.to_string_lossy().to_string())
 }
 
-// Reset the instance's Lima YAML configuration (LIMA_CONFIG_FILENAME) to the default managed MANAGED_DEFAULT_K0S_CONFIG_FILENAME for a specific instance
+// Reset the instance's Lima YAML configuration to the default k0s config
 #[tauri::command]
 pub fn reset_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
-    reset_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, MANAGED_DEFAULT_K0S_CONFIG_FILENAME)?;
-    read_lima_yaml(app, instance_name)
+    // Generate the default config
+    let default_config = get_default_k0s_lima_config(&app, &instance_name)?;
+    
+    // Write it to disk
+    write_lima_yaml(app.clone(), default_config.clone(), instance_name.clone())?;
+    
+    // Return the config
+    Ok(default_config)
+}
+
+/// Get the kubeconfig path for a specific instance (internal)
+pub(crate) fn get_kubeconfig_path_internal(app: &AppHandle, instance_name: &str) -> Result<std::path::PathBuf, String> {
+    let instance_dir = get_instance_dir(app, instance_name)?;
+    Ok(instance_dir.join(KUBECONFIG_FILENAME))
 }
 
 /// Get the kubeconfig path for a specific instance
 #[tauri::command]
 pub fn get_kubeconfig_path(app: AppHandle, instance_name: String) -> Result<String, String> {
-    let instance_dir = get_instance_dir(&app, &instance_name)?;
-    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
+    let kubeconfig_path = get_kubeconfig_path_internal(&app, &instance_name)?;
     Ok(kubeconfig_path.to_string_lossy().to_string())
-}
-
-#[tauri::command]
-pub fn reset_lima_k0s_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
-    reset_lima_yaml(app, instance_name)
 }
 
 /// Convert LimaConfig to YAML string for display
