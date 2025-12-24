@@ -25,7 +25,7 @@ pub async fn create_lima_instance(
         .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
 
     // Register the instance in our registry
-    let instance_info = InstanceInfo::new(instance_name.clone(), config_path.to_string_lossy().to_string());
+    let instance_info = InstanceInfo::new(instance_name.clone());
     register_instance(&app, instance_info)
         .map_err(|e| format!("Failed to register instance: {}", e))?;
 

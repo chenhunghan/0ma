@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 export interface InstanceInfo {
   name: string;
   created_at: string;
-  config_path: string;
+  updated_at?: string;
   status?: string;
 }
 

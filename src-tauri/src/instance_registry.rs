@@ -14,12 +14,11 @@ pub struct InstanceInfo {
     // Timestamps as Unix epoch milliseconds (as strings)
     pub created_at: String,
     pub updated_at: Option<String>,
-    pub config_path: String,
     pub status: Option<String>,
 }
 
 impl InstanceInfo {
-    pub fn new(name: String, config_path: String) -> Self {
+    pub fn new(name: String) -> Self {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -28,7 +27,6 @@ impl InstanceInfo {
             name,
             created_at: timestamp.to_string(),
             updated_at: None,
-            config_path,
             status: None,
         }
     }
