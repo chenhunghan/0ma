@@ -1,8 +1,10 @@
 use tauri::AppHandle;
 use crate::instance_registry_service::{
     InstanceInfo,
+    DiskUsage,
     load_instance_registry,
     sync_registry_from_lima,
+    get_disk_usage,
 };
 
 /// Get all registered ZeroMa instances with their current status
@@ -24,4 +26,10 @@ pub async fn get_registered_instances_cmd(app: AppHandle) -> Result<Vec<Instance
 pub async fn is_instance_registered_cmd(app: AppHandle, instance_name: String) -> Result<bool, String> {
     let registry = load_instance_registry(&app)?;
     Ok(registry.contains_key(&instance_name))
+}
+
+/// Get disk usage for a Lima instance
+#[tauri::command]
+pub async fn get_instance_disk_usage_cmd(instance_name: String) -> Result<DiskUsage, String> {
+    get_disk_usage(&instance_name)
 }

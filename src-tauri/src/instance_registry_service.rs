@@ -31,6 +31,15 @@ pub struct LimaInstance {
     // We can add more fields as needed
 }
 
+/// Disk usage information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiskUsage {
+    pub total: String,
+    pub used: String,
+    pub available: String,
+    pub use_percent: String,
+}
+
 impl InstanceInfo {
     pub fn new(name: String) -> Self {
         let timestamp = SystemTime::now()
@@ -194,4 +203,55 @@ pub fn sync_registry_from_lima(app: &AppHandle) -> Result<HashMap<String, Instan
     save_instance_registry(app, &registry)?;
     
     Ok(registry)
+}
+
+/// Get disk usage for a Lima instance by running df inside the instance
+pub fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
+    let lima_cmd = find_lima_executable()
+        .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
+    
+    // Use --output for reliable parsing, avoiding locale and formatting issues
+    // -BG ensures sizes are in gigabytes for consistency
+    let output = Command::new(&lima_cmd)
+        .args([
+            "shell",
+            instance_name,
+            "df",
+            "-BG",
+            "--output=size,used,avail,pcent",
+            "/"
+        ])
+        .output()
+        .map_err(|e| format!("Failed to run df command: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Failed to get disk usage: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Parse df output, expecting two lines: header and data
+    // Example output:
+    //   Size  Used Avail Use%
+    //    38G    3G   36G   6%
+    let lines: Vec<&str> = stdout.lines().collect();
+    
+    if lines.len() < 2 {
+        return Err(format!("Unexpected df output format: {}", stdout));
+    }
+
+    // Get the data line (skip header)
+    let data_line = lines[1];
+    let parts: Vec<&str> = data_line.split_whitespace().collect();
+    
+    if parts.len() < 4 {
+        return Err(format!("Failed to parse disk usage: expected 4 columns, got {}", parts.len()));
+    }
+
+    Ok(DiskUsage {
+        total: parts[0].to_string(),
+        used: parts[1].to_string(),
+        available: parts[2].to_string(),
+        use_percent: parts[3].to_string(),
+    })
 }

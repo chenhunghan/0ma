@@ -86,6 +86,7 @@ pub fn run() {
             lima_config_handler::convert_config_to_yaml_cmd,
             instance_registry_handler::get_registered_instances_cmd,
             instance_registry_handler::is_instance_registered_cmd,
+            instance_registry_handler::get_instance_disk_usage_cmd,
             lima_instance_handler::create_lima_instance_cmd,
             lima_instance_handler::stop_lima_instance_cmd,
             lima_instance_handler::delete_lima_instance_cmd
