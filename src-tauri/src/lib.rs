@@ -5,6 +5,7 @@ mod yaml_handler;
 mod lima_config;
 mod lima_config_handler;
 mod instance_registry;
+mod lima_instance;
 #[cfg(test)]
 mod structured_example;
 
@@ -87,9 +88,9 @@ pub fn run() {
             lima_config_handler::reset_lima_k0s_yaml,
             instance_registry::get_registered_instances,
             instance_registry::is_instance_registered,
-            yaml_handler::create_lima_instance,
-            yaml_handler::stop_lima_instance,
-            yaml_handler::delete_lima_instance
+            lima_instance::create_lima_instance,
+            lima_instance::stop_lima_instance,
+            lima_instance::delete_lima_instance
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
