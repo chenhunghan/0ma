@@ -34,7 +34,7 @@ pub fn find_lima_executable() -> Option<String> {
 }
 
 #[tauri::command]
-fn lima_version() -> Result<String, String> {
+fn lima_version_cmd() -> Result<String, String> {
     // Find limactl executable
     let lima_cmd = find_lima_executable()
         .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.".to_string())?;
@@ -75,18 +75,18 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            lima_version,
-            lima_config_handler::read_lima_yaml,
-            lima_config_handler::write_lima_yaml,
+            lima_version_cmd,
+            lima_config_handler::read_lima_yaml_cmd,
+            lima_config_handler::write_lima_yaml_cmd,
             lima_config_handler::get_lima_yaml_path_cmd,
-            lima_config_handler::reset_lima_yaml,
-            lima_config_handler::get_kubeconfig_path,
-            lima_config_handler::convert_config_to_yaml,
-            instance_registry::get_registered_instances,
-            instance_registry::is_instance_registered,
-            lima_instance::create_lima_instance,
-            lima_instance::stop_lima_instance,
-            lima_instance::delete_lima_instance
+            lima_config_handler::reset_lima_yaml_cmd,
+            lima_config_handler::get_kubeconfig_path_cmd,
+            lima_config_handler::convert_config_to_yaml_cmd,
+            instance_registry::get_registered_instances_cmd,
+            instance_registry::is_instance_registered_cmd,
+            lima_instance::create_lima_instance_cmd,
+            lima_instance::stop_lima_instance_cmd,
+            lima_instance::delete_lima_instance_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

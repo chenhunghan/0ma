@@ -13,7 +13,7 @@ export function useLimaYaml(instanceName: string) {
   } = useQuery({
     queryKey: ["lima_yaml", instanceName],
     queryFn: async () => {
-      return await invoke<LimaConfig>("read_lima_yaml", { instanceName });
+      return await invoke<LimaConfig>("read_lima_yaml_cmd", { instanceName });
     },
     enabled: !!instanceName, // Only fetch if instanceName is provided
   });
@@ -21,7 +21,7 @@ export function useLimaYaml(instanceName: string) {
   // Write Lima YAML
   const writeLimaYamlMutation = useMutation({
     mutationFn: async (config: LimaConfig) => {
-      await invoke("write_lima_yaml", { instanceName, config });
+      await invoke("write_lima_yaml_cmd", { instanceName, config });
     },
     onSuccess: async () => {
       // Invalidate and refetch the Lima YAML after writing
@@ -46,7 +46,7 @@ export function useLimaYaml(instanceName: string) {
   // Reset Lima YAML to bundled version
   const resetLimaYamlMutation = useMutation({
     mutationFn: async () => {
-      return await invoke<LimaConfig>("reset_lima_yaml", { instanceName });
+      return await invoke<LimaConfig>("reset_lima_yaml_cmd", { instanceName });
     },
     onSuccess: async (newConfig) => {
       // Update the cache with the new config

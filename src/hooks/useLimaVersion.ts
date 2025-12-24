@@ -10,7 +10,7 @@ export function useLimaVersion() {
   } = useQuery({
     queryKey: ["lima_version"],
     queryFn: async () => {
-      return await invoke<string>("lima_version");
+      return await invoke<string>("lima_version_cmd");
     },
     enabled: false, // Don't auto-fetch on mount
     retry: false, // Don't retry on error

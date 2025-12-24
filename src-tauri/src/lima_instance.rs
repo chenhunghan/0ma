@@ -11,7 +11,7 @@ use crate::instance_registry::{InstanceInfo, register_instance, unregister_insta
 /// This handler uses the stored k0s config file and runs limactl start
 /// It streams the output back to the frontend via Tauri events
 #[tauri::command]
-pub async fn create_lima_instance(
+pub async fn create_lima_instance_cmd(
     app: AppHandle,
     config: LimaConfig,
     instance_name: String,
@@ -19,7 +19,7 @@ pub async fn create_lima_instance(
     // Use the provided instance name directly - it's required
 
     // Write the config
-    write_lima_yaml(app.clone(), config.clone(), instance_name.clone())?;
+    write_lima_yaml(&app, &config, &instance_name)?;
 
     // Get the path to the stored config file (lima.yaml)
     let config_path = get_lima_yaml_path(&app, &instance_name)
@@ -114,7 +114,7 @@ pub async fn create_lima_instance(
 /// Stop a Lima instance
 /// This handler runs limactl stop and streams the output back to the frontend via Tauri events
 #[tauri::command]
-pub async fn stop_lima_instance(
+pub async fn stop_lima_instance_cmd(
     app: AppHandle,
     instance_name: String,
 ) -> Result<String, String> {
@@ -197,7 +197,7 @@ pub async fn stop_lima_instance(
 /// Delete a Lima instance
 /// This handler runs limactl delete and streams the output back to the frontend via Tauri events
 #[tauri::command]
-pub async fn delete_lima_instance(
+pub async fn delete_lima_instance_cmd(
     app: AppHandle,
     instance_name: String,
 ) -> Result<String, String> {

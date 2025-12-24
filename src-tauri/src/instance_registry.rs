@@ -109,7 +109,7 @@ fn get_instance_status(instance_name: &str) -> Result<String, String> {
 /// Get all registered ZeroMa instances with their current status
 /// Also cleans up instances that no longer exist in Lima
 #[tauri::command]
-pub async fn get_registered_instances(app: AppHandle) -> Result<Vec<InstanceInfo>, String> {
+pub async fn get_registered_instances_cmd(app: AppHandle) -> Result<Vec<InstanceInfo>, String> {
     let registry = load_instance_registry(&app)?;
 
     // Check each instance and update status
@@ -143,7 +143,7 @@ pub async fn get_registered_instances(app: AppHandle) -> Result<Vec<InstanceInfo
 
 /// Check if an instance is registered
 #[tauri::command]
-pub async fn is_instance_registered(app: AppHandle, instance_name: String) -> Result<bool, String> {
+pub async fn is_instance_registered_cmd(app: AppHandle, instance_name: String) -> Result<bool, String> {
     let registry = load_instance_registry(&app)?;
     Ok(registry.contains_key(&instance_name))
 }

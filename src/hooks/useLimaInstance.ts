@@ -135,7 +135,7 @@ export function useLimaInstance() {
     });
 
     try {
-      await invoke<string>("create_lima_instance", {
+      await invoke<string>("create_lima_instance_cmd", {
         config,
         instanceName
       });
@@ -159,7 +159,7 @@ export function useLimaInstance() {
     }));
 
     try {
-      await invoke<string>("stop_lima_instance", { instanceName });
+      await invoke<string>("stop_lima_instance_cmd", { instanceName });
     } catch (error) {
       setInstanceStatus(prev => ({
         ...prev,
@@ -180,7 +180,7 @@ export function useLimaInstance() {
     }));
 
     try {
-      await invoke<string>("delete_lima_instance", { instanceName });
+      await invoke<string>("delete_lima_instance_cmd", { instanceName });
     } catch (error) {
       setInstanceStatus(prev => ({
         ...prev,

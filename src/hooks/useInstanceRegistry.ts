@@ -17,7 +17,7 @@ export function useInstanceRegistry() {
   } = useQuery({
     queryKey: ["instances"],
     queryFn: async () => {
-      const registeredInstances = await invoke<InstanceInfo[]>("get_registered_instances");
+      const registeredInstances = await invoke<InstanceInfo[]>("get_registered_instances_cmd");
       return registeredInstances;
     },
     staleTime: 5000, // Consider data stale after 5 seconds
@@ -29,7 +29,7 @@ export function useInstanceRegistry() {
   
   const isInstanceRegistered = async (instanceName: string): Promise<boolean> => {
     try {
-      return await invoke<boolean>("is_instance_registered", { instanceName });
+      return await invoke<boolean>("is_instance_registered_cmd", { instanceName });
     } catch (err) {
       console.error("Failed to check if instance is registered:", err);
       return false;
