@@ -1,11 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useQuery } from "@tanstack/react-query";
+import { LimaConfig } from "../types/lima-config";
 
+/**
+ * Info of an instance stored in the registry
+ */
 export interface InstanceInfo {
   name: string;
   created_at: string;
   updated_at?: string;
   status?: string;
+  /** Full Lima configuration read from limactl list --json */
+  config?: LimaConfig;
 }
 
 export function useInstanceRegistry() {

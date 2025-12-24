@@ -1,46 +1,22 @@
-use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
 use crate::instance_registry_service::{
     InstanceInfo,
     load_instance_registry,
-    save_instance_registry,
-    get_instance_status,
+    sync_registry_from_lima,
 };
 
 /// Get all registered ZeroMa instances with their current status
-/// Also cleans up instances that no longer exist in Lima
+/// Syncs the registry from limactl list --json (the source of truth)
 #[tauri::command]
 pub async fn get_registered_instances_cmd(app: AppHandle) -> Result<Vec<InstanceInfo>, String> {
-    let registry = load_instance_registry(&app)?;
+    // Sync registry from limactl
+    let registry = sync_registry_from_lima(&app)?;
 
-    // Check each instance and update status
-    let mut instances_with_status: Vec<InstanceInfo> = Vec::new();
-    let mut updated_registry: HashMap<String, InstanceInfo> = HashMap::new();
+    // Convert to sorted vector
+    let mut instances: Vec<InstanceInfo> = registry.into_values().collect();
+    instances.sort_by(|a, b| a.name.cmp(&b.name));
 
-    for (name, mut instance) in registry {
-        match get_instance_status(&name) {
-            Ok(status) => {
-                instance.status = Some(status);
-                // Update timestamp when status is updated
-                let timestamp = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_millis();
-                instance.updated_at = Some(timestamp.to_string());
-                instances_with_status.push(instance.clone());
-                updated_registry.insert(name, instance);
-            }
-            Err(_) => {
-                // Instance doesn't exist in Lima anymore - skip it
-            }
-        }
-    }
-
-    // Save the cleaned registry
-    save_instance_registry(&app, &updated_registry)?;
-
-    Ok(instances_with_status)
+    Ok(instances)
 }
 
 /// Check if an instance is registered

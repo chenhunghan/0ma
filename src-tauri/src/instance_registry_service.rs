@@ -6,6 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Manager};
 use serde::{Deserialize, Serialize};
 use crate::find_lima_executable;
+use crate::lima_config::LimaConfig;
 
 /// Instance registry to track ZeroMa-managed instances
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,6 +16,19 @@ pub struct InstanceInfo {
     pub created_at: String,
     pub updated_at: Option<String>,
     pub status: Option<String>,
+    /// Full Lima configuration read from limactl list --json
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<LimaConfig>,
+}
+
+/// Lima instance structure from limactl list --json
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LimaInstance {
+    pub name: String,
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<LimaConfig>,
+    // We can add more fields as needed
 }
 
 impl InstanceInfo {
@@ -28,6 +42,7 @@ impl InstanceInfo {
             created_at: timestamp.to_string(),
             updated_at: None,
             status: None,
+            config: None,
         }
     }
 }
@@ -87,21 +102,96 @@ pub fn unregister_instance(app: &AppHandle, instance_name: &str) -> Result<(), S
     save_instance_registry(app, &registry)
 }
 
-/// Get the status of a specific Lima instance
-pub fn get_instance_status(instance_name: &str) -> Result<String, String> {
+/// Get all Lima instances from limactl list --json
+fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
     let lima_cmd = find_lima_executable()
         .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
     
     let output = Command::new(&lima_cmd)
-        .args(["list", "--format", "{{.Status}}", instance_name])
+        .args(["list", "--format", "json"])
         .output()
         .map_err(|e| format!("Failed to run limactl list: {}", e))?;
 
-    if output.status.success() {
-        let status = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        Ok(if status.is_empty() { "Unknown".to_string() } else { status.to_string() })
-    } else {
-        // If command fails with non-zero exit, instance doesn't exist
-        Err(format!("Instance '{}' not found", instance_name))
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Failed to list Lima instances: {}", stderr));
     }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stdout = stdout.trim();
+    
+    if stdout.is_empty() {
+        return Ok(vec![]);
+    }
+
+    // limactl list --format json returns newline-delimited JSON (NDJSON)
+    // Each line is a separate JSON object representing one instance
+    let mut instances = Vec::new();
+    for line in stdout.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        match serde_json::from_str::<LimaInstance>(line) {
+            Ok(instance) => instances.push(instance),
+            Err(e) => {
+                eprintln!("Warning: Failed to parse Lima instance JSON: {}", e);
+                continue;
+            }
+        }
+    }
+    
+    Ok(instances)
+}
+
+/// Sync the registry from limactl list (source of truth)
+/// This function:
+/// 1. Gets all instances from limactl list --json
+/// 2. Updates existing instances with current status
+/// 3. Removes instances that no longer exist
+/// 4. Adds new instances that aren't in the registry yet (if they exist in Lima)
+pub fn sync_registry_from_lima(app: &AppHandle) -> Result<HashMap<String, InstanceInfo>, String> {
+    let mut registry = load_instance_registry(app)?;
+    let lima_instances = get_lima_instances()?;
+    
+    // Create a map of Lima instances for quick lookup
+    let lima_map: HashMap<String, LimaInstance> = lima_instances
+        .into_iter()
+        .map(|inst| (inst.name.clone(), inst))
+        .collect();
+    
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis()
+        .to_string();
+    
+    // Update existing instances and remove ones that no longer exist
+    registry.retain(|name, info| {
+        if let Some(lima_inst) = lima_map.get(name) {
+            info.status = Some(lima_inst.status.clone());
+            info.config = lima_inst.config.clone();
+            info.updated_at = Some(timestamp.clone());
+            true
+        } else {
+            // Instance no longer exists in Lima, remove it
+            false
+        }
+    });
+    
+    // Add new instances from Lima that aren't in our registry
+    for (name, lima_inst) in lima_map {
+        if !registry.contains_key(&name) {
+            let mut info = InstanceInfo::new(name.clone());
+            info.status = Some(lima_inst.status);
+            info.config = lima_inst.config;
+            info.updated_at = Some(timestamp.clone());
+            registry.insert(name, info);
+        }
+    }
+    
+    // Save the updated registry
+    save_instance_registry(app, &registry)?;
+    
+    Ok(registry)
 }
