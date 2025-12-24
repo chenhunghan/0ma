@@ -8,6 +8,12 @@ use tokio::process::Command as TokioCommand;
 use serde::{Deserialize, Serialize};
 use crate::lima_config::{LimaConfig, TemplateVars};
 
+const MANAGED_DEFAULT_K0S_CONFIG_FILENAME: &str = "k0s.yaml";
+/// The standard filename for Lima configuration for an instance
+const LIMA_CONFIG_FILENAME: &str = "lima.yaml";
+/// The standard filename for kubeconfig file for an instance
+const KUBECONFIG_FILENAME: &str = "kubeconfig.yaml";
+
 /// Instance registry to track ZeroMa-managed instances
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceInfo {
@@ -33,40 +39,33 @@ impl InstanceInfo {
     }
 }
 
-/// Get the kubeconfig directory path
-/// /Users/you/Library/Application Support/chh.zeroma/kubeconfig
-fn get_kubeconfig_dir(app: &AppHandle) -> Result<PathBuf, String> {
+/// Get the instance directory path
+/// + Ensures the directory exists
+/// /Users/you/Library/Application Support/chh.zeroma/<instance_name>
+fn get_instance_dir(app: &AppHandle, instance_name: &str) -> Result<PathBuf, String> {
     let app_data_dir = app
         .path()
         .app_data_dir()
         .map_err(|e| format!("Failed to get app data directory: {}", e))?;
 
-    let kubeconfig_dir = app_data_dir.join("kubeconfig");
+    let instance_dir = app_data_dir.join(instance_name);
     
     // Ensure the directory exists
-    fs::create_dir_all(&kubeconfig_dir)
-        .map_err(|e| format!("Failed to create kubeconfig directory: {}", e))?;
+    fs::create_dir_all(&instance_dir)
+        .map_err(|e| format!("Failed to create instance directory: {}", e))?;
 
-    Ok(kubeconfig_dir)
+    Ok(instance_dir)
 }
 
-/// Generic function to get the path to a YAML file in the app data directory
-/// This is where the app stores its managed YAML files
-/// e.g., /Users/you/Library/Application Support/chh.zeroma/lima.yaml
-fn get_yaml_path(app: &AppHandle, filename: &str) -> Result<PathBuf, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
-
-    // Ensure the directory exists
-    fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create app data directory: {}", e))?;
-
-    Ok(app_data_dir.join(filename))
+/// Generic function to get the path to a YAML file in the instance directory
+/// This is where the app stores its YAML files per instance
+/// e.g., /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
+fn get_yaml_path(app: &AppHandle, instance_name: &str, filename: &str) -> Result<PathBuf, String> {
+    let instance_dir = get_instance_dir(app, instance_name)?;
+    Ok(instance_dir.join(filename))
 }
 
-/// Generic function to get the bundled resource path for a YAML file
+/// Generic function to get the bundled resource filename path for a YAML file
 fn get_resource_path(app: &AppHandle, resource_filename: &str) -> Result<PathBuf, String> {
     app.path()
         .resource_dir()
@@ -145,76 +144,84 @@ fn get_instance_status(instance_name: &str) -> Result<String, String> {
     }
 }
 
-/// Generic function to ensure a YAML file exists by copying from resources if needed
+/// Generic function to ensure a YAML file exists by copying from fallback_file_name if needed
 fn ensure_yaml_exists(
     app: &AppHandle,
-    app_filename: &str,
-    resource_filename: &str,
+    instance_name: &str,
+    filename: &str,
+    fallback_file_name: &str,
 ) -> Result<(), String> {
-    let yaml_path = get_yaml_path(app, app_filename)?;
+    let yaml_path = get_yaml_path(app, instance_name, filename)?;
 
     if !yaml_path.exists() {
-        let resource_path = get_resource_path(app, resource_filename)?;
+        let resource_path = get_resource_path(app, fallback_file_name)?;
         fs::copy(&resource_path, &yaml_path)
-            .map_err(|e| format!("Failed to copy {} from resources: {}", resource_filename, e))?;
+            .map_err(|e| format!("Failed to copy {} from fall back file: {}", fallback_file_name, e))?;
     }
 
     Ok(())
 }
 
-/// Generic function to read a YAML file
-fn read_yaml(app: &AppHandle, app_filename: &str, resource_filename: &str) -> Result<String, String> {
-    ensure_yaml_exists(app, app_filename, resource_filename)?;
-    let yaml_path = get_yaml_path(app, app_filename)?;
+/// Generic function to read a YAML file for an instance
+/// Falls back to copying from fallback_file_name if the file doesn't exist
+/// e.g. Read /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
+fn read_yaml(app: &AppHandle, instance_name: &str, filename: &str, fallback_file_name: &str) -> Result<String, String> {
+    ensure_yaml_exists(app, instance_name, filename, fallback_file_name)?;
+    let config_yaml_path = get_yaml_path(app, instance_name, filename)?;
 
-    fs::read_to_string(&yaml_path)
-        .map_err(|e| format!("Failed to read {} file: {}", app_filename, e))
+    fs::read_to_string(&config_yaml_path)
+        .map_err(|e| format!("Failed to read {} config file: {}", filename, e))
 }
 
-/// Generic function to write a YAML file
-fn write_yaml(app: &AppHandle, app_filename: &str, content: String) -> Result<(), String> {
-    let yaml_path = get_yaml_path(app, app_filename)?;
+/// Generic function to write a YAML file for an instance
+/// e.g. Write /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
+fn write_yaml(app: &AppHandle, instance_name: &str, filename: &str, content: String) -> Result<(), String> {
+    let yaml_path = get_yaml_path(app, instance_name, filename)?;
 
     fs::write(&yaml_path, content)
-        .map_err(|e| format!("Failed to write {} file: {}", app_filename, e))
+        .map_err(|e| format!("Failed to write {} file: {}", filename, e))
 }
 
-/// Generic function to reset a YAML file to its bundled version
-fn reset_yaml(app: &AppHandle, app_filename: &str, resource_filename: &str) -> Result<(), String> {
-    let yaml_path = get_yaml_path(app, app_filename)?;
-    let resource_path = get_resource_path(app, resource_filename)?;
+/// Generic function to reset a YAML file to the bundled default config file from resources
+fn reset_yaml(app: &AppHandle, instance_name: &str, filename: &str, default_filename: &str) -> Result<(), String> {
+    let yaml_path = get_yaml_path(app, instance_name, filename)?;
+    let resource_path = get_resource_path(app, default_filename)?;
 
     fs::copy(&resource_path, &yaml_path)
-        .map_err(|e| format!("Failed to reset {} from resources: {}", app_filename, e))?;
+        .map_err(|e| format!("Failed to reset {} from resources: {}", filename, e))?;
 
     Ok(())
 }
 
-// Lima YAML specific commands (using k0s)
+// Read the Lima YAML configuration (LIMA_CONFIG_FILENAME) for a specific instance by instance name
 #[tauri::command]
-pub fn read_lima_yaml(app: AppHandle) -> Result<LimaConfig, String> {
-    let yaml_content = read_yaml(&app, "lima.yaml", "k0s.yaml")?;
+pub fn read_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
+    // Read the YAML content of instance's LIMA_CONFIG_FILENAME
+    // Falls back to copying from managed default MANAGED_DEFAULT_K0S_CONFIG_FILENAME if the config is not present
+    let yaml_content = read_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, MANAGED_DEFAULT_K0S_CONFIG_FILENAME)?;
     LimaConfig::from_yaml(&yaml_content)
         .map_err(|e| format!("Failed to parse YAML: {}", e))
 }
 
+
 #[tauri::command]
-pub fn write_lima_yaml(app: AppHandle, config: LimaConfig) -> Result<(), String> {
+pub fn write_lima_yaml(app: AppHandle, instance_name: String, config: LimaConfig) -> Result<(), String> {
     let yaml_content = config.to_yaml_pretty()
         .map_err(|e| format!("Failed to serialize YAML: {}", e))?;
-    write_yaml(&app, "lima.yaml", yaml_content)
+    write_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, yaml_content)
 }
 
 #[tauri::command]
-pub fn get_lima_yaml_path_cmd(app: AppHandle) -> Result<String, String> {
-    let path = get_yaml_path(&app, "lima.yaml")?;
+pub fn get_lima_yaml_path_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
+    let path = get_yaml_path(&app, &instance_name, LIMA_CONFIG_FILENAME)?;
     Ok(path.to_string_lossy().to_string())
 }
 
+// Reset the instance's Lima YAML configuration (LIMA_CONFIG_FILENAME) to the default managed MANAGED_DEFAULT_K0S_CONFIG_FILENAME for a specific instance
 #[tauri::command]
-pub fn reset_lima_yaml(app: AppHandle) -> Result<LimaConfig, String> {
-    reset_yaml(&app, "lima.yaml", "k0s.yaml")?;
-    read_lima_yaml(app)
+pub fn reset_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
+    reset_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, MANAGED_DEFAULT_K0S_CONFIG_FILENAME)?;
+    read_lima_yaml(app, instance_name)
 }
 
 /// Write YAML with variable replacement
@@ -225,13 +232,13 @@ pub fn write_lima_yaml_with_vars(
     mut config: LimaConfig,
     instance_name: String,
 ) -> Result<(), String> {
-    // Get the kubeconfig directory path
-    let kubeconfig_dir = get_kubeconfig_dir(&app)?;
-    let kubeconfig_path = kubeconfig_dir.join(format!("{}.yaml", instance_name));
+    // Get the instance directory path
+    let instance_dir = get_instance_dir(&app, &instance_name)?;
+    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
 
     // Create template variables
     let vars = TemplateVars {
-        dir: kubeconfig_dir.parent().unwrap().to_string_lossy().to_string(),
+        dir: instance_dir.to_string_lossy().to_string(),
         home: std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string()),
         user: std::env::var("USER").unwrap_or_else(|_| "user".to_string()),
     };
@@ -247,20 +254,20 @@ pub fn write_lima_yaml_with_vars(
     config.substitute_variables(&vars);
 
     // Write the config
-    write_lima_yaml(app, config)
+    write_lima_yaml(app, instance_name, config)
 }
 
 /// Get the kubeconfig path for a specific instance
 #[tauri::command]
 pub fn get_kubeconfig_path(app: AppHandle, instance_name: String) -> Result<String, String> {
-    let kubeconfig_dir = get_kubeconfig_dir(&app)?;
-    let kubeconfig_path = kubeconfig_dir.join(format!("{}.yaml", instance_name));
+    let instance_dir = get_instance_dir(&app, &instance_name)?;
+    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
     Ok(kubeconfig_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
-pub fn reset_lima_k0s_yaml(app: AppHandle) -> Result<LimaConfig, String> {
-    reset_lima_yaml(app)
+pub fn reset_lima_k0s_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
+    reset_lima_yaml(app, instance_name)
 }
 
 /// Convert LimaConfig to YAML string for display
@@ -285,7 +292,7 @@ pub async fn create_lima_instance(
     write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
 
     // Get the path to the stored config file
-    let config_path = get_yaml_path(&app, "lima.yaml")
+    let config_path = get_yaml_path(&app, &instance_name, LIMA_CONFIG_FILENAME)
         .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
 
     // Register the instance in our registry
