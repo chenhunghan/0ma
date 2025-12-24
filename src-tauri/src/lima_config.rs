@@ -79,46 +79,6 @@ pub struct Mount {
     /// Whether mount is writable
     #[serde(skip_serializing_if = "Option::is_none")]
     pub writable: Option<bool>,
-    /// SSHFS mount options
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sshfs: Option<SshfsConfig>,
-    /// 9p mount options
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ninep: Option<NinePConfig>,
-}
-
-/// SSHFS mount configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SshfsConfig {
-    /// Cache write operations
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cache: Option<bool>,
-    /// Follow symlinks on host
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub follow_symlinks: Option<bool>,
-    /// SFTP read buffer size
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sftp_read_dirs: Option<bool>,
-}
-
-/// 9p mount configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NinePConfig {
-    /// Security model
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub security_model: Option<String>,
-    /// Protocol version
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub protocol_version: Option<String>,
-    /// Cache size
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub msize: Option<u32>,
-    /// Number of threads
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cache_size: Option<u32>,
-    /// I/O size
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub io_size: Option<u32>,
 }
 
 /// Containerd configuration
@@ -253,12 +213,6 @@ mod tests {
                 location: Some("/tmp/lima".to_string()),
                 mount_point: Some("/mnt/shared".to_string()),
                 writable: Some(true),
-                sshfs: Some(SshfsConfig {
-                    cache: Some(true),
-                    follow_symlinks: Some(false),
-                    sftp_read_dirs: Some(true),
-                }),
-                ninep: None,
             }]),
             containerd: Some(ContainerdConfig {
                 system: false,
@@ -482,63 +436,6 @@ probes:
             copy_to_host[0].host,
             "/home/user/.lima/instance/copied-from-guest/kubeconfig.yaml"
         );
-    }
-
-    #[test]
-    fn test_mount_with_sshfs_config() {
-        let mount = Mount {
-            location: Some("/tmp/lima".to_string()),
-            mount_point: Some("/mnt/shared".to_string()),
-            writable: Some(true),
-            sshfs: Some(SshfsConfig {
-                cache: Some(true),
-                follow_symlinks: Some(false),
-                sftp_read_dirs: Some(true),
-            }),
-            ninep: None,
-        };
-
-        let mut config = LimaConfig::default();
-        config.mounts = Some(vec![mount]);
-
-        let yaml = config.to_yaml().expect("Failed to serialize");
-        let parsed = LimaConfig::from_yaml(&yaml).expect("Failed to parse");
-
-        let mounts = parsed.mounts.unwrap();
-        assert_eq!(mounts[0].location, Some("/tmp/lima".to_string()));
-        assert_eq!(mounts[0].writable, Some(true));
-        assert!(mounts[0].sshfs.is_some());
-        let sshfs = mounts[0].sshfs.as_ref().unwrap();
-        assert_eq!(sshfs.cache, Some(true));
-    }
-
-    #[test]
-    fn test_mount_with_ninep_config() {
-        let mount = Mount {
-            location: Some("/tmp/lima".to_string()),
-            mount_point: Some("/mnt/shared".to_string()),
-            writable: Some(true),
-            sshfs: None,
-            ninep: Some(NinePConfig {
-                security_model: Some("mapped-xattr".to_string()),
-                protocol_version: Some("9p2000.L".to_string()),
-                msize: Some(8192),
-                cache_size: Some(1024),
-                io_size: Some(4096),
-            }),
-        };
-
-        let mut config = LimaConfig::default();
-        config.mounts = Some(vec![mount]);
-
-        let yaml = config.to_yaml().expect("Failed to serialize");
-        let parsed = LimaConfig::from_yaml(&yaml).expect("Failed to parse");
-
-        let mounts = parsed.mounts.unwrap();
-        assert!(mounts[0].ninep.is_some());
-        let ninep = mounts[0].ninep.as_ref().unwrap();
-        assert_eq!(ninep.security_model, Some("mapped-xattr".to_string()));
-        assert_eq!(ninep.msize, Some(8192));
     }
 
     #[test]
