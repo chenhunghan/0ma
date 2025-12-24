@@ -3,9 +3,11 @@ use std::path::Path;
 
 mod yaml_handler;
 mod lima_config;
+mod lima_config_service;
 mod lima_config_handler;
-mod instance_registry;
-mod lima_instance;
+mod instance_registry_service;
+mod instance_registry_handler;
+mod lima_instance_handler;
 
 // Common paths where limactl might be installed
 // Note: We use limactl directly instead of lima wrapper script
@@ -82,11 +84,11 @@ pub fn run() {
             lima_config_handler::reset_lima_yaml_cmd,
             lima_config_handler::get_kubeconfig_path_cmd,
             lima_config_handler::convert_config_to_yaml_cmd,
-            instance_registry::get_registered_instances_cmd,
-            instance_registry::is_instance_registered_cmd,
-            lima_instance::create_lima_instance_cmd,
-            lima_instance::stop_lima_instance_cmd,
-            lima_instance::delete_lima_instance_cmd
+            instance_registry_handler::get_registered_instances_cmd,
+            instance_registry_handler::is_instance_registered_cmd,
+            lima_instance_handler::create_lima_instance_cmd,
+            lima_instance_handler::stop_lima_instance_cmd,
+            lima_instance_handler::delete_lima_instance_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

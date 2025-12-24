@@ -2,7 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};    
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Manager};
 use serde::{Deserialize, Serialize};
 use crate::find_lima_executable;
@@ -43,7 +43,7 @@ fn get_instance_registry_path(app: &AppHandle) -> Result<PathBuf, String> {
 }
 
 /// Load the instance registry
-fn load_instance_registry(app: &AppHandle) -> Result<HashMap<String, InstanceInfo>, String> {
+pub fn load_instance_registry(app: &AppHandle) -> Result<HashMap<String, InstanceInfo>, String> {
     let registry_path = get_instance_registry_path(app)?;
 
     if registry_path.exists() {
@@ -57,7 +57,7 @@ fn load_instance_registry(app: &AppHandle) -> Result<HashMap<String, InstanceInf
 }
 
 /// Save the instance registry
-fn save_instance_registry(app: &AppHandle, registry: &HashMap<String, InstanceInfo>) -> Result<(), String> {
+pub fn save_instance_registry(app: &AppHandle, registry: &HashMap<String, InstanceInfo>) -> Result<(), String> {
     let registry_path = get_instance_registry_path(app)?;
 
     // Ensure parent directory exists
@@ -74,21 +74,21 @@ fn save_instance_registry(app: &AppHandle, registry: &HashMap<String, InstanceIn
 }
 
 /// Register a new instance
-pub(crate) fn register_instance(app: &AppHandle, instance_info: InstanceInfo) -> Result<(), String> {
+pub fn register_instance(app: &AppHandle, instance_info: InstanceInfo) -> Result<(), String> {
     let mut registry = load_instance_registry(app)?;
     registry.insert(instance_info.name.clone(), instance_info);
     save_instance_registry(app, &registry)
 }
 
 /// Unregister an instance
-pub(crate) fn unregister_instance(app: &AppHandle, instance_name: &str) -> Result<(), String> {
+pub fn unregister_instance(app: &AppHandle, instance_name: &str) -> Result<(), String> {
     let mut registry = load_instance_registry(app)?;
     registry.remove(instance_name);
     save_instance_registry(app, &registry)
 }
 
 /// Get the status of a specific Lima instance
-fn get_instance_status(instance_name: &str) -> Result<String, String> {
+pub fn get_instance_status(instance_name: &str) -> Result<String, String> {
     let lima_cmd = find_lima_executable()
         .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
     
@@ -104,46 +104,4 @@ fn get_instance_status(instance_name: &str) -> Result<String, String> {
         // If command fails with non-zero exit, instance doesn't exist
         Err(format!("Instance '{}' not found", instance_name))
     }
-}
-
-/// Get all registered ZeroMa instances with their current status
-/// Also cleans up instances that no longer exist in Lima
-#[tauri::command]
-pub async fn get_registered_instances_cmd(app: AppHandle) -> Result<Vec<InstanceInfo>, String> {
-    let registry = load_instance_registry(&app)?;
-
-    // Check each instance and update status
-    let mut instances_with_status: Vec<InstanceInfo> = Vec::new();
-    let mut updated_registry: HashMap<String, InstanceInfo> = HashMap::new();
-
-    for (name, mut instance) in registry {
-        match get_instance_status(&name) {
-            Ok(status) => {
-                instance.status = Some(status);
-                // Update timestamp when status is updated
-                let timestamp = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_millis();
-                instance.updated_at = Some(timestamp.to_string());
-                instances_with_status.push(instance.clone());
-                updated_registry.insert(name, instance);
-            }
-            Err(_) => {
-                // Instance doesn't exist in Lima anymore - skip it
-            }
-        }
-    }
-
-    // Save the cleaned registry
-    save_instance_registry(&app, &updated_registry)?;
-
-    Ok(instances_with_status)
-}
-
-/// Check if an instance is registered
-#[tauri::command]
-pub async fn is_instance_registered_cmd(app: AppHandle, instance_name: String) -> Result<bool, String> {
-    let registry = load_instance_registry(&app)?;
-    Ok(registry.contains_key(&instance_name))
 }

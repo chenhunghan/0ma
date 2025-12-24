@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use crate::lima_config_service::get_kubeconfig_path;
+use sysinfo::System;
 
 /// Helper function to skip serializing empty Vec<Option> fields
 fn skip_vec_none<T>(vec: &Option<Vec<T>>) -> bool {
@@ -170,10 +172,8 @@ impl LimaConfig {
 
 /// Get the default k0s Lima configuration
 pub fn get_default_k0s_lima_config(app: &tauri::AppHandle, instance_name: &str) -> Result<LimaConfig, String> {
-    use crate::lima_config_handler::get_kubeconfig_path_internal;
-    use sysinfo::System;
     
-    let kubeconfig_path = get_kubeconfig_path_internal(app, instance_name)?;
+    let kubeconfig_path = get_kubeconfig_path(app, instance_name)?;
     
     // Get system information
     let mut sys = System::new_all();

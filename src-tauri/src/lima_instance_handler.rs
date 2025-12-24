@@ -4,8 +4,8 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
 use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
-use crate::lima_config_handler::{get_lima_yaml_path, write_lima_yaml};
-use crate::instance_registry::{InstanceInfo, register_instance, unregister_instance};
+use crate::lima_config_service::{get_lima_yaml_path, write_lima_yaml};
+use crate::instance_registry_service::{InstanceInfo, register_instance, unregister_instance};
 
 /// Create a Lima instance using the managed configuration
 /// This handler uses the stored k0s config file and runs limactl start
