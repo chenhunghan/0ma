@@ -6,8 +6,6 @@ mod lima_config;
 mod lima_config_handler;
 mod instance_registry;
 mod lima_instance;
-#[cfg(test)]
-mod structured_example;
 
 // Common paths where limactl might be installed
 // Note: We use limactl directly instead of lima wrapper script
