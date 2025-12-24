@@ -1,29 +1,33 @@
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command as StdCommand;
+use std::process::Command;
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};    
 use tauri::{AppHandle, Manager};
 use serde::{Deserialize, Serialize};
+use crate::find_lima_executable;
 
 /// Instance registry to track ZeroMa-managed instances
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceInfo {
     pub name: String,
+    // Timestamps as Unix epoch milliseconds (as strings)
     pub created_at: String,
+    pub updated_at: Option<String>,
     pub config_path: String,
     pub status: Option<String>,
 }
 
 impl InstanceInfo {
     pub fn new(name: String, config_path: String) -> Self {
-        use std::time::{SystemTime, UNIX_EPOCH};
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
-            .as_secs();
+            .as_millis();
         Self {
             name,
             created_at: timestamp.to_string(),
+            updated_at: None,
             config_path,
             status: None,
         }
@@ -87,7 +91,10 @@ pub(crate) fn unregister_instance(app: &AppHandle, instance_name: &str) -> Resul
 
 /// Get the status of a specific Lima instance
 fn get_instance_status(instance_name: &str) -> Result<String, String> {
-    let output = StdCommand::new("limactl")
+    let lima_cmd = find_lima_executable()
+        .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
+    
+    let output = Command::new(&lima_cmd)
         .args(["list", "--format", "{{.Status}}", instance_name])
         .output()
         .map_err(|e| format!("Failed to run limactl list: {}", e))?;
@@ -115,6 +122,12 @@ pub async fn get_registered_instances(app: AppHandle) -> Result<Vec<InstanceInfo
         match get_instance_status(&name) {
             Ok(status) => {
                 instance.status = Some(status);
+                // Update timestamp when status is updated
+                let timestamp = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis();
+                instance.updated_at = Some(timestamp.to_string());
                 instances_with_status.push(instance.clone());
                 updated_registry.insert(name, instance);
             }

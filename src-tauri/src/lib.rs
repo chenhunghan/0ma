@@ -18,7 +18,7 @@ const COMMON_LIMA_EXEC_PATHS: &[&str] = &[
 ];
 
 /// Find the lima executable in common installation paths
-fn find_lima_executable() -> Option<String> {
+pub fn find_lima_executable() -> Option<String> {
     for path in COMMON_LIMA_EXEC_PATHS {
         if *path == "limactl" {
             // Try using PATH
