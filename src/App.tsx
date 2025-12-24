@@ -67,7 +67,7 @@ export function App() {
       if (limaConfig) {
         try {
           // Convert config to YAML for display
-          const yamlString = await invoke<string>("convert_config_to_yaml", { config: limaConfig });
+          const yamlString = await invoke<string>("convert_config_to_yaml_cmd", { config: limaConfig });
           setYamlDisplay(yamlString);
         } catch (error) {
           // Fallback to JSON if YAML conversion fails
