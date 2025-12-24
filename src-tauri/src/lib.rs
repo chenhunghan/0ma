@@ -3,6 +3,8 @@ use std::path::Path;
 
 mod yaml_handler;
 mod lima_config;
+mod lima_config_handler;
+mod instance_registry;
 #[cfg(test)]
 mod structured_example;
 
@@ -75,19 +77,19 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             lima_version,
-            yaml_handler::read_lima_yaml,
-            yaml_handler::write_lima_yaml,
-            yaml_handler::write_lima_yaml_with_vars,
-            yaml_handler::get_lima_yaml_path_cmd,
-            yaml_handler::reset_lima_yaml,
-            yaml_handler::get_kubeconfig_path,
-            yaml_handler::convert_config_to_yaml,
+            lima_config_handler::read_lima_yaml,
+            lima_config_handler::write_lima_yaml,
+            lima_config_handler::write_lima_yaml_with_vars,
+            lima_config_handler::get_lima_yaml_path_cmd,
+            lima_config_handler::reset_lima_yaml,
+            lima_config_handler::get_kubeconfig_path,
+            lima_config_handler::convert_config_to_yaml,
+            lima_config_handler::reset_lima_k0s_yaml,
+            instance_registry::get_registered_instances,
+            instance_registry::is_instance_registered,
             yaml_handler::create_lima_instance,
             yaml_handler::stop_lima_instance,
-            yaml_handler::delete_lima_instance,
-            yaml_handler::get_registered_instances,
-            yaml_handler::is_instance_registered,
-            yaml_handler::reset_lima_k0s_yaml
+            yaml_handler::delete_lima_instance
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

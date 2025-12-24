@@ -1,48 +1,16 @@
 use std::fs;
 use std::path::PathBuf;
-use std::process::{Stdio, Command as StdCommand};
-use std::collections::HashMap;
+use std::process::Stdio;
 use tauri::{AppHandle, Manager, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
-use serde::{Deserialize, Serialize};
-use crate::lima_config::{LimaConfig, TemplateVars};
-
-const MANAGED_DEFAULT_K0S_CONFIG_FILENAME: &str = "k0s.yaml";
-/// The standard filename for Lima configuration for an instance
-const LIMA_CONFIG_FILENAME: &str = "lima.yaml";
-/// The standard filename for kubeconfig file for an instance
-const KUBECONFIG_FILENAME: &str = "kubeconfig.yaml";
-
-/// Instance registry to track ZeroMa-managed instances
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InstanceInfo {
-    pub name: String,
-    pub created_at: String,
-    pub config_path: String,
-    pub status: Option<String>,
-}
-
-impl InstanceInfo {
-    pub fn new(name: String, config_path: String) -> Self {
-        use std::time::{SystemTime, UNIX_EPOCH};
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
-        Self {
-            name,
-            created_at: timestamp.to_string(),
-            config_path,
-            status: None,
-        }
-    }
-}
+use crate::lima_config::LimaConfig;
+use crate::instance_registry::{InstanceInfo, register_instance, unregister_instance};
 
 /// Get the instance directory path
 /// + Ensures the directory exists
 /// /Users/you/Library/Application Support/chh.zeroma/<instance_name>
-fn get_instance_dir(app: &AppHandle, instance_name: &str) -> Result<PathBuf, String> {
+pub(crate) fn get_instance_dir(app: &AppHandle, instance_name: &str) -> Result<PathBuf, String> {
     let app_data_dir = app
         .path()
         .app_data_dir()
@@ -60,7 +28,7 @@ fn get_instance_dir(app: &AppHandle, instance_name: &str) -> Result<PathBuf, Str
 /// Generic function to get the path to a YAML file in the instance directory
 /// This is where the app stores its YAML files per instance
 /// e.g., /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
-fn get_yaml_path(app: &AppHandle, instance_name: &str, filename: &str) -> Result<PathBuf, String> {
+pub(crate) fn get_yaml_path(app: &AppHandle, instance_name: &str, filename: &str) -> Result<PathBuf, String> {
     let instance_dir = get_instance_dir(app, instance_name)?;
     Ok(instance_dir.join(filename))
 }
@@ -73,79 +41,8 @@ fn get_resource_path(app: &AppHandle, resource_filename: &str) -> Result<PathBuf
         .map(|dir| dir.join("resources").join(resource_filename))
 }
 
-/// Get the path to the instance registry file
-fn get_instance_registry_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
-
-    Ok(app_data_dir.join("instances.json"))
-}
-
-/// Load the instance registry
-fn load_instance_registry(app: &AppHandle) -> Result<HashMap<String, InstanceInfo>, String> {
-    let registry_path = get_instance_registry_path(app)?;
-
-    if registry_path.exists() {
-        let content = fs::read_to_string(&registry_path)
-            .map_err(|e| format!("Failed to read instance registry: {}", e))?;
-        serde_json::from_str(&content)
-            .map_err(|e| format!("Failed to parse instance registry: {}", e))
-    } else {
-        Ok(HashMap::new())
-    }
-}
-
-/// Save the instance registry
-fn save_instance_registry(app: &AppHandle, registry: &HashMap<String, InstanceInfo>) -> Result<(), String> {
-    let registry_path = get_instance_registry_path(app)?;
-
-    // Ensure parent directory exists
-    if let Some(parent) = registry_path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|e| format!("Failed to create instance registry directory: {}", e))?;
-    }
-
-    let content = serde_json::to_string_pretty(registry)
-        .map_err(|e| format!("Failed to serialize instance registry: {}", e))?;
-
-    fs::write(&registry_path, content)
-        .map_err(|e| format!("Failed to write instance registry: {}", e))
-}
-
-/// Register a new instance
-fn register_instance(app: &AppHandle, instance_info: InstanceInfo) -> Result<(), String> {
-    let mut registry = load_instance_registry(app)?;
-    registry.insert(instance_info.name.clone(), instance_info);
-    save_instance_registry(app, &registry)
-}
-
-/// Unregister an instance
-fn unregister_instance(app: &AppHandle, instance_name: &str) -> Result<(), String> {
-    let mut registry = load_instance_registry(app)?;
-    registry.remove(instance_name);
-    save_instance_registry(app, &registry)
-}
-
-/// Get the status of a specific Lima instance
-fn get_instance_status(instance_name: &str) -> Result<String, String> {
-    let output = StdCommand::new("limactl")
-        .args(["list", "--format", "{{.Status}}", instance_name])
-        .output()
-        .map_err(|e| format!("Failed to run limactl list: {}", e))?;
-
-    if output.status.success() {
-        let status = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        Ok(if status.is_empty() { "Unknown".to_string() } else { status.to_string() })
-    } else {
-        // If command fails with non-zero exit, instance doesn't exist
-        Err(format!("Instance '{}' not found", instance_name))
-    }
-}
-
 /// Generic function to ensure a YAML file exists by copying from fallback_file_name if needed
-fn ensure_yaml_exists(
+pub(crate) fn ensure_yaml_exists(
     app: &AppHandle,
     instance_name: &str,
     filename: &str,
@@ -165,7 +62,7 @@ fn ensure_yaml_exists(
 /// Generic function to read a YAML file for an instance
 /// Falls back to copying from fallback_file_name if the file doesn't exist
 /// e.g. Read /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
-fn read_yaml(app: &AppHandle, instance_name: &str, filename: &str, fallback_file_name: &str) -> Result<String, String> {
+pub(crate) fn read_yaml(app: &AppHandle, instance_name: &str, filename: &str, fallback_file_name: &str) -> Result<String, String> {
     ensure_yaml_exists(app, instance_name, filename, fallback_file_name)?;
     let config_yaml_path = get_yaml_path(app, instance_name, filename)?;
 
@@ -175,7 +72,7 @@ fn read_yaml(app: &AppHandle, instance_name: &str, filename: &str, fallback_file
 
 /// Generic function to write a YAML file for an instance
 /// e.g. Write /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
-fn write_yaml(app: &AppHandle, instance_name: &str, filename: &str, content: String) -> Result<(), String> {
+pub(crate) fn write_yaml(app: &AppHandle, instance_name: &str, filename: &str, content: String) -> Result<(), String> {
     let yaml_path = get_yaml_path(app, instance_name, filename)?;
 
     fs::write(&yaml_path, content)
@@ -183,7 +80,7 @@ fn write_yaml(app: &AppHandle, instance_name: &str, filename: &str, content: Str
 }
 
 /// Generic function to reset a YAML file to the bundled default config file from resources
-fn reset_yaml(app: &AppHandle, instance_name: &str, filename: &str, default_filename: &str) -> Result<(), String> {
+pub(crate) fn reset_yaml(app: &AppHandle, instance_name: &str, filename: &str, default_filename: &str) -> Result<(), String> {
     let yaml_path = get_yaml_path(app, instance_name, filename)?;
     let resource_path = get_resource_path(app, default_filename)?;
 
@@ -191,90 +88,6 @@ fn reset_yaml(app: &AppHandle, instance_name: &str, filename: &str, default_file
         .map_err(|e| format!("Failed to reset {} from resources: {}", filename, e))?;
 
     Ok(())
-}
-
-// Read the Lima YAML configuration (LIMA_CONFIG_FILENAME) for a specific instance by instance name
-#[tauri::command]
-pub fn read_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
-    // Read the YAML content of instance's LIMA_CONFIG_FILENAME
-    // Falls back to copying from managed default MANAGED_DEFAULT_K0S_CONFIG_FILENAME if the config is not present
-    let yaml_content = read_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, MANAGED_DEFAULT_K0S_CONFIG_FILENAME)?;
-    LimaConfig::from_yaml(&yaml_content)
-        .map_err(|e| format!("Failed to parse YAML: {}", e))
-}
-
-
-#[tauri::command]
-pub fn write_lima_yaml(app: AppHandle, instance_name: String, config: LimaConfig) -> Result<(), String> {
-    let yaml_content = config.to_yaml_pretty()
-        .map_err(|e| format!("Failed to serialize YAML: {}", e))?;
-    write_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, yaml_content)
-}
-
-#[tauri::command]
-pub fn get_lima_yaml_path_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
-    let path = get_yaml_path(&app, &instance_name, LIMA_CONFIG_FILENAME)?;
-    Ok(path.to_string_lossy().to_string())
-}
-
-// Reset the instance's Lima YAML configuration (LIMA_CONFIG_FILENAME) to the default managed MANAGED_DEFAULT_K0S_CONFIG_FILENAME for a specific instance
-#[tauri::command]
-pub fn reset_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
-    reset_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, MANAGED_DEFAULT_K0S_CONFIG_FILENAME)?;
-    read_lima_yaml(app, instance_name)
-}
-
-/// Write YAML with variable replacement
-/// This processes the content and replaces template variables with actual app paths
-#[tauri::command]
-pub fn write_lima_yaml_with_vars(
-    app: AppHandle,
-    mut config: LimaConfig,
-    instance_name: String,
-) -> Result<(), String> {
-    // Get the instance directory path
-    let instance_dir = get_instance_dir(&app, &instance_name)?;
-    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
-
-    // Create template variables
-    let vars = TemplateVars {
-        dir: instance_dir.to_string_lossy().to_string(),
-        home: std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string()),
-        user: std::env::var("USER").unwrap_or_else(|_| "user".to_string()),
-    };
-
-    // Update the first copyToHost entry with the specific kubeconfig path
-    if let Some(copy_to_host) = &mut config.copy_to_host {
-        if !copy_to_host.is_empty() {
-            copy_to_host[0].host = kubeconfig_path.to_string_lossy().to_string();
-        }
-    }
-
-    // Substitute other template variables
-    config.substitute_variables(&vars);
-
-    // Write the config
-    write_lima_yaml(app, instance_name, config)
-}
-
-/// Get the kubeconfig path for a specific instance
-#[tauri::command]
-pub fn get_kubeconfig_path(app: AppHandle, instance_name: String) -> Result<String, String> {
-    let instance_dir = get_instance_dir(&app, &instance_name)?;
-    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
-    Ok(kubeconfig_path.to_string_lossy().to_string())
-}
-
-#[tauri::command]
-pub fn reset_lima_k0s_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
-    reset_lima_yaml(app, instance_name)
-}
-
-/// Convert LimaConfig to YAML string for display
-#[tauri::command]
-pub fn convert_config_to_yaml(config: LimaConfig) -> Result<String, String> {
-    config.to_yaml_pretty()
-        .map_err(|e| format!("Failed to convert config to YAML: {}", e))
 }
 
 /// Create a Lima instance using the managed configuration
@@ -289,10 +102,10 @@ pub async fn create_lima_instance(
     // Use the provided instance name directly - it's required
 
     // Write the config with variable substitution (required for k0s)
-    write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
+    crate::lima_config_handler::write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
 
-    // Get the path to the stored config file
-    let config_path = get_yaml_path(&app, &instance_name, LIMA_CONFIG_FILENAME)
+    // Get the path to the stored config file (lima.yaml)
+    let config_path = get_yaml_path(&app, &instance_name, "lima.yaml")
         .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
 
     // Register the instance in our registry
@@ -525,42 +338,4 @@ pub async fn delete_lima_instance(
     });
 
     Ok(instance_name)
-}
-
-
-
-/// Get all registered ZeroMa instances with their current status
-/// Also cleans up instances that no longer exist in Lima
-#[tauri::command]
-pub async fn get_registered_instances(app: AppHandle) -> Result<Vec<InstanceInfo>, String> {
-    let registry = load_instance_registry(&app)?;
-
-    // Check each instance and update status
-    let mut instances_with_status: Vec<InstanceInfo> = Vec::new();
-    let mut updated_registry: HashMap<String, InstanceInfo> = HashMap::new();
-
-    for (name, mut instance) in registry {
-        match get_instance_status(&name) {
-            Ok(status) => {
-                instance.status = Some(status);
-                instances_with_status.push(instance.clone());
-                updated_registry.insert(name, instance);
-            }
-            Err(_) => {
-                // Instance doesn't exist in Lima anymore - skip it
-            }
-        }
-    }
-
-    // Save the cleaned registry
-    save_instance_registry(&app, &updated_registry)?;
-
-    Ok(instances_with_status)
-}
-
-/// Check if an instance is registered
-#[tauri::command]
-pub async fn is_instance_registered(app: AppHandle, instance_name: String) -> Result<bool, String> {
-    let registry = load_instance_registry(&app)?;
-    Ok(registry.contains_key(&instance_name))
 }
