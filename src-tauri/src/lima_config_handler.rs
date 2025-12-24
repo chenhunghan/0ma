@@ -29,7 +29,7 @@ pub fn read_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfi
 #[tauri::command]
 pub fn write_lima_yaml(
     app: AppHandle,
-    mut config: LimaConfig,
+    config: LimaConfig,
     instance_name: String,
 ) -> Result<(), String> {
 
