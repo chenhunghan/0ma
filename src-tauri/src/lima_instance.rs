@@ -2,6 +2,7 @@ use std::process::Stdio;
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
+use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
 use crate::lima_config_handler::{get_lima_yaml_path, write_lima_yaml};
 use crate::instance_registry::{InstanceInfo, register_instance, unregister_instance};
@@ -39,8 +40,16 @@ pub async fn create_lima_instance(
     let config_path_clone = config_path.clone();
 
     tokio::spawn(async move {
+        let lima_cmd = match find_lima_executable() {
+            Some(cmd) => cmd,
+            None => {
+                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                return;
+            }
+        };
+
         // Run limactl start command with the stored config file and explicit instance name
-        let child = TokioCommand::new("limactl")
+        let child = TokioCommand::new(&lima_cmd)
             .args([
                 "start",
                 "--name", &instance_name_clone,
@@ -118,8 +127,16 @@ pub async fn stop_lima_instance(
     let instance_name_clone = instance_name.clone();
 
     tokio::spawn(async move {
+        let lima_cmd = match find_lima_executable() {
+            Some(cmd) => cmd,
+            None => {
+                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                return;
+            }
+        };
+
         // Run limactl stop command
-        let child = TokioCommand::new("limactl")
+        let child = TokioCommand::new(&lima_cmd)
             .args(["stop", &instance_name_clone])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -197,8 +214,16 @@ pub async fn delete_lima_instance(
     let instance_name_clone = instance_name.clone();
 
     tokio::spawn(async move {
+        let lima_cmd = match find_lima_executable() {
+            Some(cmd) => cmd,
+            None => {
+                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                return;
+            }
+        };
+
         // Run limactl delete command
-        let child = TokioCommand::new("limactl")
+        let child = TokioCommand::new(&lima_cmd)
             .args(["delete", "--tty=false", &instance_name_clone])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
