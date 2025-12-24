@@ -171,15 +171,29 @@ impl LimaConfig {
 /// Get the default k0s Lima configuration
 pub fn get_default_k0s_lima_config(app: &tauri::AppHandle, instance_name: &str) -> Result<LimaConfig, String> {
     use crate::lima_config_handler::get_kubeconfig_path_internal;
+    use sysinfo::System;
     
     let kubeconfig_path = get_kubeconfig_path_internal(app, instance_name)?;
     
+    // Get system information
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    
+    // Calculate 1/2 of host CPU cores (minimum 1)
+    let host_cpus = sys.cpus().len() as u32;
+    let vm_cpus = std::cmp::max(1, host_cpus / 2);
+    
+    // Calculate 1/2 of host memory in GiB (minimum 1 GiB)
+    let host_memory_bytes = sys.total_memory();
+    let vm_memory_gib = std::cmp::max(1, (host_memory_bytes / 2) / (1024 * 1024 * 1024));
+    let vm_memory = format!("{}GiB", vm_memory_gib);
+    
     Ok(LimaConfig {
-        minimum_lima_version: None,
-        vm_type: None,
-        cpus: None,
-        memory: None,
-        disk: None,
+        minimum_lima_version: Some("2.0.0".to_string()),
+        vm_type: Some("vz".to_string()),
+        cpus: Some(vm_cpus),
+        memory: Some(vm_memory),
+        disk: Some("100GiB".to_string()),
         images: Some(vec![Image {
             location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
             arch: Some("aarch64".to_string()),

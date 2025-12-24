@@ -28,43 +28,6 @@ pub(crate) fn get_yaml_path(app: &AppHandle, instance_name: &str, filename: &str
     Ok(instance_dir.join(filename))
 }
 
-/// Generic function to get the bundled resource filename path for a YAML file
-fn get_resource_path(app: &AppHandle, resource_filename: &str) -> Result<PathBuf, String> {
-    app.path()
-        .resource_dir()
-        .map_err(|e| format!("Failed to get resource directory: {}", e))
-        .map(|dir| dir.join("resources").join(resource_filename))
-}
-
-/// Generic function to ensure a YAML file exists by copying from fallback_file_name if needed
-pub(crate) fn ensure_yaml_exists(
-    app: &AppHandle,
-    instance_name: &str,
-    filename: &str,
-    fallback_file_name: &str,
-) -> Result<(), String> {
-    let yaml_path = get_yaml_path(app, instance_name, filename)?;
-
-    if !yaml_path.exists() {
-        let resource_path = get_resource_path(app, fallback_file_name)?;
-        fs::copy(&resource_path, &yaml_path)
-            .map_err(|e| format!("Failed to copy {} from fall back file: {}", fallback_file_name, e))?;
-    }
-
-    Ok(())
-}
-
-/// Generic function to read a YAML file for an instance
-/// Falls back to copying from fallback_file_name if the file doesn't exist
-/// e.g. Read /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
-pub(crate) fn read_yaml(app: &AppHandle, instance_name: &str, filename: &str, fallback_file_name: &str) -> Result<String, String> {
-    ensure_yaml_exists(app, instance_name, filename, fallback_file_name)?;
-    let config_yaml_path = get_yaml_path(app, instance_name, filename)?;
-
-    fs::read_to_string(&config_yaml_path)
-        .map_err(|e| format!("Failed to read {} config file: {}", filename, e))
-}
-
 /// Generic function to write a YAML file for an instance
 /// e.g. Write /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
 pub(crate) fn write_yaml(app: &AppHandle, instance_name: &str, filename: &str, content: String) -> Result<(), String> {
@@ -72,15 +35,4 @@ pub(crate) fn write_yaml(app: &AppHandle, instance_name: &str, filename: &str, c
 
     fs::write(&yaml_path, content)
         .map_err(|e| format!("Failed to write {} file: {}", filename, e))
-}
-
-/// Generic function to reset a YAML file to the bundled default config file from resources
-pub(crate) fn reset_yaml(app: &AppHandle, instance_name: &str, filename: &str, default_filename: &str) -> Result<(), String> {
-    let yaml_path = get_yaml_path(app, instance_name, filename)?;
-    let resource_path = get_resource_path(app, default_filename)?;
-
-    fs::copy(&resource_path, &yaml_path)
-        .map_err(|e| format!("Failed to reset {} from resources: {}", filename, e))?;
-
-    Ok(())
 }
