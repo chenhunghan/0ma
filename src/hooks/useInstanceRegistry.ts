@@ -14,13 +14,6 @@ export interface InstanceInfo {
   config?: LimaConfig;
 }
 
-export interface DiskUsage {
-  total: string;
-  used: string;
-  available: string;
-  use_percent: string;
-}
-
 export function useInstanceRegistry() {
   const {
     data: instances = [],
@@ -39,32 +32,11 @@ export function useInstanceRegistry() {
     refetchOnReconnect: true, // Auto-refetch when network reconnects
   });
 
-  
-  const isInstanceRegistered = async (instanceName: string): Promise<boolean> => {
-    try {
-      return await invoke<boolean>("is_instance_registered_cmd", { instanceName });
-    } catch (err) {
-      console.error("Failed to check if instance is registered:", err);
-      return false;
-    }
-  };
-
-  const getDiskUsage = async (instanceName: string): Promise<DiskUsage | null> => {
-    try {
-      return await invoke<DiskUsage>("get_instance_disk_usage_cmd", { instanceName });
-    } catch (err) {
-      console.error("Failed to get disk usage:", err);
-      return null;
-    }
-  };
-
   return {
     instances,
     isLoading,
     error,
     loadInstances,
     refreshInstances: loadInstances,
-    isInstanceRegistered,
-    getDiskUsage,
   };
 }
