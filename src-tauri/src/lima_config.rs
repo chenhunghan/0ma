@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Helper function to skip serializing empty Vec<Option> fields
 fn skip_vec_none<T>(vec: &Option<Vec<T>>) -> bool {
@@ -9,35 +8,37 @@ fn skip_vec_none<T>(vec: &Option<Vec<T>>) -> bool {
     }
 }
 
+/// Image configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Image {
+    /// Image location (URL or file path)
+    pub location: String,
+    /// Architecture (e.g., "aarch64", "x86_64")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub arch: Option<String>,
+    /// Digest for image verification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub digest: Option<String>,
+}
+
 /// Represents a complete Lima configuration file
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimaConfig {
     /// Minimum version of Lima required
     #[serde(rename = "minimumLimaVersion", skip_serializing_if = "Option::is_none")]
     pub minimum_lima_version: Option<String>,
-    /// Instance name
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
-    /// Base image template
-    pub base: String,
+    /// VM type (e.g., "vz", "qemu")
+    #[serde(rename = "vmType", skip_serializing_if = "Option::is_none")]
+    pub vm_type: Option<String>,
+    /// Image configurations
+    #[serde(skip_serializing_if = "skip_vec_none")]
+    pub images: Option<Vec<Image>>,
     /// Mount points configuration
     #[serde(skip_serializing_if = "skip_vec_none")]
     pub mounts: Option<Vec<Mount>>,
-    /// Network configuration
-    #[serde(skip_serializing_if = "skip_vec_none")]
-    pub networks: Option<Vec<Network>>,
-    /// Port forwarding configuration
-    #[serde(skip_serializing_if = "skip_vec_none")]
-    pub port_forwards: Option<Vec<PortForward>>,
     /// Containerd configuration
     #[serde(skip_serializing_if = "Option::is_none")]
     pub containerd: Option<ContainerdConfig>,
-    /// DNS configuration
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub dns: Option<DnsConfig>,
-    /// Environment variables
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub env: Option<HashMap<String, String>>,
     /// Provisioning scripts
     #[serde(skip_serializing_if = "skip_vec_none")]
     pub provision: Option<Vec<Provision>>,
@@ -47,24 +48,15 @@ pub struct LimaConfig {
     /// Files to copy from guest to host
     #[serde(skip_serializing_if = "skip_vec_none")]
     pub copy_to_host: Option<Vec<CopyToHost>>,
-    /// Files to copy from host to guest
-    #[serde(skip_serializing_if = "skip_vec_none")]
-    pub copy_from_host: Option<Vec<CopyFromHost>>,
-    /// Message to display after instance is ready
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub message: Option<String>,
     /// CPU configuration
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cpus: Option<u32>,
-    /// Memory configuration (in bytes)
+    /// Memory configuration (e.g., "4GiB", "8GB")
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub memory: Option<u64>,
+    pub memory: Option<String>,
     /// Disk configuration
     #[serde(skip_serializing_if = "Option::is_none")]
     pub disk: Option<String>,
-    /// SSH configuration
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ssh: Option<SshConfig>,
 }
 
 /// Mount configuration
@@ -163,79 +155,6 @@ pub struct CopyToHost {
     pub delete_on_stop: Option<bool>,
 }
 
-/// File copy from host to guest
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CopyFromHost {
-    /// Path on the host
-    pub host: String,
-    /// Path in the guest VM
-    pub guest: String,
-}
-
-/// Network configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Network {
-    /// Network name
-    pub name: String,
-    /// VNL (Virtual Network Link) configuration
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub vnl: Option<String>,
-    /// Switch name
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub switch: Option<String>,
-}
-
-/// Port forwarding configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PortForward {
-    /// Guest port
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub guest: Option<u32>,
-    /// Host port
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub host: Option<u32>,
-    /// Guest IP address
-    #[serde(rename = "guestIP", skip_serializing_if = "Option::is_none")]
-    pub guest_ip: Option<String>,
-    /// Host IP address
-    #[serde(rename = "hostIP", skip_serializing_if = "Option::is_none")]
-    pub host_ip: Option<String>,
-    /// Protocol (tcp/udp)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub proto: Option<String>,
-    /// Whether to ignore (skip) this port forward
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ignore: Option<bool>,
-    /// Reverse port forward (from guest to host)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reverse: Option<bool>,
-}
-
-/// DNS configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DnsConfig {
-    /// List of DNS servers
-    #[serde(skip_serializing_if = "skip_vec_none")]
-    pub addresses: Option<Vec<String>>,
-}
-
-/// SSH configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SshConfig {
-    /// Local SSH port
-    #[serde(rename = "localPort", skip_serializing_if = "Option::is_none")]
-    pub local_port: Option<u32>,
-    /// Load dot SSH config
-    #[serde(rename = "loadDotSSH", skip_serializing_if = "Option::is_none")]
-    pub load_dot_ssh: Option<bool>,
-    /// Forward SSH agent
-    #[serde(rename = "forwardAgent", skip_serializing_if = "Option::is_none")]
-    pub forward_agent: Option<bool>,
-    /// Forward X11
-    #[serde(rename = "forwardX11", skip_serializing_if = "Option::is_none")]
-    pub forward_x11: Option<bool>,
-}
-
 /// Template variables that can be substituted in the config
 #[derive(Debug, Clone)]
 pub struct TemplateVars {
@@ -251,26 +170,19 @@ impl Default for LimaConfig {
     fn default() -> Self {
         Self {
             minimum_lima_version: None,
-            name: None,
-            base: "template://_images/ubuntu-lts".to_string(),
+            vm_type: None,
+            images: Some(vec![]),
             mounts: Some(vec![]),
-            networks: Some(vec![]),
-            port_forwards: Some(vec![]),
             containerd: Some(ContainerdConfig {
-                system: true,
+                system: false,
                 user: false,
             }),
-            dns: None,
-            env: None,
             provision: Some(vec![]),
             probes: Some(vec![]),
             copy_to_host: Some(vec![]),
-            copy_from_host: Some(vec![]),
-            message: None,
             cpus: None,
             memory: None,
             disk: None,
-            ssh: None,
         }
     }
 }
@@ -291,22 +203,6 @@ impl LimaConfig {
                 copy.host = copy.host.replace("{{.Home}}", &vars.home);
                 copy.host = copy.host.replace("{{.User}}", &vars.user);
             }
-        }
-
-        // Substitute in copyFromHost paths
-        if let Some(copy_from_host) = &mut self.copy_from_host {
-            for copy in copy_from_host {
-                copy.host = copy.host.replace("{{.Dir}}", &vars.dir);
-                copy.host = copy.host.replace("{{.Home}}", &vars.home);
-                copy.host = copy.host.replace("{{.User}}", &vars.user);
-            }
-        }
-
-        // Substitute in message
-        if let Some(message) = &mut self.message {
-            *message = message.replace("{{.Dir}}", &vars.dir);
-            *message = message.replace("{{.Home}}", &vars.home);
-            *message = message.replace("{{.User}}", &vars.user);
         }
     }
 
