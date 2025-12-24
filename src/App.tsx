@@ -85,7 +85,7 @@ export function App() {
       // Modify the structured config
       const updatedConfig: LimaConfig = {
         ...limaConfig,
-        message: `# Modified at ${new Date().toISOString()}\n${limaConfig.message}`,
+        cpus: limaConfig.cpus ? limaConfig.cpus + 1 : 2,
       };
       writeLimaYaml(updatedConfig);
     }
@@ -93,8 +93,8 @@ export function App() {
 
   const handleCreateInstance = async () => {
     if (editableConfig) {
-      // Always provide an instance name - use the input, config name, or generate a unique one
-      const nameToUse = instanceName || editableConfig.name || `zeroma-${Date.now()}`;
+      // Always provide an instance name - use the input or generate a unique one
+      const nameToUse = instanceName || `zeroma-${Date.now()}`;
       await startInstance(editableConfig, nameToUse);
     }
   };
@@ -253,7 +253,7 @@ export function App() {
             type="text"
             value={instanceName}
             onChange={(e) => setInstanceName(e.target.value)}
-            placeholder={editableConfig?.name || "default"}
+            placeholder="default"
             style={{
               padding: "5px",
               border: "1px solid #ccc",
@@ -565,13 +565,11 @@ export function App() {
             <h3>Configuration Summary:</h3>
             <div style={{ padding: "10px", background: "#f8f8f8", borderRadius: "4px" }}>
               <ul style={{ marginLeft: "20px", marginTop: "5px" }}>
+                <li>Images: {limaConfig.images?.length || 0} configured</li>
                 <li>Mounts: {limaConfig.mounts?.length || 0} configured</li>
-                <li>Networks: {limaConfig.networks?.length || 0} configured</li>
-                <li>Port Forwards: {limaConfig.port_forwards?.length || 0} configured</li>
                 <li>Provision Scripts: {limaConfig.provision?.length || 0} scripts</li>
                 <li>Probes: {limaConfig.probes?.length || 0} probes</li>
                 <li>Copy To Host: {limaConfig.copy_to_host?.length || 0} items</li>
-                <li>Copy From Host: {limaConfig.copy_from_host?.length || 0} items</li>
               </ul>
             </div>
           </div>

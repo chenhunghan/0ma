@@ -29,13 +29,13 @@ export function QuickConfigEditor({ config, onChange }: QuickConfigEditorProps) 
 
         {/* Basic Settings */}
         <div>
-          <label style={{ display: "block", marginBottom: "5px" }}>Instance Name:</label>
+          <label style={{ display: "block", marginBottom: "5px" }}>VM Type:</label>
           <input
             type="text"
-            value={config.name || ''}
-            onChange={(e) => updateConfig('name', e.target.value || undefined)}
+            value={config.vm_type || ''}
+            onChange={(e) => updateConfig('vm_type', e.target.value || undefined)}
             style={{ width: "100%", padding: "5px" }}
-            placeholder="Default"
+            placeholder="vz, qemu, krunkit"
           />
         </div>
 
@@ -65,15 +65,13 @@ export function QuickConfigEditor({ config, onChange }: QuickConfigEditorProps) 
         </div>
 
         <div>
-          <label style={{ display: "block", marginBottom: "5px" }}>Memory (GB):</label>
+          <label style={{ display: "block", marginBottom: "5px" }}>Memory (e.g., "4GiB", "8GB"):</label>
           <input
-            type="number"
-            value={config.memory ? Math.round(config.memory / 1024 / 1024 / 1024) : ''}
-            onChange={(e) => updateConfig('memory', e.target.value ? parseInt(e.target.value) * 1024 * 1024 * 1024 : undefined)}
+            type="text"
+            value={config.memory || ''}
+            onChange={(e) => updateConfig('memory', e.target.value || undefined)}
             style={{ width: "100%", padding: "5px" }}
-            placeholder="Default"
-            min="1"
-            max="128"
+            placeholder="4GiB"
           />
         </div>
 
@@ -99,73 +97,6 @@ export function QuickConfigEditor({ config, onChange }: QuickConfigEditorProps) 
               />
               User
             </label>
-          </div>
-        </div>
-
-        {/* SSH Settings */}
-        {config.ssh && (
-          <div>
-            <label style={{ display: "block", marginBottom: "5px" }}>SSH Settings:</label>
-            <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-              <label style={{ display: "flex", alignItems: "center" }}>
-                <input
-                  type="number"
-                  value={config.ssh.local_port || ''}
-                  onChange={(e) => {
-                    const ssh = { ...config.ssh! };
-                    ssh.local_port = e.target.value ? parseInt(e.target.value) : undefined;
-                    updateConfig('ssh', ssh);
-                  }}
-                  placeholder="Port"
-                  style={{ width: "80px", padding: "3px", marginRight: "5px" }}
-                  min="1"
-                  max="65535"
-                />
-                Local Port
-              </label>
-              <label style={{ display: "flex", alignItems: "center" }}>
-                <input
-                  type="checkbox"
-                  checked={config.ssh.forward_agent || false}
-                  onChange={(e) => {
-                    const ssh = { ...config.ssh! };
-                    ssh.forward_agent = e.target.checked;
-                    updateConfig('ssh', ssh);
-                  }}
-                  style={{ marginRight: "5px" }}
-                />
-                Forward Agent
-              </label>
-              <label style={{ display: "flex", alignItems: "center" }}>
-                <input
-                  type="checkbox"
-                  checked={config.ssh.forward_x11 || false}
-                  onChange={(e) => {
-                    const ssh = { ...config.ssh! };
-                    ssh.forward_x11 = e.target.checked;
-                    updateConfig('ssh', ssh);
-                  }}
-                  style={{ marginRight: "5px" }}
-                />
-                Forward X11
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Environment Variables */}
-        <div>
-          <label style={{ display: "block", marginBottom: "5px" }}>
-            Environment Variables: {config.env ? Object.keys(config.env).length : 0}
-          </label>
-          <div style={{ fontSize: "12px", color: "#666" }}>
-            {config.env && Object.keys(config.env).length > 0 ? (
-              <div>{Object.entries(config.env).slice(0, 3).map(([k, v]) => (
-                <div key={k}>{k}={v}</div>
-              ))}</div>
-            ) : (
-              <span>Click "Edit Configuration" to manage environment variables</span>
-            )}
           </div>
         </div>
 
