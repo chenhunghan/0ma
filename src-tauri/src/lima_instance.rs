@@ -3,7 +3,7 @@ use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
 use crate::lima_config::LimaConfig;
-use crate::lima_config_handler::{get_lima_yaml_path, write_lima_yaml_with_vars};
+use crate::lima_config_handler::{get_lima_yaml_path, write_lima_yaml};
 use crate::instance_registry::{InstanceInfo, register_instance, unregister_instance};
 
 /// Create a Lima instance using the managed configuration
@@ -18,7 +18,7 @@ pub async fn create_lima_instance(
     // Use the provided instance name directly - it's required
 
     // Write the config
-    write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
+    write_lima_yaml(app.clone(), config.clone(), instance_name.clone())?;
 
     // Get the path to the stored config file (lima.yaml)
     let config_path = get_lima_yaml_path(&app, &instance_name)

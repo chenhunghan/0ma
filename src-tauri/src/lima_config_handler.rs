@@ -18,9 +18,25 @@ pub fn read_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfi
         .map_err(|e| format!("Failed to parse YAML: {}", e))
 }
 
-
+/// Write YAML with and setup copy_to_host's kubeconfig path to app managed folder for a specific instance
 #[tauri::command]
-pub fn write_lima_yaml(app: AppHandle, instance_name: String, config: LimaConfig) -> Result<(), String> {
+pub fn write_lima_yaml(
+    app: AppHandle,
+    mut config: LimaConfig,
+    instance_name: String,
+) -> Result<(), String> {
+    // Get the instance directory path
+    let instance_dir = get_instance_dir(&app, &instance_name)?;
+    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
+
+    // Update the first copyToHost entry with the specific kubeconfig path
+    if let Some(copy_to_host) = &mut config.copy_to_host {
+        if !copy_to_host.is_empty() {
+            copy_to_host[0].host = kubeconfig_path.to_string_lossy().to_string();
+        }
+    }
+
+    // Write the config
     let yaml_content = config.to_yaml_pretty()
         .map_err(|e| format!("Failed to serialize YAML: {}", e))?;
     write_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, yaml_content)
@@ -42,29 +58,6 @@ pub fn get_lima_yaml_path_cmd(app: AppHandle, instance_name: String) -> Result<S
 pub fn reset_lima_yaml(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
     reset_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, MANAGED_DEFAULT_K0S_CONFIG_FILENAME)?;
     read_lima_yaml(app, instance_name)
-}
-
-/// Write YAML with variable replacement
-/// This processes the content and replaces template variables with actual app paths
-#[tauri::command]
-pub fn write_lima_yaml_with_vars(
-    app: AppHandle,
-    mut config: LimaConfig,
-    instance_name: String,
-) -> Result<(), String> {
-    // Get the instance directory path
-    let instance_dir = get_instance_dir(&app, &instance_name)?;
-    let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
-
-    // Update the first copyToHost entry with the specific kubeconfig path
-    if let Some(copy_to_host) = &mut config.copy_to_host {
-        if !copy_to_host.is_empty() {
-            copy_to_host[0].host = kubeconfig_path.to_string_lossy().to_string();
-        }
-    }
-
-    // Write the config
-    write_lima_yaml(app, instance_name, config)
 }
 
 /// Get the kubeconfig path for a specific instance

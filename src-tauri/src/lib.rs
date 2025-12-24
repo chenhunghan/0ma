@@ -78,7 +78,6 @@ pub fn run() {
             lima_version,
             lima_config_handler::read_lima_yaml,
             lima_config_handler::write_lima_yaml,
-            lima_config_handler::write_lima_yaml_with_vars,
             lima_config_handler::get_lima_yaml_path_cmd,
             lima_config_handler::reset_lima_yaml,
             lima_config_handler::get_kubeconfig_path,
