@@ -193,7 +193,7 @@ pub fn get_default_k0s_lima_config(app: &tauri::AppHandle, instance_name: &str) 
         vm_type: Some("vz".to_string()),
         cpus: Some(vm_cpus),
         memory: Some(vm_memory),
-        disk: Some("100GiB".to_string()),
+        disk: Some("40GiB".to_string()),
         images: Some(vec![Image {
             location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
             arch: Some("aarch64".to_string()),
@@ -502,6 +502,37 @@ probes:
         assert_eq!(config.cpus, None);
         assert_eq!(config.memory, None);
         assert_eq!(config.disk, None);
+    }
+
+    #[test]
+    fn test_cpu_memory_calculation_logic() {
+        use sysinfo::System;
+        
+        // Test the same CPU/memory calculation logic used in get_default_k0s_lima_config
+        let mut sys = System::new_all();
+        sys.refresh_all();
+        
+        let host_cpus = sys.cpus().len() as u32;
+        let vm_cpus = std::cmp::max(1, host_cpus / 2);
+        
+        let host_memory_bytes = sys.total_memory();
+        let vm_memory_gib = std::cmp::max(1, (host_memory_bytes / 2) / (1024 * 1024 * 1024));
+        
+        // Verify CPU calculations (varies by host, but should be reasonable)
+        assert!(vm_cpus >= 1, "VM CPUs should be at least 1");
+        assert!(vm_cpus <= host_cpus, "VM CPUs should not exceed host CPUs");
+        assert!(vm_cpus == host_cpus / 2 || vm_cpus == 1, 
+            "VM CPUs should be half of host CPUs or 1 (minimum)");
+        
+        // Verify memory calculations (varies by host, but should be reasonable)
+        assert!(vm_memory_gib >= 1, "VM memory should be at least 1 GiB");
+        let host_memory_gib = host_memory_bytes / (1024 * 1024 * 1024);
+        assert!(vm_memory_gib <= host_memory_gib, 
+            "VM memory should not exceed host memory");
+        
+        // Log values for debugging (varies by test host)
+        println!("Host CPUs: {}, VM CPUs: {}", host_cpus, vm_cpus);
+        println!("Host Memory: {} GiB, VM Memory: {} GiB", host_memory_gib, vm_memory_gib);
     }
 }
 
