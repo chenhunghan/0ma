@@ -26,9 +26,14 @@ pub fn write_lima_yaml(app: AppHandle, instance_name: String, config: LimaConfig
     write_yaml(&app, &instance_name, LIMA_CONFIG_FILENAME, yaml_content)
 }
 
+/// Get the path to the Lima YAML configuration file for an instance
+pub fn get_lima_yaml_path(app: &AppHandle, instance_name: &str) -> Result<std::path::PathBuf, String> {
+    get_yaml_path(app, instance_name, LIMA_CONFIG_FILENAME)
+}
+
 #[tauri::command]
 pub fn get_lima_yaml_path_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
-    let path = get_yaml_path(&app, &instance_name, LIMA_CONFIG_FILENAME)?;
+    let path = get_lima_yaml_path(&app, &instance_name)?;
     Ok(path.to_string_lossy().to_string())
 }
 

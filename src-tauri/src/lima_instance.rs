@@ -3,8 +3,8 @@ use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
 use crate::lima_config::LimaConfig;
+use crate::lima_config_handler::{get_lima_yaml_path, write_lima_yaml_with_vars};
 use crate::instance_registry::{InstanceInfo, register_instance, unregister_instance};
-use crate::yaml_handler::get_yaml_path;
 
 /// Create a Lima instance using the managed configuration
 /// This handler uses the stored k0s config file and runs limactl start
@@ -17,11 +17,11 @@ pub async fn create_lima_instance(
 ) -> Result<String, String> {
     // Use the provided instance name directly - it's required
 
-    // Write the config with variable substitution (required for k0s)
-    crate::lima_config_handler::write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
+    // Write the config
+    write_lima_yaml_with_vars(app.clone(), config.clone(), instance_name.clone())?;
 
     // Get the path to the stored config file (lima.yaml)
-    let config_path = get_yaml_path(&app, &instance_name, "lima.yaml")
+    let config_path = get_lima_yaml_path(&app, &instance_name)
         .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
 
     // Register the instance in our registry
