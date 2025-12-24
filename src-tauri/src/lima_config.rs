@@ -123,17 +123,6 @@ pub struct CopyToHost {
     pub delete_on_stop: Option<bool>,
 }
 
-/// Template variables that can be substituted in the config
-#[derive(Debug, Clone)]
-pub struct TemplateVars {
-    /// Instance directory
-    pub dir: String,
-    /// User home directory
-    pub home: String,
-    /// Username
-    pub user: String,
-}
-
 impl Default for LimaConfig {
     fn default() -> Self {
         Self {
@@ -160,18 +149,6 @@ impl LimaConfig {
     #[allow(dead_code)]
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Substitute template variables in the configuration
-    pub fn substitute_variables(&mut self, vars: &TemplateVars) {
-        // Substitute in copyToHost paths
-        if let Some(copy_to_host) = &mut self.copy_to_host {
-            for copy in copy_to_host {
-                copy.host = copy.host.replace("{{.Dir}}", &vars.dir);
-                copy.host = copy.host.replace("{{.Home}}", &vars.home);
-                copy.host = copy.host.replace("{{.User}}", &vars.user);
-            }
-        }
     }
 
     /// Read YAML content and parse into LimaConfig
@@ -350,8 +327,6 @@ probes:
 
         // Parse from YAML
         let config = LimaConfig::from_yaml(yaml_input).expect("Failed to parse YAML");
-        
-        println!("Parsed config - copy_to_host: {:?}", config.copy_to_host);
 
         // Verify all fields
         assert_eq!(config.vm_type, Some("vz".to_string()));
@@ -400,42 +375,6 @@ probes:
         assert_eq!(config2.vm_type, config.vm_type);
         assert_eq!(config2.cpus, config.cpus);
         assert_eq!(config2.memory, config.memory);
-    }
-
-    #[test]
-    fn test_substitute_variables() {
-        let mut config = LimaConfig {
-            minimum_lima_version: None,
-            vm_type: None,
-            images: None,
-            cpus: None,
-            memory: None,
-            disk: None,
-            mounts: None,
-            containerd: None,
-            provision: None,
-            probes: None,
-            copy_to_host: Some(vec![CopyToHost {
-                guest: "/var/lib/k0s/pki/admin.conf".to_string(),
-                host: "{{.Dir}}/copied-from-guest/kubeconfig.yaml".to_string(),
-                delete_on_stop: Some(true),
-            }]),
-        };
-
-        let vars = TemplateVars {
-            dir: "/home/user/.lima/instance".to_string(),
-            home: "/home/user".to_string(),
-            user: "testuser".to_string(),
-        };
-
-        config.substitute_variables(&vars);
-
-        // Verify substitution
-        let copy_to_host = config.copy_to_host.as_ref().unwrap();
-        assert_eq!(
-            copy_to_host[0].host,
-            "/home/user/.lima/instance/copied-from-guest/kubeconfig.yaml"
-        );
     }
 
     #[test]

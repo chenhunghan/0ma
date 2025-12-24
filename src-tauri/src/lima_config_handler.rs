@@ -1,5 +1,5 @@
 use tauri::AppHandle;
-use crate::lima_config::{LimaConfig, TemplateVars};
+use crate::lima_config::LimaConfig;
 use crate::yaml_handler::{get_instance_dir, get_yaml_path, read_yaml, write_yaml, reset_yaml};
 
 const MANAGED_DEFAULT_K0S_CONFIG_FILENAME: &str = "k0s.yaml";
@@ -51,22 +51,12 @@ pub fn write_lima_yaml_with_vars(
     let instance_dir = get_instance_dir(&app, &instance_name)?;
     let kubeconfig_path = instance_dir.join(KUBECONFIG_FILENAME);
 
-    // Create template variables
-    let vars = TemplateVars {
-        dir: instance_dir.to_string_lossy().to_string(),
-        home: std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string()),
-        user: std::env::var("USER").unwrap_or_else(|_| "user".to_string()),
-    };
-
     // Update the first copyToHost entry with the specific kubeconfig path
     if let Some(copy_to_host) = &mut config.copy_to_host {
         if !copy_to_host.is_empty() {
             copy_to_host[0].host = kubeconfig_path.to_string_lossy().to_string();
         }
     }
-
-    // Substitute other template variables
-    config.substitute_variables(&vars);
 
     // Write the config
     write_lima_yaml(app, instance_name, config)
