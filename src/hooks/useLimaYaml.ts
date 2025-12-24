@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { LimaConfig } from "../types/lima-config";
 
-export function useLimaYaml() {
+export function useLimaYaml(instanceName: string) {
   const queryClient = useQueryClient();
 
   const {
@@ -11,20 +11,21 @@ export function useLimaYaml() {
     isLoading: isLoadingLima,
     refetch: refetchLima,
   } = useQuery({
-    queryKey: ["lima_yaml"],
+    queryKey: ["lima_yaml", instanceName],
     queryFn: async () => {
-      return await invoke<LimaConfig>("read_lima_yaml");
+      return await invoke<LimaConfig>("read_lima_yaml", { instanceName });
     },
+    enabled: !!instanceName, // Only fetch if instanceName is provided
   });
 
   // Write Lima YAML
   const writeLimaYamlMutation = useMutation({
     mutationFn: async (config: LimaConfig) => {
-      await invoke("write_lima_yaml", { config });
+      await invoke("write_lima_yaml", { instanceName, config });
     },
     onSuccess: async () => {
       // Invalidate and refetch the Lima YAML after writing
-      await queryClient.invalidateQueries({ queryKey: ["lima_yaml"] });
+      await queryClient.invalidateQueries({ queryKey: ["lima_yaml", instanceName] });
     },
   });
 
@@ -35,9 +36,9 @@ export function useLimaYaml() {
     isLoading: isLoadingLimaYamlPath,
     refetch: fetchLimaYamlPath,
   } = useQuery({
-    queryKey: ["lima_yaml_path"],
+    queryKey: ["lima_yaml_path", instanceName],
     queryFn: async () => {
-      return await invoke<string>("get_lima_yaml_path_cmd");
+      return await invoke<string>("get_lima_yaml_path_cmd", { instanceName });
     },
     enabled: false, // Don't auto-fetch on mount
   });
@@ -45,11 +46,11 @@ export function useLimaYaml() {
   // Reset Lima YAML to bundled version
   const resetLimaYamlMutation = useMutation({
     mutationFn: async () => {
-      return await invoke<LimaConfig>("reset_lima_yaml");
+      return await invoke<LimaConfig>("reset_lima_yaml", { instanceName });
     },
     onSuccess: async (newConfig) => {
       // Update the cache with the new config
-      queryClient.setQueryData(["lima_yaml"], newConfig);
+      queryClient.setQueryData(["lima_yaml", instanceName], newConfig);
     },
   });
 

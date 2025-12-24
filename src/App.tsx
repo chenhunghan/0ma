@@ -10,6 +10,10 @@ import { QuickConfigEditor } from "./components/QuickConfigEditor";
 import { ask } from "@tauri-apps/plugin-dialog";
 
 export function App() {
+  const [showEditor, setShowEditor] = useState(false);
+  const [editableConfig, setEditableConfig] = useState<LimaConfig | null>(null);
+  const [instanceName, setInstanceName] = useState<string>("default");
+
   const { limaVersion, limaVersionError, isLoadingLimaVersion, checkLimaVersion } =
     useLimaVersion();
 
@@ -28,7 +32,7 @@ export function App() {
     resetLimaYaml,
     isResettingLima,
     resetLimaError,
-  } = useLimaYaml();
+  } = useLimaYaml(instanceName);
 
   const { instanceStatus, startInstance, stopInstance, deleteInstance, clearStatus: clearInstanceStatus, setCurrentInstance, isCreatingInstance } = useLimaInstance();
   const { instances: registeredInstances, isLoading: loadingInstances, loadInstances: refreshInstances } = useInstanceRegistry();
@@ -45,10 +49,6 @@ export function App() {
       console.error('App.tsx: Error in handleDeleteInstance:', error);
     }
   };
-
-  const [showEditor, setShowEditor] = useState(false);
-  const [editableConfig, setEditableConfig] = useState<LimaConfig | null>(null);
-  const [instanceName, setInstanceName] = useState<string>("");
 
   
   // Convert config to YAML for display
