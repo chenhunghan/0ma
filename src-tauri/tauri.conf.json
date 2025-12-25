@@ -10,11 +10,20 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "zeroma",
-        "width": 800,
-        "height": 600
+        "title": "",
+        "width": 1024,
+        "height": 768,
+        "theme": "Dark",
+        "backgroundColor": "#1a1a1a",
+        "titleBarStyle": "Transparent",
+        "transparent": true,
+        "windowEffects": {
+          "effects": ["underWindowBackground"],
+          "state": "active"
+        }
       }
     ],
     "security": {
