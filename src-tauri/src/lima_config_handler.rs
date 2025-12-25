@@ -50,6 +50,12 @@ pub fn reset_lima_yaml_cmd(app: AppHandle, instance_name: String) -> Result<Lima
     Ok(default_config)
 }
 
+/// Get the default k0s Lima configuration for an instance
+#[tauri::command]
+pub fn get_default_k0s_lima_config_yaml_cmd(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
+    get_default_k0s_lima_config(&app, &instance_name)
+}
+
 /// Get the kubeconfig path for a specific instance
 #[tauri::command]
 pub fn get_kubeconfig_path_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
