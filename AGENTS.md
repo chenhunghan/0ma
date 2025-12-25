@@ -35,6 +35,53 @@ All functions decorated with `#[tauri::command]` **MUST** follow these rules:
 
 2. **File Placement**: All Tauri command functions must be in `*_handler.rs` files
 
+3. **Event Naming Convention**: Commands that emit events must use unique, command-specific event names
+   ```rust
+   // ✅ Correct - Unique events per command
+   #[tauri::command]
+   pub async fn create_lima_instance_cmd(app: AppHandle, ...) -> Result<String, String> {
+       app.emit("lima-instance-create-error", &error_msg)?;
+       app.emit("lima-instance-create-stdout", &line)?;
+       app.emit("lima-instance-create-stderr", &line)?;
+       app.emit("lima-instance-create-success", &instance_name)?;
+       // ...
+   }
+
+   #[tauri::command]
+   pub async fn start_lima_instance_cmd(app: AppHandle, ...) -> Result<String, String> {
+       app.emit("lima-instance-start-error", &error_msg)?;
+       app.emit("lima-instance-start-stdout", &line)?;
+       app.emit("lima-instance-start-stderr", &line)?;
+       app.emit("lima-instance-start-success", &instance_name)?;
+       // ...
+   }
+
+   // ❌ Incorrect - Generic events shared across commands
+   #[tauri::command]
+   pub async fn create_lima_instance_cmd(app: AppHandle, ...) -> Result<String, String> {
+       app.emit("lima-instance-error", &error_msg)?;  // Too generic!
+       app.emit("lima-instance-output", &line)?;      // Too generic!
+       // ...
+   }
+   ```
+
+   **Pattern**: `{scope}-{action}-{type}`
+   - `scope`: The feature area (e.g., `lima-instance`)
+   - `action`: The specific command operation (e.g., `create`, `start`, `stop`, `delete`)
+   - `type`: The event type (e.g., `error`, `stdout`, `stderr`, `success`)
+
+   **Examples**:
+   - `create_lima_instance_cmd` → `lima-instance-create-{error|stdout|stderr|success}`
+   - `start_lima_instance_cmd` → `lima-instance-start-{error|stdout|stderr|success}`
+   - `stop_lima_instance_cmd` → `lima-instance-stop-{error|stdout|stderr|success}`
+   - `delete_lima_instance_cmd` → `lima-instance-delete-{error|stdout|stderr|success}`
+
+   **Why Unique Events?**
+   - Prevents event collision when multiple operations run concurrently
+   - Makes frontend event handling more precise and predictable
+   - Easier to debug and trace which command emitted which event
+   - Allows frontend to subscribe to specific operation events
+
 ### File Organization
 
 The backend follows a clear separation between handlers and services:
@@ -303,8 +350,9 @@ src/
 - [ ] Commands registered in `invoke_handler`
 - [ ] TypeScript code uses `_cmd` suffix when invoking
 - [ ] React hooks provide clean API (hide `_cmd` from consumers)
+- [ ] Event names follow unique pattern: `{scope}-{action}-{type}`
 
 ---
 
-**Last Updated**: 2025-12-24  
+**Last Updated**: 2025-12-25  
 **Maintained By**: Development Team & AI Agents

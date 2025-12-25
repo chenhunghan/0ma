@@ -35,7 +35,7 @@ pub async fn create_lima_instance_cmd(
         let lima_cmd = match find_lima_executable() {
             Some(cmd) => cmd,
             None => {
-                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                let _ = app_handle.emit("lima-instance-create-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
                 return;
             }
         };
@@ -55,7 +55,7 @@ pub async fn create_lima_instance_cmd(
         let mut child = match child {
             Ok(c) => c,
             Err(e) => {
-                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                let _ = app_handle.emit("lima-instance-create-error", &e.to_string());
                 return;
             }
         };
@@ -66,7 +66,7 @@ pub async fn create_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stdout).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                    let _ = app_handle_stdout.emit("lima-instance-create-stdout", &line);
                 }
             });
         }
@@ -77,7 +77,7 @@ pub async fn create_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                    let _ = app_handle_stderr.emit("lima-instance-create-stderr", &line);
                 }
             });
         }
@@ -89,12 +89,12 @@ pub async fn create_lima_instance_cmd(
                     let _ = app_handle.emit("lima-instance-create-success", &instance_name_clone);
                 } else {
                     let error_msg = format!("Failed to create Lima instance. Exit code: {:?}", status.code());
-                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                    let _ = app_handle.emit("lima-instance-create-error", &error_msg);
                 }
             }
             Err(e) => {
                 let error_msg = format!("Failed to wait for limactl create process: {}", e);
-                let _ = app_handle.emit("lima-instance-error", &error_msg);
+                let _ = app_handle.emit("lima-instance-create-error", &error_msg);
             }
         }
     });
@@ -121,7 +121,7 @@ pub async fn start_lima_instance_cmd(
         let lima_cmd = match find_lima_executable() {
             Some(cmd) => cmd,
             None => {
-                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                let _ = app_handle.emit("lima-instance-start-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
                 return;
             }
         };
@@ -137,7 +137,7 @@ pub async fn start_lima_instance_cmd(
         let mut child = match child {
             Ok(c) => c,
             Err(e) => {
-                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                let _ = app_handle.emit("lima-instance-start-error", &e.to_string());
                 return;
             }
         };
@@ -148,7 +148,7 @@ pub async fn start_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stdout).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                    let _ = app_handle_stdout.emit("lima-instance-start-stdout", &line);
                 }
             });
         }
@@ -159,7 +159,7 @@ pub async fn start_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                    let _ = app_handle_stderr.emit("lima-instance-start-stderr", &line);
                 }
             });
         }
@@ -171,12 +171,12 @@ pub async fn start_lima_instance_cmd(
                     let _ = app_handle.emit("lima-instance-start-success", &instance_name_clone);
                 } else {
                     let error_msg = format!("Failed to start Lima instance. Exit code: {:?}", status.code());
-                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                    let _ = app_handle.emit("lima-instance-start-error", &error_msg);
                 }
             }
             Err(e) => {
                 let error_msg = format!("Failed to wait for limactl start process: {}", e);
-                let _ = app_handle.emit("lima-instance-error", &error_msg);
+                let _ = app_handle.emit("lima-instance-start-error", &error_msg);
             }
         }
     });
@@ -203,7 +203,7 @@ pub async fn stop_lima_instance_cmd(
         let lima_cmd = match find_lima_executable() {
             Some(cmd) => cmd,
             None => {
-                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                let _ = app_handle.emit("lima-instance-stop-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
                 return;
             }
         };
@@ -219,7 +219,7 @@ pub async fn stop_lima_instance_cmd(
         let mut child = match child {
             Ok(c) => c,
             Err(e) => {
-                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                let _ = app_handle.emit("lima-instance-stop-error", &e.to_string());
                 return;
             }
         };
@@ -230,7 +230,7 @@ pub async fn stop_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stdout).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                    let _ = app_handle_stdout.emit("lima-instance-stop-stdout", &line);
                 }
             });
         }
@@ -241,7 +241,7 @@ pub async fn stop_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                    let _ = app_handle_stderr.emit("lima-instance-stop-stderr", &line);
                 }
             });
         }
@@ -254,12 +254,12 @@ pub async fn stop_lima_instance_cmd(
                     let _ = app_handle.emit("lima-instance-stop-success", &success_msg);
                 } else {
                     let error_msg = format!("Failed to stop Lima instance. Exit code: {:?}", status.code());
-                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                    let _ = app_handle.emit("lima-instance-stop-error", &error_msg);
                 }
             }
             Err(e) => {
                 let error_msg = format!("Failed to wait for limactl stop process: {}", e);
-                let _ = app_handle.emit("lima-instance-error", &error_msg);
+                let _ = app_handle.emit("lima-instance-stop-error", &error_msg);
             }
         }
     });
@@ -286,7 +286,7 @@ pub async fn delete_lima_instance_cmd(
         let lima_cmd = match find_lima_executable() {
             Some(cmd) => cmd,
             None => {
-                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                let _ = app_handle.emit("lima-instance-delete-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
                 return;
             }
         };
@@ -302,7 +302,7 @@ pub async fn delete_lima_instance_cmd(
         let mut child = match child {
             Ok(c) => c,
             Err(e) => {
-                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                let _ = app_handle.emit("lima-instance-delete-error", &e.to_string());
                 return;
             }
         };
@@ -313,7 +313,7 @@ pub async fn delete_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stdout).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                    let _ = app_handle_stdout.emit("lima-instance-delete-stdout", &line);
                 }
             });
         }
@@ -324,7 +324,7 @@ pub async fn delete_lima_instance_cmd(
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                    let _ = app_handle_stderr.emit("lima-instance-delete-stderr", &line);
                 }
             });
         }
@@ -337,12 +337,12 @@ pub async fn delete_lima_instance_cmd(
                     let _ = app_handle.emit("lima-instance-delete-success", &success_msg);
                 } else {
                     let error_msg = format!("Failed to delete Lima instance. Exit code: {:?}", status.code());
-                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                    let _ = app_handle.emit("lima-instance-delete-error", &error_msg);
                 }
             }
             Err(e) => {
                 let error_msg = format!("Failed to wait for limactl delete process: {}", e);
-                let _ = app_handle.emit("lima-instance-error", &error_msg);
+                let _ = app_handle.emit("lima-instance-delete-error", &error_msg);
             }
         }
     });
