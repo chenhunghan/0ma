@@ -10,17 +10,20 @@ import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { StartInstanceModal } from './components/StartInstanceModal';
+import { StopInstanceModal } from './components/StopInstanceModal';
 
 export const App: React.FC = () => {
   const { instances, isLoading } = useLimaInstances();
-  const { createInstance, startInstance } = useLimaInstance();
+  const { createInstance, startInstance, stopInstance } = useLimaInstance();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
   const [showStartLogsModal, setShowStartLogsModal] = useState(false);
+  const [showStopLogsModal, setShowStopLogsModal] = useState(false);
   const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(null);
+  const [stoppingInstanceName, setStoppingInstanceName] = useState<string | null>(null);
 
   // Listen for create events and logs
   const handleCreateSuccess = useCallback((instanceName: string) => {
@@ -62,6 +65,17 @@ export const App: React.FC = () => {
     // Keep modal open to show error logs
   }, []);
 
+  const handleStopSuccess = useCallback((instanceName: string) => {
+    console.debug(`Instance ${instanceName} stopped successfully.`);
+    setShowStopLogsModal(false);
+    setStoppingInstanceName(null);
+  }, []);
+
+  const handleStopError = useCallback((error: string) => {
+    console.error('Instance stop failed:', error);
+    // Keep modal open to show error logs
+  }, []);
+
   const handleOpenCreateModal = () => {
     setShowCreateModal(true);
   };
@@ -83,6 +97,12 @@ export const App: React.FC = () => {
     
     // Start the instance - logs modal will close on success
     startInstance(createdInstanceName);
+  };
+
+  const handleStopInstance = (instanceName: string) => {
+    setStoppingInstanceName(instanceName);
+    setShowStopLogsModal(true);
+    stopInstance(instanceName);
   };
 
   const handleDelete = async () => {
@@ -131,6 +151,14 @@ export const App: React.FC = () => {
             onSuccess={handleStartSuccess}
             onError={handleStartError}
         />
+        
+        <StopInstanceModal 
+            isOpen={showStopLogsModal}
+            onClose={() => setShowStopLogsModal(false)}
+            instanceName={stoppingInstanceName || ''}
+            onSuccess={handleStopSuccess}
+            onError={handleStopError}
+        />
 
         {isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-4">
@@ -165,6 +193,7 @@ export const App: React.FC = () => {
                 onCreate={handleOpenCreateModal}
                 instance={selectedInstance}
                 onDelete={handleDelete}
+                onStop={handleStopInstance}
                 isCreating={false}
              />
         ) : (

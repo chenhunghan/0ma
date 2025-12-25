@@ -4,7 +4,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 
 interface CreateLog {
-  type: 'stdout' | 'stderr' | 'error';
+  type: 'stdout' | 'stderr' | 'error' | 'info' | 'success';
   message: string;
   timestamp: Date;
 }

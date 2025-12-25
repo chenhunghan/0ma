@@ -34,6 +34,7 @@ interface InstanceDetailProps {
   isCreating: boolean;
   instance: LimaInstance;
   onDelete: () => Promise<void> | void;
+  onStop?: (instanceName: string) => void;
 }
 
 const DEFAULT_UI_STATE: InstanceUIState = {
@@ -66,6 +67,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   isCreating,
   instance,
   onDelete,
+  onStop,
 }) => {
   // Global instances state map
   const [instancesState, setInstancesState] = useState<Record<string, InstanceUIState>>({});
@@ -163,10 +165,10 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     setIsProcessing(false);
   };
 
-  const handleStop = async () => {
-    setIsProcessing(true);
-    await limaService.stopInstance(instance.id);
-    setIsProcessing(false);
+  const handleStop = () => {
+    if (onStop) {
+      onStop(instance.name);
+    }
   };
 
   // Trigger modal
