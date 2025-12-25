@@ -4,23 +4,21 @@ import {
 } from 'lucide-react';
 import { InstanceStatus } from './types/InstanceStatus';
 import { LimaConfig } from './types/LimaConfig';
-import { limaService } from './services/limaService';
 import { useLimaInstances } from './hooks/useLimaInstances';
+import { useLimaInstance } from './hooks/useLimaInstance';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 
 export const App: React.FC = () => {
-  const { instances, isLoading, refreshInstances } = useLimaInstances();
+  const { instances, isLoading } = useLimaInstances();
+  const { createInstance, startInstance, isCreating, isStarting } = useLimaInstance();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  
   const [showStartModal, setShowStartModal] = useState(false);
-  const [createdInstanceId, setCreatedInstanceId] = useState<string | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
+  const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(null);
 
   // Auto-select first instance if none selected
   useEffect(() => {
@@ -34,28 +32,29 @@ export const App: React.FC = () => {
   };
 
   const handleCreateConfirm = async (name: string, config: LimaConfig) => {
-    setIsCreating(true);
-    const newInstance = await limaService.createInstance(name, config);
-    
-    // Select the new instance
-    setSelectedId(newInstance.id);
-    
-    setIsCreating(false);
+    // Close create modal
     setShowCreateModal(false);
-
+    
+    // Create the instance first
+    createInstance({ config, instanceName: name });
+    
+    // Store the name for starting later
+    setCreatedInstanceName(name);
+    setSelectedId(name);
+    
     // Prompt to start
-    setCreatedInstanceId(newInstance.id);
     setShowStartModal(true);
   };
 
-  const handleStartCreatedInstance = async () => {
-    if (!createdInstanceId) return;
-    setIsStarting(true);
-    await limaService.startInstance(createdInstanceId);
-    await refreshInstances();
-    setIsStarting(false);
+  const handleStartCreatedInstance = () => {
+    if (!createdInstanceName) return;
+    
+    // Start the instance
+    startInstance(createdInstanceName);
+    
+    // Close modal and clear state
     setShowStartModal(false);
-    setCreatedInstanceId(null);
+    setCreatedInstanceName(null);
   };
 
   const handleDelete = async () => {
@@ -81,7 +80,7 @@ export const App: React.FC = () => {
             isOpen={showCreateModal}
             onClose={() => setShowCreateModal(false)}
             onCreate={handleCreateConfirm}
-            isProcessing={isCreating}
+            isProcessing={false}
         />
         
         <ConfirmationModal 
@@ -129,7 +128,7 @@ export const App: React.FC = () => {
                 onCreate={handleOpenCreateModal}
                 instance={selectedInstance}
                 onDelete={handleDelete}
-                isCreating={isCreating}
+                isCreating={false}
              />
         ) : (
             <div className="flex-1 flex items-center justify-center">

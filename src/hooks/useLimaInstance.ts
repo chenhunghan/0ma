@@ -17,6 +17,19 @@ export function useLimaInstance() {
   // Listen for Lima instance events
   useEffect(() => {
     const setupListeners = async () => {
+      // Listen for create event
+      const unlistenCreate = await listen<string>("lima-instance-create", (event) => {
+        setOperationLogs({
+          logs: [event.payload],
+        });
+      });
+
+      // Listen for create success event
+      const unlistenCreateSuccess = await listen<string>("lima-instance-create-success", () => {
+        // Invalidate instances query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
+      });
+
       // Listen for start event
       const unlistenStart = await listen<string>("lima-instance-start", (event) => {
         setOperationLogs({
@@ -45,8 +58,8 @@ export function useLimaInstance() {
         }));
       });
 
-      // Listen for success event
-      const unlistenSuccess = await listen<string>("lima-instance-success", () => {
+      // Listen for start success event
+      const unlistenStartSuccess = await listen<string>("lima-instance-start-success", () => {
         // Invalidate instances query to refresh the list
         queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
@@ -72,11 +85,13 @@ export function useLimaInstance() {
 
       // Return cleanup function
       return () => {
+        unlistenCreate();
+        unlistenCreateSuccess();
         unlistenStart();
         unlistenStop();
         unlistenDelete();
         unlistenOutput();
-        unlistenSuccess();
+        unlistenStartSuccess();
         unlistenStopSuccess();
         unlistenDeleteSuccess();
         unlistenError();
@@ -90,12 +105,26 @@ export function useLimaInstance() {
     };
   }, [queryClient]);
 
-  const startMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: async ({ config, instanceName }: { config: LimaConfig; instanceName: string }) => {
       return await invoke<string>("create_lima_instance_cmd", {
         config,
         instanceName
       });
+    },
+    onMutate: () => {
+      setOperationLogs({
+        logs: [],
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instances"] });
+    },
+  });
+
+  const startMutation = useMutation({
+    mutationFn: async (instanceName: string) => {
+      return await invoke<string>("start_lima_instance_cmd", { instanceName });
     },
     onMutate: () => {
       setOperationLogs({
@@ -139,14 +168,20 @@ export function useLimaInstance() {
     setOperationLogs({
       logs: [],
     });
+    createMutation.reset();
     startMutation.reset();
     stopMutation.reset();
     deleteMutation.reset();
   };
 
   return {
-    // Streaming logs from lifecycle operations (start/stop/delete)
+    // Streaming logs from lifecycle operations (create/start/stop/delete)
     operationLogs,
+    
+    // Create instance mutation
+    createInstance: createMutation.mutate,
+    isCreating: createMutation.isPending,
+    createError: createMutation.error,
     
     // Start instance mutation
     startInstance: startMutation.mutate,
@@ -165,6 +200,6 @@ export function useLimaInstance() {
     
     // General utilities
     clearStatus,
-    isProcessing: startMutation.isPending || stopMutation.isPending || deleteMutation.isPending,
+    isProcessing: createMutation.isPending || startMutation.isPending || stopMutation.isPending || deleteMutation.isPending,
   };
 }

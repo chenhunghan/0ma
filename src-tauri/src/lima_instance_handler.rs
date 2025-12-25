@@ -7,7 +7,7 @@ use crate::lima_config::LimaConfig;
 use crate::lima_config_service::{get_lima_yaml_path, write_lima_yaml};
 
 /// Create a Lima instance using the managed configuration
-/// This handler uses the stored k0s config file and runs limactl start
+/// This handler wrote config file and runs limactl create with stored config
 /// It streams the output back to the frontend via Tauri events
 #[tauri::command]
 pub async fn create_lima_instance_cmd(
@@ -15,8 +15,6 @@ pub async fn create_lima_instance_cmd(
     config: LimaConfig,
     instance_name: String,
 ) -> Result<String, String> {
-    // Use the provided instance name directly - it's required
-
     // Write the config
     write_lima_yaml(&app, &config, &instance_name)?;
 
@@ -24,9 +22,9 @@ pub async fn create_lima_instance_cmd(
     let config_path = get_lima_yaml_path(&app, &instance_name)
         .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
 
-    // Emit start event
-    app.emit("lima-instance-start", &format!("Starting Lima instance '{}'...", instance_name))
-        .map_err(|e| format!("Failed to emit start event: {}", e))?;
+    // Emit create event
+    app.emit("lima-instance-create", &format!("Creating Lima instance '{}'...", instance_name))
+        .map_err(|e| format!("Failed to emit create event: {}", e))?;
 
     // Spawn async task to run limactl and stream output
     let app_handle = app.clone();
@@ -42,17 +40,100 @@ pub async fn create_lima_instance_cmd(
             }
         };
 
-        // Run limactl start command with the stored config file and explicit instance name
+        // Run limactl create command with the stored config file and explicit instance name
         let child = TokioCommand::new(&lima_cmd)
             .args([
-                "start",
+                "create",
                 "--name", &instance_name_clone,
                 &config_path_clone.to_string_lossy()
             ])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .map_err(|e| format!("Failed to start limactl process: {}", e));
+            .map_err(|e| format!("Failed to start limactl create process: {}", e));
+
+        let mut child = match child {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = app_handle.emit("lima-instance-error", &e.to_string());
+                return;
+            }
+        };
+
+        // Stream stdout
+        if let Some(stdout) = child.stdout.take() {
+            let app_handle_stdout = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stdout).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stdout.emit("lima-instance-output", &line);
+                }
+            });
+        }
+
+        // Stream stderr
+        if let Some(stderr) = child.stderr.take() {
+            let app_handle_stderr = app_handle.clone();
+            tokio::spawn(async move {
+                let mut reader = BufReader::new(stderr).lines();
+                while let Ok(Some(line)) = reader.next_line().await {
+                    let _ = app_handle_stderr.emit("lima-instance-output", &format!("ERROR: {}", line));
+                }
+            });
+        }
+
+        // Wait for process to complete
+        match child.wait().await {
+            Ok(status) => {
+                if status.success() {
+                    let success_msg = format!("Lima instance '{}' created successfully!", instance_name_clone);
+                    let _ = app_handle.emit("lima-instance-create-success", &success_msg);
+                } else {
+                    let error_msg = format!("Failed to create Lima instance. Exit code: {:?}", status.code());
+                    let _ = app_handle.emit("lima-instance-error", &error_msg);
+                }
+            }
+            Err(e) => {
+                let error_msg = format!("Failed to wait for limactl create process: {}", e);
+                let _ = app_handle.emit("lima-instance-error", &error_msg);
+            }
+        }
+    });
+
+    Ok(instance_name)
+}
+
+/// Start a Lima instance
+/// This handler runs limactl start and streams the output back to the frontend via Tauri events
+#[tauri::command]
+pub async fn start_lima_instance_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<String, String> {
+    // Emit start event
+    app.emit("lima-instance-start", &format!("Starting Lima instance '{}'...", instance_name))
+        .map_err(|e| format!("Failed to emit start event: {}", e))?;
+
+    // Spawn async task to run limactl and stream output
+    let app_handle = app.clone();
+    let instance_name_clone = instance_name.clone();
+
+    tokio::spawn(async move {
+        let lima_cmd = match find_lima_executable() {
+            Some(cmd) => cmd,
+            None => {
+                let _ = app_handle.emit("lima-instance-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                return;
+            }
+        };
+
+        // Run limactl start command
+        let child = TokioCommand::new(&lima_cmd)
+            .args(["start", &instance_name_clone])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("Failed to start limactl start process: {}", e));
 
         let mut child = match child {
             Ok(c) => c,
@@ -89,14 +170,14 @@ pub async fn create_lima_instance_cmd(
             Ok(status) => {
                 if status.success() {
                     let success_msg = format!("Lima instance '{}' started successfully!", instance_name_clone);
-                    let _ = app_handle.emit("lima-instance-success", &success_msg);
+                    let _ = app_handle.emit("lima-instance-start-success", &success_msg);
                 } else {
                     let error_msg = format!("Failed to start Lima instance. Exit code: {:?}", status.code());
                     let _ = app_handle.emit("lima-instance-error", &error_msg);
                 }
             }
             Err(e) => {
-                let error_msg = format!("Failed to wait for limactl process: {}", e);
+                let error_msg = format!("Failed to wait for limactl start process: {}", e);
                 let _ = app_handle.emit("lima-instance-error", &error_msg);
             }
         }
