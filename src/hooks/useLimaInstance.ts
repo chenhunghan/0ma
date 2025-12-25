@@ -166,26 +166,21 @@ export function useLimaInstance() {
     
     // Create instance mutation
     createInstance: createMutation.mutate,
-    isCreating: createMutation.isPending,
     createError: createMutation.error,
     
     // Start instance mutation
     startInstance: startMutation.mutate,
-    isStarting: startMutation.isPending,
     startError: startMutation.error,
     
     // Stop instance mutation
     stopInstance: stopMutation.mutate,
-    isStopping: stopMutation.isPending,
     stopError: stopMutation.error,
     
     // Delete instance mutation
     deleteInstance: deleteMutation.mutate,
-    isDeleting: deleteMutation.isPending,
     deleteError: deleteMutation.error,
     
     // General utilities
     clearStatus,
-    isProcessing: createMutation.isPending || startMutation.isPending || stopMutation.isPending || deleteMutation.isPending,
   };
 }
