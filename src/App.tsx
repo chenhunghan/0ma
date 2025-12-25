@@ -19,7 +19,7 @@ export const App: React.FC = () => {
   
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showStartModal, setShowStartModal] = useState(false);
+  const [showConfirmStartModal, setShowConfirmStartModal] = useState(false);
   const [showStartLogsModal, setShowStartLogsModal] = useState(false);
   const [showStopLogsModal, setShowStopLogsModal] = useState(false);
   const [showDeleteLogsModal, setShowDeleteLogsModal] = useState(false);
@@ -34,7 +34,7 @@ export const App: React.FC = () => {
     setCreatedInstanceName(instanceName);
     setSelectedName(instanceName);
     setShowCreateModal(false);
-    setShowStartModal(true);
+    setShowConfirmStartModal(true);
   }, []);
 
   const handleCreateError = useCallback((error: string) => {
@@ -114,14 +114,14 @@ export const App: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleStartCreatedInstance = () => {
+  const handleConfirmStartInstance = () => {
     if (!createdInstanceName) {
       console.error('No created instance to start. Somthing went wrong.');
       return;
     };
     
     // Close confirmation modal and open logs modal
-    setShowStartModal(false);
+    setShowConfirmStartModal(false);
     setShowStartLogsModal(true);
     
     // Start the instance - logs modal will close on success
@@ -164,14 +164,14 @@ export const App: React.FC = () => {
         />
         
         <ConfirmationModal 
-            isOpen={showStartModal}
+            isOpen={showConfirmStartModal}
             title="INSTANCE CREATED"
             message="The virtual machine has been successfully provisioned. Do you want to initialize the boot sequence now?"
             confirmLabel="START INSTANCE"
             cancelLabel="LATER"
             variant="success"
-            onConfirm={handleStartCreatedInstance}
-            onCancel={() => setShowStartModal(false)}
+            onConfirm={handleConfirmStartInstance}
+            onCancel={() => setShowConfirmStartModal(false)}
             isProcessing={false}
         />
         
