@@ -34,6 +34,7 @@ interface InstanceDetailProps {
   isCreating: boolean;
   instance: LimaInstance;
   onDelete: () => Promise<void> | void;
+  onStart?: (instanceName: string) => void;
   onStop?: (instanceName: string) => void;
 }
 
@@ -67,6 +68,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   isCreating,
   instance,
   onDelete,
+  onStart,
   onStop,
 }) => {
   // Global instances state map
@@ -159,10 +161,10 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     updateUiState({ activeTab: tab });
   };
 
-  const handleStart = async () => {
-    setIsProcessing(true);
-    await limaService.startInstance(instance.id);
-    setIsProcessing(false);
+  const handleStart = () => {
+    if (onStart) {
+      onStart(instance.name);
+    }
   };
 
   const handleStop = () => {

@@ -23,6 +23,7 @@ export const App: React.FC = () => {
   const [showStartLogsModal, setShowStartLogsModal] = useState(false);
   const [showStopLogsModal, setShowStopLogsModal] = useState(false);
   const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(null);
+  const [startingInstanceName, setStartingInstanceName] = useState<string | null>(null);
   const [stoppingInstanceName, setStoppingInstanceName] = useState<string | null>(null);
 
   // Listen for create events and logs
@@ -49,11 +50,19 @@ export const App: React.FC = () => {
   // Listen for instance start success to clean up state
   const handleStartSuccess = useCallback((instanceName: string) => {
     console.debug(`Instance ${instanceName} started successfully.`);
-    // Only close modal if the started instance matches the one we're waiting for
+    setShowStartLogsModal(false);
+    
+    // Clear created instance name if it matches
     setCreatedInstanceName((current) => {
       if (instanceName === current) {
-        setShowStartLogsModal(false);
-        // Clear created instance name
+        return null;
+      }
+      return current;
+    });
+    
+    // Clear starting instance name if it matches
+    setStartingInstanceName((current) => {
+      if (instanceName === current) {
         return null;
       }
       return current;
@@ -97,6 +106,12 @@ export const App: React.FC = () => {
     
     // Start the instance - logs modal will close on success
     startInstance(createdInstanceName);
+  };
+
+  const handleStartInstance = (instanceName: string) => {
+    setStartingInstanceName(instanceName);
+    setShowStartLogsModal(true);
+    startInstance(instanceName);
   };
 
   const handleStopInstance = (instanceName: string) => {
@@ -147,7 +162,7 @@ export const App: React.FC = () => {
         <StartInstanceModal 
             isOpen={showStartLogsModal}
             onClose={() => setShowStartLogsModal(false)}
-            instanceName={createdInstanceName || ''}
+            instanceName={startingInstanceName || createdInstanceName || ''}
             onSuccess={handleStartSuccess}
             onError={handleStartError}
         />
@@ -193,6 +208,7 @@ export const App: React.FC = () => {
                 onCreate={handleOpenCreateModal}
                 instance={selectedInstance}
                 onDelete={handleDelete}
+                onStart={handleStartInstance}
                 onStop={handleStopInstance}
                 isCreating={false}
              />
