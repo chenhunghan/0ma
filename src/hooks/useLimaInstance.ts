@@ -6,14 +6,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface LimaInstanceStatus {
   output: string[];
-  success: string | null;
 }
 
 export function useLimaInstance() {
   const queryClient = useQueryClient();
   const [instanceStatus, setInstanceStatus] = useState<LimaInstanceStatus>({
     output: [],
-    success: null,
   });
 
   // Listen for Lima instance events
@@ -24,7 +22,6 @@ export function useLimaInstance() {
         setInstanceStatus(prev => ({
           ...prev,
           output: [event.payload],
-          success: null,
         }));
       });
 
@@ -33,7 +30,6 @@ export function useLimaInstance() {
         setInstanceStatus(prev => ({
           ...prev,
           output: [event.payload],
-          success: null,
         }));
       });
 
@@ -42,7 +38,6 @@ export function useLimaInstance() {
         setInstanceStatus(prev => ({
           ...prev,
           output: [event.payload],
-          success: null,
         }));
       });
 
@@ -55,31 +50,19 @@ export function useLimaInstance() {
       });
 
       // Listen for success event
-      const unlistenSuccess = await listen<string>("lima-instance-success", (event) => {
-        setInstanceStatus(prev => ({
-          ...prev,
-          success: event.payload,
-        }));
+      const unlistenSuccess = await listen<string>("lima-instance-success", () => {
         // Invalidate instances query to refresh the list
         queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
 
       // Listen for stop success event
-      const unlistenStopSuccess = await listen<string>("lima-instance-stop-success", (event) => {
-        setInstanceStatus(prev => ({
-          ...prev,
-          success: event.payload,
-        }));
+      const unlistenStopSuccess = await listen<string>("lima-instance-stop-success", () => {
         // Invalidate instances query to refresh the list
         queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
 
       // Listen for delete success event
-      const unlistenDeleteSuccess = await listen<string>("lima-instance-delete-success", (event) => {
-        setInstanceStatus(prev => ({
-          ...prev,
-          success: event.payload,
-        }));
+      const unlistenDeleteSuccess = await listen<string>("lima-instance-delete-success", () => {
         // Invalidate instances query to refresh the list
         queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
@@ -121,7 +104,6 @@ export function useLimaInstance() {
     onMutate: () => {
       setInstanceStatus({
         output: [],
-        success: null,
       });
     },
     onSuccess: () => {
@@ -136,7 +118,6 @@ export function useLimaInstance() {
     onMutate: (instanceName) => {
       setInstanceStatus({
         output: [`Stopping instance ${instanceName}...`],
-        success: null,
       });
     },
     onSuccess: () => {
@@ -151,7 +132,6 @@ export function useLimaInstance() {
     onMutate: (instanceName) => {
       setInstanceStatus({
         output: [`Deleting instance ${instanceName}...`],
-        success: null,
       });
     },
     onSuccess: () => {
@@ -162,7 +142,6 @@ export function useLimaInstance() {
   const clearStatus = () => {
     setInstanceStatus({
       output: [],
-      success: null,
     });
     startMutation.reset();
     stopMutation.reset();

@@ -454,7 +454,7 @@ export function App() {
         )}
 
         {/* Instance Status */}
-        {(isProcessing || instanceStatus.output.length > 0 || startError || stopError || deleteError || instanceStatus.success) && (
+        {(isProcessing || instanceStatus.output.length > 0 || startError || stopError || deleteError) && (
           <div style={{ marginTop: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px", background: "#f9f9f9" }}>
             <h3>Instance Status</h3>
 
@@ -491,33 +491,6 @@ export function App() {
                 }}>
                   {instanceStatus.output.join('\n')}
                 </pre>
-              </div>
-            )}
-
-            {instanceStatus.success && (
-              <div style={{ marginBottom: "10px", padding: "10px", background: "#d4edda", border: "1px solid #c3e6cb", borderRadius: "4px", color: "#155724" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ flex: 1 }}>
-                    ✅ <strong>Success:</strong> {instanceStatus.success}
-                  </div>
-                  <button
-                    onClick={clearInstanceStatus}
-                    style={{
-                      marginLeft: "10px",
-                      padding: "4px 12px",
-                      background: "#28a745",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "14px"
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.background = "#218838"}
-                    onMouseOut={(e) => e.currentTarget.style.background = "#28a745"}
-                  >
-                    Clear
-                  </button>
-                </div>
               </div>
             )}
 
