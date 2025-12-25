@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Terminal, X, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, Terminal, X, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { useLimaConfig } from '../hooks/useLimaConfig';
 import { LimaConfigForm } from './LimaConfigForm';
 import { CreateLogViewer } from './CreateLogViewer';
 import { useLimaCreateLogs } from '../hooks/useLimaCreateLogs';
 import { useDefaultK0sLimaConfig } from '../hooks/useDefaultK0sLimaConfig';
 import { useLimaInstance } from '../hooks/useLimaInstance';
+import { useIsInstanceRegistered } from '../hooks/useIsInstanceRegistered';
 
 function  getRandomInstanceName (): string {
   const hash = Math.random().toString(36).substring(2, 6);
@@ -44,6 +45,14 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     onError
   );
 
+  const showLogs = isCreating || logs.length > 0;
+
+  // Check if instance name already exists
+  const { data: isRegistered } = useIsInstanceRegistered(
+    name,
+    !showLogs // Only check when not showing logs
+  );
+
   // Reset form when modal is opened fresh (not during creation)
   useEffect(() => {
     if (isOpen && !isCreating && logs.length === 0) {
@@ -57,7 +66,6 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     createInstance({ config, instanceName: name });
   };
 
-  const showLogs = isCreating || logs.length > 0;
   const creationSuccess = !isCreating && !creationError && logs.length > 0;
 
   return (
@@ -93,8 +101,16 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
                        value={name}
                        onChange={(e) => setName(e.target.value)}
                        placeholder="e.g. k8s-worker-01"
-                       className="bg-black border border-zinc-800 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors w-full font-mono placeholder:text-zinc-700"
+                       className={`bg-black border px-4 py-2.5 text-sm text-white focus:outline-none transition-colors w-full font-mono placeholder:text-zinc-700 ${
+                         isRegistered ? 'border-red-500 focus:border-red-500' : 'border-zinc-800 focus:border-emerald-500'
+                       }`}
                     />
+                    {isRegistered && (
+                      <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+                        <AlertCircle className="w-3 h-3" />
+                        <span>An instance with this name already exists</span>
+                      </div>
+                    )}
                 </div>
 
                 {/* Config Form Wrapper */}
@@ -162,7 +178,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
                 </button>
                 <button 
                     onClick={handleSubmit}
-                    disabled={!name.trim()}
+                    disabled={!name.trim() || isRegistered}
                     className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                     Create Instance
