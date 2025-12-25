@@ -2,25 +2,20 @@ import { invoke } from "@tauri-apps/api/core";
 import { LimaConfig } from "../types/lima-config";
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface LimaInstanceStatus {
-  isStarting: boolean;
   output: string[];
-  error: string | null;
   success: string | null;
-  currentInstanceName: string | null;
 }
 
 export function useLimaInstance() {
+  const queryClient = useQueryClient();
   const [instanceStatus, setInstanceStatus] = useState<LimaInstanceStatus>({
-    isStarting: false,
     output: [],
-    error: null,
     success: null,
-    currentInstanceName: null,
   });
 
-  
   // Listen for Lima instance events
   useEffect(() => {
     const setupListeners = async () => {
@@ -28,9 +23,7 @@ export function useLimaInstance() {
       const unlistenStart = await listen<string>("lima-instance-start", (event) => {
         setInstanceStatus(prev => ({
           ...prev,
-          isStarting: true,
           output: [event.payload],
-          error: null,
           success: null,
         }));
       });
@@ -39,9 +32,7 @@ export function useLimaInstance() {
       const unlistenStop = await listen<string>("lima-instance-stop", (event) => {
         setInstanceStatus(prev => ({
           ...prev,
-          isStarting: true,
           output: [event.payload],
-          error: null,
           success: null,
         }));
       });
@@ -50,9 +41,7 @@ export function useLimaInstance() {
       const unlistenDelete = await listen<string>("lima-instance-delete", (event) => {
         setInstanceStatus(prev => ({
           ...prev,
-          isStarting: true,
           output: [event.payload],
-          error: null,
           success: null,
         }));
       });
@@ -69,40 +58,37 @@ export function useLimaInstance() {
       const unlistenSuccess = await listen<string>("lima-instance-success", (event) => {
         setInstanceStatus(prev => ({
           ...prev,
-          isStarting: false,
           success: event.payload,
-          error: null,
         }));
+        // Invalidate instances query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
 
       // Listen for stop success event
       const unlistenStopSuccess = await listen<string>("lima-instance-stop-success", (event) => {
         setInstanceStatus(prev => ({
           ...prev,
-          isStarting: false,
           success: event.payload,
-          error: null,
         }));
+        // Invalidate instances query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
 
       // Listen for delete success event
       const unlistenDeleteSuccess = await listen<string>("lima-instance-delete-success", (event) => {
         setInstanceStatus(prev => ({
           ...prev,
-          isStarting: false,
           success: event.payload,
-          error: null,
         }));
+        // Invalidate instances query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
 
       // Listen for error events
       const unlistenError = await listen<string>("lima-instance-error", (event) => {
-        setInstanceStatus(prev => ({
-          ...prev,
-          isStarting: false,
-          error: event.payload,
-          success: null,
-        }));
+        console.error("Lima instance error:", event.payload);
+        // Invalidate instances query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
       });
 
       // Return cleanup function
@@ -123,98 +109,87 @@ export function useLimaInstance() {
     return () => {
       cleanup.then(fn => fn());
     };
-  }, []);
+  }, [queryClient]);
 
-  const startInstance = async (config: LimaConfig, instanceName: string) => {
-    setInstanceStatus({
-      isStarting: true,
-      output: [],
-      error: null,
-      success: null,
-      currentInstanceName: instanceName,
-    });
-
-    try {
-      await invoke<string>("create_lima_instance_cmd", {
+  const startMutation = useMutation({
+    mutationFn: async ({ config, instanceName }: { config: LimaConfig; instanceName: string }) => {
+      return await invoke<string>("create_lima_instance_cmd", {
         config,
         instanceName
       });
-    } catch (error) {
-      setInstanceStatus(prev => ({
-        ...prev,
-        isStarting: false,
-        error: String(error),
+    },
+    onMutate: () => {
+      setInstanceStatus({
+        output: [],
         success: null,
-      }));
-    }
-  };
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instances"] });
+    },
+  });
 
-  const stopInstance = async (instanceName: string) => {
-    setInstanceStatus(prev => ({
-      ...prev,
-      isStarting: true,
-      output: [`Stopping instance ${instanceName}...`],
-      error: null,
-      success: null,
-    }));
-
-    try {
-      await invoke<string>("stop_lima_instance_cmd", { instanceName });
-    } catch (error) {
-      setInstanceStatus(prev => ({
-        ...prev,
-        isStarting: false,
-        error: String(error),
+  const stopMutation = useMutation({
+    mutationFn: async (instanceName: string) => {
+      return await invoke<string>("stop_lima_instance_cmd", { instanceName });
+    },
+    onMutate: (instanceName) => {
+      setInstanceStatus({
+        output: [`Stopping instance ${instanceName}...`],
         success: null,
-      }));
-    }
-  };
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instances"] });
+    },
+  });
 
-  const deleteInstance = async (instanceName: string) => {
-    setInstanceStatus(prev => ({
-      ...prev,
-      isStarting: true,
-      output: [`Deleting instance ${instanceName}...`],
-      error: null,
-      success: null,
-    }));
-
-    try {
-      await invoke<string>("delete_lima_instance_cmd", { instanceName });
-    } catch (error) {
-      setInstanceStatus(prev => ({
-        ...prev,
-        isStarting: false,
-        error: String(error),
+  const deleteMutation = useMutation({
+    mutationFn: async (instanceName: string) => {
+      return await invoke<string>("delete_lima_instance_cmd", { instanceName });
+    },
+    onMutate: (instanceName) => {
+      setInstanceStatus({
+        output: [`Deleting instance ${instanceName}...`],
         success: null,
-      }));
-    }
-  };
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instances"] });
+    },
+  });
 
   const clearStatus = () => {
     setInstanceStatus({
-      isStarting: false,
       output: [],
-      error: null,
       success: null,
-      currentInstanceName: null,
     });
-  };
-
-  const setCurrentInstance = (instanceName: string) => {
-    setInstanceStatus(prev => ({
-      ...prev,
-      currentInstanceName: instanceName,
-    }));
+    startMutation.reset();
+    stopMutation.reset();
+    deleteMutation.reset();
   };
 
   return {
+    // Instance status (for streaming output/success messages)
     instanceStatus,
-    startInstance,
-    stopInstance,
-    deleteInstance,
+    
+    // Start instance mutation
+    startInstance: startMutation.mutate,
+    isStarting: startMutation.isPending,
+    startError: startMutation.error,
+    
+    // Stop instance mutation
+    stopInstance: stopMutation.mutate,
+    isStopping: stopMutation.isPending,
+    stopError: stopMutation.error,
+    
+    // Delete instance mutation
+    deleteInstance: deleteMutation.mutate,
+    isDeleting: deleteMutation.isPending,
+    deleteError: deleteMutation.error,
+    
+    // General utilities
     clearStatus,
-    setCurrentInstance,
-    isCreatingInstance: instanceStatus.isStarting,
+    isProcessing: startMutation.isPending || stopMutation.isPending || deleteMutation.isPending,
   };
 }

@@ -13,6 +13,7 @@ export function App() {
   const [showEditor, setShowEditor] = useState(false);
   const [editableConfig, setEditableConfig] = useState<LimaConfig | null>(null);
   const [instanceName, setInstanceName] = useState<string>("default");
+  const [selectedInstanceName, setSelectedInstanceName] = useState<string | null>(null);
 
   const { limaVersion, limaVersionError, isLoadingLimaVersion, checkLimaVersion } =
     useLimaVersion();
@@ -34,7 +35,20 @@ export function App() {
     resetLimaError,
   } = useLimaYaml(instanceName);
 
-  const { instanceStatus, startInstance, stopInstance, deleteInstance, clearStatus: clearInstanceStatus, setCurrentInstance, isCreatingInstance } = useLimaInstance();
+  const {
+    instanceStatus,
+    startInstance,
+    stopInstance,
+    deleteInstance,
+    clearStatus: clearInstanceStatus,
+    isStarting,
+    isStopping,
+    isDeleting,
+    startError,
+    stopError,
+    deleteError,
+    isProcessing,
+  } = useLimaInstance();
   const { instances: registeredInstances, isLoading: loadingInstances, loadInstances: refreshInstances } = useInstanceRegistry();
 
   // Wrapper function for delete that triggers refresh after successful deletion
@@ -45,6 +59,10 @@ export function App() {
       console.log('App.tsx: deleteInstance returned, refreshing...');
       // Refresh the instance registry after deletion
       refreshInstances();
+      // Clear selected instance if it was deleted
+      if (selectedInstanceName === instanceName) {
+        setSelectedInstanceName(null);
+      }
     } catch (error) {
       console.error('App.tsx: Error in handleDeleteInstance:', error);
     }
@@ -95,7 +113,7 @@ export function App() {
     if (editableConfig) {
       // Always provide an instance name - use the input or generate a unique one
       const nameToUse = instanceName || `zeroma-${Date.now()}`;
-      await startInstance(editableConfig, nameToUse);
+      await startInstance({ config: editableConfig, instanceName: nameToUse });
     }
   };
 
@@ -172,19 +190,19 @@ export function App() {
 
           <button
             onClick={handleCreateInstance}
-            disabled={!editableConfig || isCreatingInstance || instanceStatus.isStarting || !!instanceStatus.error}
+            disabled={!editableConfig || isStarting || !!startError}
             style={{
-              background: instanceStatus.error ? "#dc3545" : "#28a745",
+              background: startError ? "#dc3545" : "#28a745",
               color: "white",
               border: "none",
               padding: "8px 16px",
               borderRadius: "4px",
-              cursor: (!editableConfig || isCreatingInstance || instanceStatus.isStarting || !!instanceStatus.error) ? "not-allowed" : "pointer"
+              cursor: (!editableConfig || isStarting || !!startError) ? "not-allowed" : "pointer"
             }}
           >
-            {isCreatingInstance || instanceStatus.isStarting
+            {isStarting
               ? "Starting..."
-              : instanceStatus.error
+              : startError
                 ? "Clear Error to Retry"
                 : "Create Lima Instance"
             }
@@ -192,54 +210,54 @@ export function App() {
 
           <button
             onClick={() => {
-              if (instanceStatus.currentInstanceName) {
-                stopInstance(instanceStatus.currentInstanceName);
+              if (selectedInstanceName) {
+                stopInstance(selectedInstanceName);
               }
             }}
-            disabled={!instanceStatus.currentInstanceName || isCreatingInstance || instanceStatus.isStarting || !!instanceStatus.error}
+            disabled={!selectedInstanceName || isStopping || !!stopError}
             style={{
-              background: !instanceStatus.currentInstanceName || instanceStatus.error ? "#6c757d" : "#dc3545",
+              background: !selectedInstanceName || stopError ? "#6c757d" : "#dc3545",
               color: "white",
               border: "none",
               padding: "8px 16px",
               borderRadius: "4px",
-              cursor: (!instanceStatus.currentInstanceName || isCreatingInstance || instanceStatus.isStarting || !!instanceStatus.error) ? "not-allowed" : "pointer"
+              cursor: (!selectedInstanceName || isStopping || !!stopError) ? "not-allowed" : "pointer"
             }}
           >
-            {isCreatingInstance || instanceStatus.isStarting
+            {isStopping
               ? "Stopping..."
-              : instanceStatus.error
+              : stopError
                 ? "Clear Error First"
-                : !instanceStatus.currentInstanceName
-                  ? "No Instance to Stop"
-                  : `Stop Instance (${instanceStatus.currentInstanceName})`
+                : !selectedInstanceName
+                  ? "No Instance Selected"
+                  : `Stop Instance (${selectedInstanceName})`
             }
           </button>
 
           <button
             onClick={() => {
-              if (instanceStatus.currentInstanceName &&
-                  confirm(`Are you sure you want to permanently delete the Lima instance '${instanceStatus.currentInstanceName}'? This action cannot be undone.`)) {
-                deleteInstance(instanceStatus.currentInstanceName);
+              if (selectedInstanceName &&
+                  confirm(`Are you sure you want to permanently delete the Lima instance '${selectedInstanceName}'? This action cannot be undone.`)) {
+                deleteInstance(selectedInstanceName);
               }
             }}
-            disabled={!instanceStatus.currentInstanceName || isCreatingInstance || instanceStatus.isStarting || !!instanceStatus.error}
+            disabled={!selectedInstanceName || isDeleting || !!deleteError}
             style={{
-              background: !instanceStatus.currentInstanceName || instanceStatus.error ? "#6c757d" : "#ffc107",
-              color: (!instanceStatus.currentInstanceName || instanceStatus.error) ? "white" : "black",
+              background: !selectedInstanceName || deleteError ? "#6c757d" : "#ffc107",
+              color: (!selectedInstanceName || deleteError) ? "white" : "black",
               border: "none",
               padding: "8px 16px",
               borderRadius: "4px",
-              cursor: (!instanceStatus.currentInstanceName || isCreatingInstance || instanceStatus.isStarting || !!instanceStatus.error) ? "not-allowed" : "pointer"
+              cursor: (!selectedInstanceName || isDeleting || !!deleteError) ? "not-allowed" : "pointer"
             }}
           >
-            {isCreatingInstance || instanceStatus.isStarting
+            {isDeleting
               ? "Deleting..."
-              : instanceStatus.error
+              : deleteError
                 ? "Clear Error First"
-                : !instanceStatus.currentInstanceName
-                  ? "No Instance to Delete"
-                  : `Delete Instance (${instanceStatus.currentInstanceName})`
+                : !selectedInstanceName
+                  ? "No Instance Selected"
+                  : `Delete Instance (${selectedInstanceName})`
             }
           </button>
         </div>
@@ -303,7 +321,7 @@ export function App() {
                 .map((instance) => {
                   const isInstanceRunning = instance.status === "Running";
                   const isInstanceStopped = instance.status === "Stopped";
-                  const isSelected = instance.name === instanceStatus.currentInstanceName;
+                  const isSelected = instance.name === selectedInstanceName;
 
                   // Determine background color based on status
                   let bgColor = "white";
@@ -313,7 +331,7 @@ export function App() {
                   return (
                     <div
                       key={instance.name}
-                      onClick={() => setCurrentInstance(instance.name)}
+                      onClick={() => setSelectedInstanceName(instance.name)}
                       style={{
                         display: "flex",
                         justifyContent: "space-between",
@@ -381,16 +399,16 @@ export function App() {
                               console.error('Error showing dialog:', error);
                             }
                           }}
-                          disabled={instanceStatus.isStarting}
+                          disabled={isProcessing}
                           style={{
                             padding: "2px 8px",
                             background: "#dc3545",
                             color: "white",
                             border: "none",
                             borderRadius: "3px",
-                            cursor: instanceStatus.isStarting ? "not-allowed" : "pointer",
+                            cursor: isProcessing ? "not-allowed" : "pointer",
                             fontSize: "11px",
-                            opacity: instanceStatus.isStarting ? 0.6 : 1
+                            opacity: isProcessing ? 0.6 : 1
                           }}
                           title={`Delete instance ${instance.name}`}
                         >
@@ -436,24 +454,24 @@ export function App() {
         )}
 
         {/* Instance Status */}
-        {(instanceStatus.isStarting || instanceStatus.output.length > 0 || instanceStatus.error || instanceStatus.success) && (
+        {(isProcessing || instanceStatus.output.length > 0 || startError || stopError || deleteError || instanceStatus.success) && (
           <div style={{ marginTop: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px", background: "#f9f9f9" }}>
             <h3>Instance Status</h3>
 
-            {instanceStatus.isStarting && (
+            {isProcessing && (
               <div style={{ marginBottom: "10px", color: "#007bff" }}>
                 ⏳ Operation in progress...
-                {instanceStatus.currentInstanceName && (
+                {selectedInstanceName && (
                   <span style={{ marginLeft: "10px", fontWeight: "bold" }}>
-                    Instance: {instanceStatus.currentInstanceName}
+                    Instance: {selectedInstanceName}
                   </span>
                 )}
               </div>
             )}
 
-            {instanceStatus.currentInstanceName && !instanceStatus.isStarting && !instanceStatus.error && (
+            {selectedInstanceName && !isProcessing && !startError && !stopError && !deleteError && (
               <div style={{ marginBottom: "10px", padding: "8px", background: "#e7f3ff", border: "1px solid #b3d9ff", borderRadius: "4px" }}>
-                <strong>Active Instance:</strong> {instanceStatus.currentInstanceName}
+                <strong>Selected Instance:</strong> {selectedInstanceName}
               </div>
             )}
 
@@ -503,11 +521,11 @@ export function App() {
               </div>
             )}
 
-            {instanceStatus.error && (
+            {(startError || stopError || deleteError) && (
               <div style={{ marginBottom: "10px", padding: "10px", background: "#f8d7da", border: "1px solid #f5c6cb", borderRadius: "4px", color: "#721c24" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div style={{ flex: 1 }}>
-                    ❌ <strong>Error:</strong> {instanceStatus.error}
+                    ❌ <strong>Error:</strong> {String(startError || stopError || deleteError)}
                   </div>
                   <button
                     onClick={clearInstanceStatus}
