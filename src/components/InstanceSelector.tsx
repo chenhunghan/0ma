@@ -37,8 +37,8 @@ export const InstanceSelector: React.FC<InstanceSelectorProps> = ({
       <button
         onClick={onCreate}
         disabled={isCreating}
-        className="h-[28px] w-[28px] flex items-center justify-center border border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-        title="NEW INSTANCE"
+        className="h-7 w-7 flex items-center justify-center border border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+        title="New Instance"
       >
         {isCreating ? (
           <Loader2 className="w-3 h-3 animate-spin" />

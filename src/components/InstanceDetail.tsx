@@ -556,7 +556,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
               {!isRunning && (
                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
-                  <div className="border border-zinc-700 bg-zinc-950 p-6 min-w-[300px] text-center shadow-2xl">
+                  <div className="border border-zinc-700 bg-zinc-950 p-6 min-w-75 text-center shadow-2xl">
                     <div className="text-red-500 font-bold mb-2 uppercase tracking-widest text-lg animate-pulse">
                       SYSTEM HALTED
                     </div>
