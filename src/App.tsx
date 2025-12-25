@@ -115,7 +115,10 @@ export const App: React.FC = () => {
   };
 
   const handleStartCreatedInstance = () => {
-    if (!createdInstanceName) return;
+    if (!createdInstanceName) {
+      console.error('No created instance to start. Somthing went wrong.');
+      return;
+    };
     
     // Close confirmation modal and open logs modal
     setShowStartModal(false);
