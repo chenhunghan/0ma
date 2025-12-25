@@ -36,7 +36,7 @@ export function App() {
   } = useLimaYaml(instanceName);
 
   const {
-    instanceStatus,
+    operationLogs,
     startInstance,
     stopInstance,
     deleteInstance,
@@ -454,7 +454,7 @@ export function App() {
         )}
 
         {/* Instance Status */}
-        {(isProcessing || instanceStatus.output.length > 0 || startError || stopError || deleteError) && (
+        {(isProcessing || operationLogs.logs.length > 0 || startError || stopError || deleteError) && (
           <div style={{ marginTop: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px", background: "#f9f9f9" }}>
             <h3>Instance Status</h3>
 
@@ -475,9 +475,9 @@ export function App() {
               </div>
             )}
 
-            {instanceStatus.output.length > 0 && (
+            {operationLogs.logs.length > 0 && (
               <div style={{ marginBottom: "15px" }}>
-                <strong>Output:</strong>
+                <strong>Logs:</strong>
                 <pre style={{
                   background: "#1e1e1e",
                   color: "#d4d4d4",
@@ -489,7 +489,7 @@ export function App() {
                   lineHeight: "1.4",
                   marginTop: "5px"
                 }}>
-                  {instanceStatus.output.join('\n')}
+                  {operationLogs.logs.join('\n')}
                 </pre>
               </div>
             )}

@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export interface LimaInstanceStatus {
-  output: string[];
+export interface LimaOperationLogs {
+  logs: string[];
 }
 
 export function useLimaInstance() {
   const queryClient = useQueryClient();
-  const [instanceStatus, setInstanceStatus] = useState<LimaInstanceStatus>({
-    output: [],
+  const [operationLogs, setOperationLogs] = useState<LimaOperationLogs>({
+    logs: [],
   });
 
   // Listen for Lima instance events
@@ -19,33 +19,33 @@ export function useLimaInstance() {
     const setupListeners = async () => {
       // Listen for start event
       const unlistenStart = await listen<string>("lima-instance-start", (event) => {
-        setInstanceStatus(prev => ({
+        setOperationLogs(prev => ({
           ...prev,
-          output: [event.payload],
+          logs: [event.payload],
         }));
       });
 
       // Listen for stop event
       const unlistenStop = await listen<string>("lima-instance-stop", (event) => {
-        setInstanceStatus(prev => ({
+        setOperationLogs(prev => ({
           ...prev,
-          output: [event.payload],
+          logs: [event.payload],
         }));
       });
 
       // Listen for delete event
       const unlistenDelete = await listen<string>("lima-instance-delete", (event) => {
-        setInstanceStatus(prev => ({
+        setOperationLogs(prev => ({
           ...prev,
-          output: [event.payload],
+          logs: [event.payload],
         }));
       });
 
       // Listen for output events
       const unlistenOutput = await listen<string>("lima-instance-output", (event) => {
-        setInstanceStatus(prev => ({
+        setOperationLogs(prev => ({
           ...prev,
-          output: [...prev.output, event.payload],
+          logs: [...prev.logs, event.payload],
         }));
       });
 
@@ -102,8 +102,8 @@ export function useLimaInstance() {
       });
     },
     onMutate: () => {
-      setInstanceStatus({
-        output: [],
+      setOperationLogs({
+        logs: [],
       });
     },
     onSuccess: () => {
@@ -115,9 +115,9 @@ export function useLimaInstance() {
     mutationFn: async (instanceName: string) => {
       return await invoke<string>("stop_lima_instance_cmd", { instanceName });
     },
-    onMutate: (instanceName) => {
-      setInstanceStatus({
-        output: [`Stopping instance ${instanceName}...`],
+    onMutate: () => {
+      setOperationLogs({
+        logs: [],
       });
     },
     onSuccess: () => {
@@ -129,9 +129,9 @@ export function useLimaInstance() {
     mutationFn: async (instanceName: string) => {
       return await invoke<string>("delete_lima_instance_cmd", { instanceName });
     },
-    onMutate: (instanceName) => {
-      setInstanceStatus({
-        output: [`Deleting instance ${instanceName}...`],
+    onMutate: () => {
+      setOperationLogs({
+        logs: [],
       });
     },
     onSuccess: () => {
@@ -140,8 +140,8 @@ export function useLimaInstance() {
   });
 
   const clearStatus = () => {
-    setInstanceStatus({
-      output: [],
+    setOperationLogs({
+      logs: [],
     });
     startMutation.reset();
     stopMutation.reset();
@@ -149,8 +149,8 @@ export function useLimaInstance() {
   };
 
   return {
-    // Instance status (for streaming output/success messages)
-    instanceStatus,
+    // Streaming logs from lifecycle operations (start/stop/delete)
+    operationLogs,
     
     // Start instance mutation
     startInstance: startMutation.mutate,
