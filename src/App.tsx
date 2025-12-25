@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   Terminal,
 } from 'lucide-react';
 import { InstanceStatus } from './types/InstanceStatus';
 import { useLimaInstances } from './hooks/useLimaInstances';
 import { useLimaInstance } from './hooks/useLimaInstance';
+import { useSelectedInstance } from './hooks/useSelectedInstance';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
@@ -15,7 +16,7 @@ import { DeleteInstanceModal } from './components/DeleteInstanceModal';
 export const App: React.FC = () => {
   const { instances, isLoading } = useLimaInstances();
   const { startInstance, stopInstance, deleteInstance } = useLimaInstance();
-  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const { selectedName, setSelectedName, selectedInstance } = useSelectedInstance(instances);
   
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -41,13 +42,6 @@ export const App: React.FC = () => {
     console.error('Instance creation failed:', error);
     // Keep modal open to show error logs
   }, []);
-
-  // Auto-select first instance if none selected
-  useEffect(() => {
-    if (!selectedName && instances.length > 0) {
-      setSelectedName(instances[0].name);
-    }
-  }, [instances, selectedName]);
 
   // Listen for instance start success to clean up state
   const handleStartSuccess = useCallback((instanceName: string) => {
@@ -150,8 +144,6 @@ export const App: React.FC = () => {
     // Trigger deletion with modal - will switch to another instance on success
     handleDeleteInstance(instanceName);
   };
-
-  const selectedInstance = instances.find(i => i.name === selectedName);
 
   return (
     <div className="h-screen bg-black text-zinc-300 font-mono overflow-hidden flex flex-col selection:bg-zinc-700 selection:text-white">
