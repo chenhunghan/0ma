@@ -172,6 +172,7 @@ export const App: React.FC = () => {
             variant="success"
             onConfirm={handleConfirmStartInstance}
             onCancel={() => setShowConfirmStartModal(false)}
+            // immediate not in loading state since we already created the instance
             isProcessing={false}
         />
         
