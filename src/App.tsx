@@ -2,17 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Terminal,
 } from 'lucide-react';
-import { LimaInstance } from './types/LimaInstance';
 import { InstanceStatus } from './types/InstanceStatus';
 import { LimaConfig } from './types/LimaConfig';
 import { limaService } from './services/limaService';
+import { useLimaInstances } from './hooks/useLimaInstances';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 
 export const App: React.FC = () => {
-  const [instances, setInstances] = useState<LimaInstance[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { instances, isLoading, refreshInstances } = useLimaInstances();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
   // Modal States
@@ -23,24 +22,12 @@ export const App: React.FC = () => {
   const [createdInstanceId, setCreatedInstanceId] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
-  const fetchInstances = async () => {
-    const data = await limaService.getInstances();
-    setInstances(data);
-    setIsLoading(false);
-    
-    // Auto-select first instance if none selected
-    if (!selectedId && data.length > 0) {
-      setSelectedId(data[0].id);
-    }
-  };
-
+  // Auto-select first instance if none selected
   useEffect(() => {
-    fetchInstances();
-    const interval = setInterval(() => {
-        limaService.getInstances().then(setInstances);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!selectedId && instances.length > 0) {
+      setSelectedId(instances[0].id);
+    }
+  }, [instances, selectedId]);
 
   const handleOpenCreateModal = () => {
     setShowCreateModal(true);
@@ -49,7 +36,6 @@ export const App: React.FC = () => {
   const handleCreateConfirm = async (name: string, config: LimaConfig) => {
     setIsCreating(true);
     const newInstance = await limaService.createInstance(name, config);
-    await fetchInstances();
     
     // Select the new instance
     setSelectedId(newInstance.id);
@@ -66,30 +52,22 @@ export const App: React.FC = () => {
     if (!createdInstanceId) return;
     setIsStarting(true);
     await limaService.startInstance(createdInstanceId);
-    await fetchInstances();
+    await refreshInstances();
     setIsStarting(false);
     setShowStartModal(false);
     setCreatedInstanceId(null);
   };
 
   const handleDelete = async () => {
-      // Fetch latest instances to determine what to show next
-      const data = await limaService.getInstances();
-      
-      if (data.length > 0) {
+      if (instances.length > 0) {
           // Priority 1: Switch to a Running instance
-          const runningInstance = data.find(i => i.status === InstanceStatus.Running);
-          const nextId = runningInstance ? runningInstance.id : data[0].id;
+          const runningInstance = instances.find(i => i.status === InstanceStatus.Running);
+          const nextId = runningInstance ? runningInstance.id : instances[0].id;
           
-          // CRITICAL: Update selectedId FIRST so the UI switches to the valid instance
-          // before the old list (which still contains the deleted one in React state) is updated.
-          // This prevents the "Loading Data Stream" fallback which occurs when selectedId is invalid.
+          // Update selectedId to switch to the valid instance
           setSelectedId(nextId);
-          setInstances(data);
       } else {
-          // No instances left: Update instances first to clear the list, 
-          // then clear selection to show the empty state.
-          setInstances(data);
+          // No instances left: clear selection to show the empty state
           setSelectedId(null);
       }
   };
@@ -150,7 +128,6 @@ export const App: React.FC = () => {
                 onSelect={setSelectedId}
                 onCreate={handleOpenCreateModal}
                 instance={selectedInstance}
-                onUpdate={fetchInstances}
                 onDelete={handleDelete}
                 isCreating={isCreating}
              />

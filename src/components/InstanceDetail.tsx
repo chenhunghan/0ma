@@ -32,9 +32,7 @@ interface InstanceDetailProps {
   onSelect: (id: string) => void;
   onCreate: () => void;
   isCreating: boolean;
-
   instance: LimaInstance;
-  onUpdate: () => void;
   onDelete: () => Promise<void> | void;
 }
 
@@ -67,7 +65,6 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   onCreate,
   isCreating,
   instance,
-  onUpdate,
   onDelete,
 }) => {
   // Global instances state map
@@ -163,14 +160,12 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   const handleStart = async () => {
     setIsProcessing(true);
     await limaService.startInstance(instance.id);
-    onUpdate();
     setIsProcessing(false);
   };
 
   const handleStop = async () => {
     setIsProcessing(true);
     await limaService.stopInstance(instance.id);
-    onUpdate();
     setIsProcessing(false);
   };
 
@@ -207,8 +202,6 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
                 draftYaml: undefined 
             }
         }));
-        
-        onUpdate();
     } catch (e) {
         console.error("Failed to save config", e);
     }
