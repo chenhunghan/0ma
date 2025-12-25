@@ -26,6 +26,8 @@ export function useLimaYaml(instanceName: string) {
     onSuccess: async () => {
       // Invalidate and refetch the Lima YAML after writing
       await queryClient.invalidateQueries({ queryKey: ["lima_yaml", instanceName] });
+      // Also invalidate instances query so the UI reflects updated metadata (cpus, memory, disk)
+      await queryClient.invalidateQueries({ queryKey: ["instances"] });
     },
   });
 

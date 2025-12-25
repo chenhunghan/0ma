@@ -14,7 +14,7 @@ import { LimaConfig } from '../types/LimaConfig';
 
 interface LimaPanelProps {
   instance: LimaInstance;
-  parsedConfig: LimaConfig;
+  parsedConfig?: LimaConfig;
   panelHeight: number | 'auto';
   handlePanelResizeStart: (e: React.MouseEvent<HTMLDivElement>) => void;
   onClose: () => void;
@@ -79,7 +79,7 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
               <div>
                 <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">VM Type</span>
                 <span className="text-zinc-300 text-xs">
-                  {parsedConfig.vmType || 'vz'}
+                  {parsedConfig?.vmType || 'vz'}
                 </span>
               </div>
               <div>

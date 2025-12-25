@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import { Save } from 'lucide-react';
 import { LimaInstance } from '../types/LimaInstance';
 import { InstanceStatus } from '../types/InstanceStatus';
@@ -24,6 +23,7 @@ import { K8sNodePanel } from './K8sNodePanel';
 import { K8sPodPanel } from './K8sPodPanel';
 import { K8sSvcPanel } from './K8sSvcPanel';
 import { ConfirmationModal } from './ConfirmationModal';
+import { useLimaYaml } from '../hooks/useLimaYaml';
 
 interface InstanceDetailProps {
   instances: LimaInstance[];
@@ -70,6 +70,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   onStart,
   onStop,
 }) => {
+  const { limaConfig, writeLimaYaml, isWritingLima } = useLimaYaml(instance.name);
+
   // Global instances state map
   const [instancesState, setInstancesState] = useState<Record<string, InstanceUIState>>({});
 
@@ -99,8 +101,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   // Derived states
   // configObject: The structured config we operate on (Source of Truth)
   // yamlString: The text we show in the editor
-  const configObject = uiState.config.draftConfig ?? instance.config;
-  const yamlString = uiState.config.draftYaml ?? stringify(instance.config);
+  const configObject = uiState.config.draftConfig ?? limaConfig;
+  const yamlString = uiState.config.draftYaml ?? (limaConfig ? stringify(limaConfig) : '');
 
   // Helper to update both config object and its yaml string representation
   const setConfig = (newConfig: LimaConfig) => {
@@ -185,13 +187,12 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   };
 
   const handleSaveConfig = async () => {
+    if (!configObject) return; // Guard against undefined config
+    
     setIsSaving(true);
     try {
         // Save using the current object state
-        await invoke('write_lima_yaml_cmd', { 
-          instanceName: instance.name, 
-          config: configObject 
-        });
+        writeLimaYaml(configObject);
         
         // Clear drafts
         updateUiState(prev => ({
@@ -210,11 +211,13 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   // --- Configuration Modification Helpers (Object Manipulation) ---
 
   const updateConfigField = (field: string, value: any) => {
+    if (!configObject) return;
     const newConfig = { ...configObject, [field]: value };
     setConfig(newConfig);
   };
 
   const updateProvisionScript = (index: number, key: 'mode' | 'script', value: string) => {
+    if (!configObject) return;
     const newProvision = [...(configObject.provision || [])];
     if (!newProvision[index]) return;
     newProvision[index] = { ...newProvision[index], [key]: value };
@@ -223,6 +226,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   };
 
   const addProvisionScript = () => {
+    if (!configObject) return;
     const newScript = { mode: 'system', script: '# New Script\n' };
     const newProvision = [...(configObject.provision || []), newScript];
     const newConfig = { ...configObject, provision: newProvision };
@@ -235,6 +239,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   };
 
   const removeProvisionScript = (index: number) => {
+    if (!configObject) return;
     const newProvision = [...(configObject.provision || [])];
     newProvision.splice(index, 1);
     const newConfig = { ...configObject, provision: newProvision };
@@ -246,6 +251,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     key: 'description' | 'script' | 'hint' | 'mode',
     value: string
   ) => {
+    if (!configObject) return;
     const newProbes = [...(configObject.probes || [])];
     if (!newProbes[index]) return;
     // @ts-ignore - dynamic access
@@ -255,6 +261,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   };
 
   const addProbeScript = () => {
+    if (!configObject) return;
     const newProbe = {
       description: 'New Probe',
       script: '#!/bin/bash\nexit 0\n',
@@ -271,6 +278,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   };
 
   const removeProbeScript = (index: number) => {
+    if (!configObject) return;
     const newProbes = [...(configObject.probes || [])];
     newProbes.splice(index, 1);
     const newConfig = { ...configObject, probes: newProbes };
@@ -379,7 +387,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   // Check if config has changed
   // Simple check via stringify comparison
-  const hasChanges = uiState.config.draftConfig !== undefined && stringify(uiState.config.draftConfig) !== stringify(instance.config);
+  const hasChanges = uiState.config.draftConfig !== undefined && limaConfig !== undefined && stringify(uiState.config.draftConfig) !== stringify(limaConfig);
 
   return (
     <div className="flex flex-col h-full bg-black text-zinc-300 font-mono">
@@ -479,11 +487,11 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
                 <div className="absolute bottom-6 right-6 z-50">
                   <button
                     onClick={handleSaveConfig}
-                    disabled={isSaving}
+                    disabled={isSaving || isWritingLima}
                     className="flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-zinc-100 hover:bg-white text-black border border-zinc-100 shadow-xl transition-all hover:scale-105"
                   >
                     <Save className="w-4 h-4" />
-                    {isSaving ? 'WRITING...' : 'SAVE CHANGES'}
+                    {(isSaving || isWritingLima) ? 'WRITING...' : 'SAVE CHANGES'}
                   </button>
                 </div>
               )}
@@ -494,7 +502,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
             {uiState.lima.showPanel && activeTab === 'lima' && (
               <LimaPanel
                 instance={instance}
-                parsedConfig={instance.config}
+                parsedConfig={limaConfig}
                 panelHeight={uiState.panelHeight}
                 handlePanelResizeStart={handlePanelResizeStart}
                 onClose={() => updateUiState(prev => ({ lima: { ...prev.lima, showPanel: false } }))}

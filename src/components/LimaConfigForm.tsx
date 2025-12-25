@@ -21,7 +21,7 @@ import { Select } from './Select';
 import { LimaConfig } from '../types/LimaConfig';
 
 interface LimaConfigFormProps {
-  parsedConfig: LimaConfig;
+  parsedConfig?: LimaConfig;
   updateConfigField: (field: string, value: any) => void;
   updateProvisionScript: (index: number, key: 'mode' | 'script', value: string) => void;
   addProvisionScript: () => void;
@@ -54,6 +54,14 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
   showProbes: propsShowProbes,
   onToggleProbes
 }) => {
+  if (!parsedConfig) {
+    return (
+      <div className="flex items-center justify-center h-full text-zinc-500">
+        Loading configuration...
+      </div>
+    );
+  }
+  
   const [localShowScripts, setLocalShowScripts] = React.useState(false);
   const [localShowProbes, setLocalShowProbes] = React.useState(false);
   const [showImages, setShowImages] = React.useState(true);

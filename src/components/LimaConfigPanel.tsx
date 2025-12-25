@@ -7,7 +7,7 @@ import { LimaConfigForm } from './LimaConfigForm';
 import { LimaConfig } from '../types/LimaConfig';
 
 interface LimaConfigPanelProps {
-  parsedConfig: LimaConfig;
+  parsedConfig?: LimaConfig;
   updateConfigField: (field: string, value: any) => void;
   updateProvisionScript: (index: number, key: 'mode' | 'script', value: string) => void;
   addProvisionScript: () => void;

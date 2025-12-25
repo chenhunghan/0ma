@@ -22,7 +22,8 @@ pub struct LimaInstance {
     pub memory: String,
     pub disk: String,
     pub arch: String,
-    pub config: LimaConfig,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<LimaConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub k8s: Option<K8sInfo>,
 }
@@ -81,11 +82,8 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
         }
         match serde_json::from_str::<LimaListOutput>(line) {
             Ok(raw) => {
-                // Extract config or use default values
-                let config = raw.config.clone().unwrap_or_else(|| {
-                    // Create minimal (default empty) config if not available
-                    LimaConfig::default()
-                });
+                // Extract config only for metadata extraction
+                let config = raw.config.as_ref();
                 
                 // Extract architecture
                 let arch = raw.arch
@@ -97,14 +95,18 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                         { "x86_64".to_string() }
                     });
                 
-                // Extract CPUs from config
-                let cpus = config.cpus.unwrap_or(0);
+                // Extract CPUs from config if available
+                let cpus = config.and_then(|c| c.cpus).unwrap_or(0);
                 
                 // Extract memory from config (already has unit)
-                let memory = config.memory.clone().unwrap_or_else(|| "-".to_string());
+                let memory = config
+                    .and_then(|c| c.memory.clone())
+                    .unwrap_or_else(|| "-".to_string());
                 
                 // Extract disk from config (already has unit)
-                let disk = config.disk.clone().unwrap_or_else(|| "-".to_string());
+                let disk = config
+                    .and_then(|c| c.disk.clone())
+                    .unwrap_or_else(|| "-".to_string());
                 
                 let instance = LimaInstance {
                     name: raw.name,
@@ -113,7 +115,7 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                     memory,
                     disk,
                     arch,
-                    config,
+                    config: None, // Read config using read_lima_yaml_cmd instead
                     k8s: None, // K8s info would need to be fetched separately
                 };
                 instances.push(instance);
