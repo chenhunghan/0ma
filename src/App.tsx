@@ -11,10 +11,11 @@ import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { StartInstanceModal } from './components/StartInstanceModal';
 import { StopInstanceModal } from './components/StopInstanceModal';
+import { DeleteInstanceModal } from './components/DeleteInstanceModal';
 
 export const App: React.FC = () => {
   const { instances, isLoading } = useLimaInstances();
-  const { createInstance, startInstance, stopInstance } = useLimaInstance();
+  const { createInstance, startInstance, stopInstance, deleteInstance } = useLimaInstance();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
   // Modal States
@@ -22,9 +23,11 @@ export const App: React.FC = () => {
   const [showStartModal, setShowStartModal] = useState(false);
   const [showStartLogsModal, setShowStartLogsModal] = useState(false);
   const [showStopLogsModal, setShowStopLogsModal] = useState(false);
+  const [showDeleteLogsModal, setShowDeleteLogsModal] = useState(false);
   const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(null);
   const [startingInstanceName, setStartingInstanceName] = useState<string | null>(null);
   const [stoppingInstanceName, setStoppingInstanceName] = useState<string | null>(null);
+  const [deletingInstanceName, setDeletingInstanceName] = useState<string | null>(null);
 
   // Listen for create events and logs
   const handleCreateSuccess = useCallback((instanceName: string) => {
@@ -85,6 +88,29 @@ export const App: React.FC = () => {
     // Keep modal open to show error logs
   }, []);
 
+  const handleDeleteSuccess = useCallback((instanceName: string) => {
+    console.debug(`Instance ${instanceName} deleted successfully.`);
+    setShowDeleteLogsModal(false);
+    setDeletingInstanceName(null);
+    
+    // Switch to another instance after successful deletion
+    const remainingInstances = instances.filter(i => i.name !== instanceName);
+    if (remainingInstances.length > 0) {
+      // Priority 1: Switch to a Running instance
+      const runningInstance = remainingInstances.find(i => i.status === InstanceStatus.Running);
+      const nextId = runningInstance ? runningInstance.id : remainingInstances[0].id;
+      setSelectedId(nextId);
+    } else {
+      // No instances left: clear selection to show the empty state
+      setSelectedId(null);
+    }
+  }, [instances]);
+
+  const handleDeleteError = useCallback((error: string) => {
+    console.error('Instance delete failed:', error);
+    // Keep modal open to show error logs
+  }, []);
+
   const handleOpenCreateModal = () => {
     setShowCreateModal(true);
   };
@@ -120,18 +146,15 @@ export const App: React.FC = () => {
     stopInstance(instanceName);
   };
 
-  const handleDelete = async () => {
-      if (instances.length > 0) {
-          // Priority 1: Switch to a Running instance
-          const runningInstance = instances.find(i => i.status === InstanceStatus.Running);
-          const nextId = runningInstance ? runningInstance.id : instances[0].id;
-          
-          // Update selectedId to switch to the valid instance
-          setSelectedId(nextId);
-      } else {
-          // No instances left: clear selection to show the empty state
-          setSelectedId(null);
-      }
+  const handleDeleteInstance = (instanceName: string) => {
+    setDeletingInstanceName(instanceName);
+    setShowDeleteLogsModal(true);
+    deleteInstance(instanceName);
+  };
+
+  const handleDelete = (instanceName: string) => {
+    // Trigger deletion with modal - will switch to another instance on success
+    handleDeleteInstance(instanceName);
   };
 
   const selectedInstance = instances.find(i => i.id === selectedId);
@@ -173,6 +196,14 @@ export const App: React.FC = () => {
             instanceName={stoppingInstanceName || ''}
             onSuccess={handleStopSuccess}
             onError={handleStopError}
+        />
+        
+        <DeleteInstanceModal 
+            isOpen={showDeleteLogsModal}
+            onClose={() => setShowDeleteLogsModal(false)}
+            instanceName={deletingInstanceName || ''}
+            onSuccess={handleDeleteSuccess}
+            onError={handleDeleteError}
         />
 
         {isLoading ? (

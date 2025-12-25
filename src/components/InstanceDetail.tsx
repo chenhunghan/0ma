@@ -7,7 +7,6 @@ import { SessionType } from '../types/TerminalSession';
 import { LimaConfig } from '../types/LimaConfig';
 import TerminalView from './TerminalView';
 import { limaService } from '../services/limaService';
-import { terminalManager } from '../services/TerminalManager';
 import { parse, stringify } from 'yaml';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
@@ -33,7 +32,7 @@ interface InstanceDetailProps {
   onCreate: () => void;
   isCreating: boolean;
   instance: LimaInstance;
-  onDelete: () => Promise<void> | void;
+  onDelete: (instanceName: string) => Promise<void> | void;
   onStart?: (instanceName: string) => void;
   onStop?: (instanceName: string) => void;
 }
@@ -181,15 +180,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   // Actual delete execution
   const executeDelete = async () => {
     setIsProcessing(true);
-    try {
-        await limaService.deleteInstance(instance.id);
-        terminalManager.disposeByPrefix(instance.id);
-        await onDelete();
-    } catch (e) {
-        console.error("Delete failed", e);
-        setIsProcessing(false);
-        setShowDeleteModal(false);
-    }
+    setShowDeleteModal(false);
+    await onDelete(instance.name);
   };
 
   const handleSaveConfig = async () => {
