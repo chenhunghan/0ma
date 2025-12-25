@@ -45,7 +45,7 @@ App (Parent)
 │   ├── isCreating (moved to child - internal display state)
 │   └── error (moved to child - internal error handling)
 │
-└── StartInstanceModal (Child)
+└── StartLogsModal (Child)
     ├── logs (moved to child - only used internally)
     ├── isStarting (moved to child - internal display state)
     └── error (moved to child - internal error handling)
@@ -81,7 +81,7 @@ interface ModalProps {
 Use custom hooks inside child components to manage their own data fetching and state:
 
 - `useLimaCreateLogs()` inside `CreateInstanceModal`
-- `useLimaStartLogs()` inside `StartInstanceModal`
+- `useLimaStartLogs()` inside `StartLogsModal`
 - Parent only receives notifications via callbacks
 
 ## Current Implementation
@@ -89,7 +89,7 @@ Use custom hooks inside child components to manage their own data fetching and s
 The following components manage their own state:
 
 - **CreateInstanceModal**: Manages creation logs, loading state, and errors internally
-- **StartInstanceModal**: Manages start logs, loading state, and errors internally
+- **StartLogsModal**: Manages start logs, loading state, and errors internally
 - **CreateLogViewer**: Reusable log display component (purely presentational)
 
 Parent (App) only manages:

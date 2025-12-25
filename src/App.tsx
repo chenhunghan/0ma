@@ -8,7 +8,7 @@ import { useLimaInstance } from './hooks/useLimaInstance';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { StartInstanceModal } from './components/StartInstanceModal';
+import { StartLogsModal } from './components/StartLogsModal';
 import { StopInstanceModal } from './components/StopInstanceModal';
 import { DeleteInstanceModal } from './components/DeleteInstanceModal';
 
@@ -175,7 +175,7 @@ export const App: React.FC = () => {
             isProcessing={false}
         />
         
-        <StartInstanceModal 
+        <StartLogsModal 
             isOpen={showStartLogsModal}
             onClose={() => setShowStartLogsModal(false)}
             instanceName={startingInstanceName || createdInstanceName || ''}

@@ -3,7 +3,7 @@ import { Loader2, Play, X, CheckCircle2, XCircle } from 'lucide-react';
 import { CreateLogViewer } from './CreateLogViewer';
 import { useLimaStartLogs } from '../hooks/useLimaStartLogs';
 
-interface StartInstanceModalProps {
+interface StartLogsModalProps {
   isOpen: boolean;
   onClose: () => void;
   instanceName: string;
@@ -11,7 +11,7 @@ interface StartInstanceModalProps {
   onError?: (error: string) => void;
 }
 
-export const StartInstanceModal: React.FC<StartInstanceModalProps> = ({
+export const StartLogsModal: React.FC<StartLogsModalProps> = ({
   isOpen,
   onClose,
   instanceName,
