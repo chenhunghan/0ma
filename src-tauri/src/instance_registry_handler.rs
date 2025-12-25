@@ -1,31 +1,26 @@
 use tauri::AppHandle;
 use crate::instance_registry_service::{
-    InstanceInfo,
+    LimaInstance,
     DiskUsage,
-    load_instance_registry,
-    sync_registry_from_lima,
+    get_all_lima_instances,
     get_disk_usage,
 };
 
 /// Get all registered ZeroMa instances with their current status
-/// Syncs the registry from limactl list --json (the source of truth)
+/// Returns instances directly from limactl list --json (the source of truth)
 #[tauri::command]
-pub async fn get_registered_instances_cmd(app: AppHandle) -> Result<Vec<InstanceInfo>, String> {
-    // Sync registry from limactl
-    let registry = sync_registry_from_lima(&app)?;
-
-    // Convert to sorted vector
-    let mut instances: Vec<InstanceInfo> = registry.into_values().collect();
-    instances.sort_by(|a, b| a.name.cmp(&b.name));
+pub async fn get_all_lima_instances_cmd(_app: AppHandle) -> Result<Vec<LimaInstance>, String> {
+    // Get instances from limactl (source of truth)
+    let instances = get_all_lima_instances()?;
 
     Ok(instances)
 }
 
 /// Check if an instance is registered
 #[tauri::command]
-pub async fn is_instance_registered_cmd(app: AppHandle, instance_name: String) -> Result<bool, String> {
-    let registry = load_instance_registry(&app)?;
-    Ok(registry.contains_key(&instance_name))
+pub async fn is_instance_registered_cmd(_app: AppHandle, instance_name: String) -> Result<bool, String> {
+    let instances = get_all_lima_instances()?;
+    Ok(instances.iter().any(|inst| inst.name == instance_name))
 }
 
 /// Get disk usage for a Lima instance

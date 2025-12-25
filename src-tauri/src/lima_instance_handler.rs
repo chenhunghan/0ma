@@ -5,7 +5,6 @@ use tokio::process::Command as TokioCommand;
 use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
 use crate::lima_config_service::{get_lima_yaml_path, write_lima_yaml};
-use crate::instance_registry_service::{InstanceInfo, register_instance, unregister_instance};
 
 /// Create a Lima instance using the managed configuration
 /// This handler uses the stored k0s config file and runs limactl start
@@ -24,11 +23,6 @@ pub async fn create_lima_instance_cmd(
     // Get the path to the stored config file (lima.yaml)
     let config_path = get_lima_yaml_path(&app, &instance_name)
         .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
-
-    // Register the instance in our registry
-    let instance_info = InstanceInfo::new(instance_name.clone());
-    register_instance(&app, instance_info)
-        .map_err(|e| format!("Failed to register instance: {}", e))?;
 
     // Emit start event
     app.emit("lima-instance-start", &format!("Starting Lima instance '{}'...", instance_name))
@@ -201,10 +195,6 @@ pub async fn delete_lima_instance_cmd(
     app: AppHandle,
     instance_name: String,
 ) -> Result<String, String> {
-    // Unregister the instance from our registry (we do this before attempting delete)
-    unregister_instance(&app, &instance_name)
-        .map_err(|e| format!("Failed to unregister instance: {}", e))?;
-
     // Emit delete event
     app.emit("lima-instance-delete", &format!("Deleting Lima instance '{}'...", instance_name))
         .map_err(|e| format!("Failed to emit delete event: {}", e))?;

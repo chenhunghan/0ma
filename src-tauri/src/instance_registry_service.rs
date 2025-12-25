@@ -1,34 +1,44 @@
-use std::fs;
-use std::path::PathBuf;
 use std::process::Command;
-use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::{AppHandle, Manager};
 use serde::{Deserialize, Serialize};
 use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
 
-/// Instance registry to track ZeroMa-managed instances
+/// Kubernetes information
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InstanceInfo {
-    pub name: String,
-    // Timestamps as Unix epoch milliseconds (as strings)
-    pub created_at: String,
-    pub updated_at: Option<String>,
-    pub status: Option<String>,
-    /// Full Lima configuration read from limactl list --json
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub config: Option<LimaConfig>,
+pub struct K8sInfo {
+    pub version: String,
+    pub nodes: u32,
+    pub pods: u32,
+    pub services: u32,
+    pub status: String, // 'Ready' | 'NotReady' | 'Unknown'
 }
 
 /// Lima instance structure from limactl list --json
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimaInstance {
+    pub id: String,
     pub name: String,
     pub status: String,
+    pub cpus: u32,
+    pub memory: String,
+    pub disk: String,
+    pub arch: String,
+    pub config: LimaConfig,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub config: Option<LimaConfig>,
-    // We can add more fields as needed
+    pub k8s: Option<K8sInfo>,
+}
+
+/// Raw output from limactl list --json
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct LimaListOutput {
+    name: String,
+    status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    config: Option<LimaConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    dir: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    arch: Option<String>,
 }
 
 /// Disk usage information
@@ -38,77 +48,6 @@ pub struct DiskUsage {
     pub used: String,
     pub available: String,
     pub use_percent: String,
-}
-
-impl InstanceInfo {
-    pub fn new(name: String) -> Self {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis();
-        Self {
-            name,
-            created_at: timestamp.to_string(),
-            updated_at: None,
-            status: None,
-            config: None,
-        }
-    }
-}
-
-/// Get the path to the instance registry file
-fn get_instance_registry_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
-
-    Ok(app_data_dir.join("instances.json"))
-}
-
-/// Load the instance registry
-pub fn load_instance_registry(app: &AppHandle) -> Result<HashMap<String, InstanceInfo>, String> {
-    let registry_path = get_instance_registry_path(app)?;
-
-    if registry_path.exists() {
-        let content = fs::read_to_string(&registry_path)
-            .map_err(|e| format!("Failed to read instance registry: {}", e))?;
-        serde_json::from_str(&content)
-            .map_err(|e| format!("Failed to parse instance registry: {}", e))
-    } else {
-        Ok(HashMap::new())
-    }
-}
-
-/// Save the instance registry
-pub fn save_instance_registry(app: &AppHandle, registry: &HashMap<String, InstanceInfo>) -> Result<(), String> {
-    let registry_path = get_instance_registry_path(app)?;
-
-    // Ensure parent directory exists
-    if let Some(parent) = registry_path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|e| format!("Failed to create instance registry directory: {}", e))?;
-    }
-
-    let content = serde_json::to_string_pretty(registry)
-        .map_err(|e| format!("Failed to serialize instance registry: {}", e))?;
-
-    fs::write(&registry_path, content)
-        .map_err(|e| format!("Failed to write instance registry: {}", e))
-}
-
-/// Register a new instance
-pub fn register_instance(app: &AppHandle, instance_info: InstanceInfo) -> Result<(), String> {
-    let mut registry = load_instance_registry(app)?;
-    registry.insert(instance_info.name.clone(), instance_info);
-    save_instance_registry(app, &registry)
-}
-
-/// Unregister an instance
-pub fn unregister_instance(app: &AppHandle, instance_name: &str) -> Result<(), String> {
-    let mut registry = load_instance_registry(app)?;
-    registry.remove(instance_name);
-    save_instance_registry(app, &registry)
 }
 
 /// Get all Lima instances from limactl list --json
@@ -141,8 +80,46 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
         if line.is_empty() {
             continue;
         }
-        match serde_json::from_str::<LimaInstance>(line) {
-            Ok(instance) => instances.push(instance),
+        match serde_json::from_str::<LimaListOutput>(line) {
+            Ok(raw) => {
+                // Extract config or use default values
+                let config = raw.config.clone().unwrap_or_else(|| {
+                    // Create minimal (default empty) config if not available
+                    LimaConfig::default()
+                });
+                
+                // Extract architecture
+                let arch = raw.arch
+                    .unwrap_or_else(|| {
+                        // Default to current system architecture
+                        #[cfg(target_arch = "aarch64")]
+                        { "aarch64".to_string() }
+                        #[cfg(target_arch = "x86_64")]
+                        { "x86_64".to_string() }
+                    });
+                
+                // Extract CPUs from config
+                let cpus = config.cpus.unwrap_or(0);
+                
+                // Extract memory from config (already has unit)
+                let memory = config.memory.clone().unwrap_or_else(|| "-".to_string());
+                
+                // Extract disk from config (already has unit)
+                let disk = config.disk.clone().unwrap_or_else(|| "-".to_string());
+                
+                let instance = LimaInstance {
+                    id: raw.name.clone(),
+                    name: raw.name,
+                    status: raw.status,
+                    cpus,
+                    memory,
+                    disk,
+                    arch,
+                    config,
+                    k8s: None, // K8s info would need to be fetched separately
+                };
+                instances.push(instance);
+            }
             Err(e) => {
                 eprintln!("Warning: Failed to parse Lima instance JSON: {}", e);
                 continue;
@@ -153,56 +130,14 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
     Ok(instances)
 }
 
-/// Sync the registry from limactl list (source of truth)
-/// This function:
-/// 1. Gets all instances from limactl list --json
-/// 2. Updates existing instances with current status
-/// 3. Removes instances that no longer exist
-/// 4. Adds new instances that aren't in the registry yet (if they exist in Lima)
-pub fn sync_registry_from_lima(app: &AppHandle) -> Result<HashMap<String, InstanceInfo>, String> {
-    let mut registry = load_instance_registry(app)?;
-    let lima_instances = get_lima_instances()?;
+/// Get all Lima instances from limactl list --json (the source of truth)
+pub fn get_all_lima_instances() -> Result<Vec<LimaInstance>, String> {
+    let mut instances = get_lima_instances()?;
     
-    // Create a map of Lima instances for quick lookup
-    let lima_map: HashMap<String, LimaInstance> = lima_instances
-        .into_iter()
-        .map(|inst| (inst.name.clone(), inst))
-        .collect();
+    // Sort instances by name
+    instances.sort_by(|a, b| a.name.cmp(&b.name));
     
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis()
-        .to_string();
-    
-    // Update existing instances and remove ones that no longer exist
-    registry.retain(|name, info| {
-        if let Some(lima_inst) = lima_map.get(name) {
-            info.status = Some(lima_inst.status.clone());
-            info.config = lima_inst.config.clone();
-            info.updated_at = Some(timestamp.clone());
-            true
-        } else {
-            // Instance no longer exists in Lima, remove it
-            false
-        }
-    });
-    
-    // Add new instances from Lima that aren't in our registry
-    for (name, lima_inst) in lima_map {
-        if !registry.contains_key(&name) {
-            let mut info = InstanceInfo::new(name.clone());
-            info.status = Some(lima_inst.status);
-            info.config = lima_inst.config;
-            info.updated_at = Some(timestamp.clone());
-            registry.insert(name, info);
-        }
-    }
-    
-    // Save the updated registry
-    save_instance_registry(app, &registry)?;
-    
-    Ok(registry)
+    Ok(instances)
 }
 
 /// Get disk usage for a Lima instance by running df inside the instance
