@@ -342,7 +342,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                                         onChange={(e) => updateArrayItem('copyToHost', i, 'host', e.target.value)}
                                       />
                                   </div>
-                                  <div className="flex items-center gap-2 pl-[38px]">
+                                  <div className="flex items-center gap-2 pl-9.5">
                                         <input 
                                             type="checkbox"
                                             checked={rule.deleteOnStop || false}
@@ -393,7 +393,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                     }}
                     className="flex items-center gap-1 px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold uppercase rounded transition-colors border border-zinc-700 hover:border-zinc-600"
                     >
-                    <Plus className="w-3 h-3" /> Add Script
+                    <Plus className="w-3 h-3" />
                     </button>
                 </div>
 
@@ -473,7 +473,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                     }}
                     className="flex items-center gap-1 px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold uppercase rounded transition-colors border border-zinc-700 hover:border-zinc-600"
                     >
-                    <Plus className="w-3 h-3" /> Add Probe
+                    <Plus className="w-3 h-3" />
                     </button>
                 </div>
 
