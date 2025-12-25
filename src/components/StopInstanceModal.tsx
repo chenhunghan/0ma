@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { X } from "lucide-react";
+import { Loader2, Power, X, CheckCircle2, XCircle } from "lucide-react";
 import { CreateLogViewer } from "./CreateLogViewer";
 import { useLimaStopLogs } from "../hooks/useLimaStopLogs";
 
@@ -36,63 +36,72 @@ export const StopInstanceModal: React.FC<StopInstanceModalProps> = ({
 
   if (!isOpen) return null;
 
+  const stopSuccess = !isStopping && !stopError && logs.length > 0;
+
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-zinc-900 border-2 border-zinc-700 w-full max-w-3xl flex flex-col max-h-[80vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-          <div>
-            <h2 className="text-lg font-bold text-zinc-100 uppercase tracking-wider">
-              STOPPING INSTANCE
-            </h2>
-            <p className="text-xs text-zinc-500 mt-1 font-mono">
-              {instanceName}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={isStopping}
-            className="text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-zinc-950 border border-zinc-800 shadow-2xl w-full max-w-3xl h-[70vh] flex flex-col animate-in zoom-in-95 duration-200">
+        
+        {/* HEADER */}
+        <div className="h-14 border-b border-zinc-800 flex items-center justify-between px-6 bg-zinc-900/50">
+           <div className="flex items-center gap-3">
+              <div className="p-1.5 bg-zinc-800 rounded border border-zinc-700">
+                <Power className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-white">Stopping Instance</h2>
+                  <div className="text-[10px] text-zinc-500 font-mono">SHUTTING DOWN SYSTEM</div>
+              </div>
+           </div>
+           <button 
+             onClick={onClose} 
+             disabled={isStopping}
+             className="p-1 hover:text-white text-zinc-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+              <X className="w-5 h-5" />
+           </button>
         </div>
 
-        {/* Log Viewer */}
-        <div className="flex-1 overflow-hidden">
-          <CreateLogViewer logs={logs} />
+        {/* BODY */}
+        <div className="flex-1 overflow-hidden flex flex-col p-6 gap-6">
+            {/* Instance Info */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded">
+              <Power className="w-4 h-4 text-amber-500" />
+              <div className="flex-1">
+                <div className="text-sm font-bold text-white">{instanceName}</div>
+                <div className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                  {isStopping && 'Stopping Instance...'}
+                  {stopSuccess && 'Instance Stopped Successfully'}
+                  {stopError && 'Stop Failed'}
+                </div>
+              </div>
+              {isStopping && <Loader2 className="w-4 h-4 animate-spin text-amber-500" />}
+              {stopSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+              {stopError && <XCircle className="w-4 h-4 text-red-500" />}
+            </div>
+
+            {/* Log Viewer */}
+            <div className="flex-1 min-h-0 flex flex-col border border-zinc-800 rounded overflow-hidden">
+              <div className="px-4 py-2 bg-zinc-900 border-b border-zinc-800">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Stop Logs</span>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <CreateLogViewer logs={logs} />
+              </div>
+            </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-zinc-800 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            {isStopping && (
-              <div className="flex items-center gap-2 text-amber-500 text-xs font-mono">
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                STOPPING...
-              </div>
-            )}
-            {stopError && !isStopping && (
-              <div className="flex items-center gap-2 text-red-500 text-xs font-mono">
-                <div className="w-2 h-2 bg-red-500 rounded-full" />
-                STOP FAILED
-              </div>
-            )}
-            {!isStopping && !stopError && logs.length > 0 && (
-              <div className="flex items-center gap-2 text-green-500 text-xs font-mono">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                STOPPED
-              </div>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            disabled={isStopping}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-600 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            CLOSE
-          </button>
+        {/* FOOTER */}
+        <div className="h-16 border-t border-zinc-800 flex items-center justify-end px-6 gap-4 bg-zinc-900/50">
+            <button 
+                onClick={onClose}
+                disabled={isStopping}
+                className="px-8 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed"
+            >
+                {isStopping ? 'Stopping...' : 'Close'}
+            </button>
         </div>
+
       </div>
     </div>
   );
