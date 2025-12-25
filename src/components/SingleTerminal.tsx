@@ -13,7 +13,7 @@ export interface SingleTerminalProps {
 
 // Consistent font settings matching Tailwind's font-mono stack
 const TERM_CONFIG = {
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
     fontSize: 12,
     lineHeight: 1.2,
     theme: {

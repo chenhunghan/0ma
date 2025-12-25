@@ -1,5 +1,13 @@
+@import "@fontsource/fira-code/400.css";
+@import "@fontsource/fira-code/500.css";
+@import "@fontsource/fira-code/600.css";
+@import "@fontsource/fira-code/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/600.css";
+@import "@fontsource/jetbrains-mono/700.css";
 @import "tailwindcss";
 
 @theme {
-  --font-mono: Monaco, Menlo, "Courier New", monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", Menlo, Monaco, "Courier New", monospace;
 }
