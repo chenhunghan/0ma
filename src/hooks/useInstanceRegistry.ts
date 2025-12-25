@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useQuery } from "@tanstack/react-query";
-import { LimaConfig } from "../types/lima-config";
+import { LimaConfig } from "../types/LimaConfig";
 
 /**
  * Info of an instance stored in the registry
@@ -26,10 +26,7 @@ export function useInstanceRegistry() {
       const registeredInstances = await invoke<InstanceInfo[]>("get_registered_instances_cmd");
       return registeredInstances;
     },
-    staleTime: 5000, // Consider data stale after 5 seconds
-    refetchInterval: false, // Don't auto-refetch - we use event-based refreshes
-    refetchOnWindowFocus: true, // Let React Query handle window focus automatically (v5 uses visibilitychange)
-    refetchOnReconnect: true, // Auto-refetch when network reconnects
+    staleTime: 30000, // Consider data stale after 30 seconds
   });
 
   return {

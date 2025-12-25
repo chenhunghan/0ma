@@ -3,7 +3,7 @@ import { useLimaYaml } from "./hooks/useLimaYaml";
 import { useLimaVersion } from "./hooks/useLimaVersion";
 import { useLimaInstance } from "./hooks/useLimaInstance";
 import { useInstanceRegistry } from "./hooks/useInstanceRegistry";
-import { LimaConfig } from "./types/lima-config";
+import { LimaConfig } from "./types/LimaConfig";
 import { useState, useEffect } from "react";
 import { LimaConfigEditor } from "./components/LimaConfigEditor";
 import { QuickConfigEditor } from "./components/QuickConfigEditor";

@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { LimaConfig } from "../types/lima-config";
+import { LimaConfig } from "../types/LimaConfig";
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

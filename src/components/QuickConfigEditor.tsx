@@ -1,4 +1,4 @@
-import { LimaConfig } from '../types/lima-config';
+import { LimaConfig } from '../types/LimaConfig';
 
 interface QuickConfigEditorProps {
   config: LimaConfig;
