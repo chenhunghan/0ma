@@ -66,7 +66,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   const Icon = styles.Icon;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-zinc-950 border border-zinc-800 shadow-2xl w-full max-w-md p-1 animate-in zoom-in-95 duration-200">
         <div className="border border-zinc-900 bg-zinc-900/50 p-6">
             <div className="flex items-start gap-4 mb-4">

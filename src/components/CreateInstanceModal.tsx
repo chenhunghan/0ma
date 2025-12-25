@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, Terminal, X, CheckCircle2, XCircle } from 'lucide-react';
 import { useLimaConfig } from '../hooks/useLimaConfig';
-import { DEFAULT_CONFIG } from '../services/limaService';
 import { LimaConfigForm } from './LimaConfigForm';
 import { LimaConfig } from '../types/LimaConfig';
 import { CreateLogViewer } from './CreateLogViewer';
 import { useLimaCreateLogs } from '../hooks/useLimaCreateLogs';
+import { useDefaultK0sLimaConfig } from '../hooks/useDefaultK0sLimaConfig';
+
+function  getRandomInstanceName (): string {
+  const hash = Math.random().toString(36).substring(2, 6);
+  return `0ma-${hash}`;
+};
 
 interface CreateInstanceModalProps {
   isOpen: boolean;
@@ -22,7 +27,8 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(getRandomInstanceName());
+  const { defaultConfig } = useDefaultK0sLimaConfig(name);
   const {
     config,
     updateConfigField,
@@ -32,7 +38,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     updateProbeScript,
     addProbeScript,
     removeProbeScript
-  } = useLimaConfig(DEFAULT_CONFIG);
+  } = useLimaConfig(defaultConfig);
 
   const { logs, isCreating, error: creationError } = useLimaCreateLogs(
     onSuccess,
@@ -42,7 +48,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
   // Reset form when modal is opened fresh (not during creation)
   useEffect(() => {
     if (isOpen && !isCreating && logs.length === 0) {
-      setName('');
+      setName(getRandomInstanceName());
     }
   }, [isOpen, isCreating, logs.length]);
 

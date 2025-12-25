@@ -153,7 +153,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                 wrapperClassName="w-full bg-zinc-950 border border-zinc-800 focus-within:border-zinc-500"
                 className="text-zinc-300 text-xs px-2 py-1.5"
               >
-                <option value="vz">VZ (Virtualization.framework)</option>
+                <option value="vz">VZ</option>
                 <option value="qemu">QEMU</option>
                 <option value="krunkit">Krunkit</option>
               </Select>
