@@ -23,8 +23,6 @@ pub struct LimaInstance {
     pub disk: String,
     pub arch: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub config: Option<LimaConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub k8s: Option<K8sInfo>,
 }
 
@@ -115,7 +113,6 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                     memory,
                     disk,
                     arch,
-                    config: None, // Read config using read_lima_yaml_cmd instead
                     k8s: None, // K8s info would need to be fetched separately
                 };
                 instances.push(instance);
