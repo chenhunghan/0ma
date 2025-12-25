@@ -435,12 +435,11 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                                 )
                                 }
                                 padding={10}
-                                className="font-mono text-xs"
+                                className="font-mono"
                                 style={{
-                                fontFamily: '"Fira code", "Fira Mono", monospace',
-                                fontSize: 11,
-                                backgroundColor: '#1e1e1e',
-                                color: '#e0e0e0',
+                                  fontSize: 11,
+                                  backgroundColor: '#1e1e1e',
+                                  color: '#e0e0e0',
                                 }}
                             />
                             </div>
@@ -524,8 +523,6 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                                 padding={10}
                                 className="font-mono text-xs"
                                 style={{
-                                    fontFamily: '"Fira code", "Fira Mono", monospace',
-                                    fontSize: 11,
                                     backgroundColor: '#1e1e1e',
                                     color: '#e0e0e0',
                                 }}

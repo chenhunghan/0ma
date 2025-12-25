@@ -474,9 +474,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
                   Prism.highlight(code, Prism.languages.yaml, 'yaml')
                 }
                 padding={20}
-                className="prism-editor min-h-full font-mono text-sm"
+                className="prism-editor min-h-full font-mono"
                 style={{
-                  fontFamily: '"Fira code", "Fira Mono", monospace',
                   fontSize: 11,
                   backgroundColor: '#000000',
                   color: '#e0e0e0',
