@@ -16,7 +16,7 @@ import { DeleteInstanceModal } from './components/DeleteInstanceModal';
 export const App: React.FC = () => {
   const { instances, isLoading } = useLimaInstances();
   const { startInstance, stopInstance, deleteInstance } = useLimaInstance();
-  const { selectedName, setSelectedName, selectedInstance } = useSelectedInstance(instances);
+  const { setSelectedName, selectedInstance } = useSelectedInstance(instances);
   
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
