@@ -46,7 +46,7 @@ export const App: React.FC = () => {
   // Auto-select first instance if none selected
   useEffect(() => {
     if (!selectedId && instances.length > 0) {
-      setSelectedId(instances[0].id);
+      setSelectedId(instances[0].name);
     }
   }, [instances, selectedId]);
 
@@ -98,7 +98,7 @@ export const App: React.FC = () => {
     if (remainingInstances.length > 0) {
       // Priority 1: Switch to a Running instance
       const runningInstance = remainingInstances.find(i => i.status === InstanceStatus.Running);
-      const nextId = runningInstance ? runningInstance.id : remainingInstances[0].id;
+      const nextId = runningInstance ? runningInstance.name : remainingInstances[0].name;
       setSelectedId(nextId);
     } else {
       // No instances left: clear selection to show the empty state
@@ -157,7 +157,7 @@ export const App: React.FC = () => {
     handleDeleteInstance(instanceName);
   };
 
-  const selectedInstance = instances.find(i => i.id === selectedId);
+  const selectedInstance = instances.find(i => i.name === selectedId);
 
   return (
     <div className="h-screen bg-black text-zinc-300 font-mono overflow-hidden flex flex-col selection:bg-zinc-700 selection:text-white">
@@ -234,7 +234,7 @@ export const App: React.FC = () => {
              <InstanceDetail 
                 // We do NOT use a key here to prevent unmounting the header when switching.
                 instances={instances}
-                selectedId={selectedInstance.id}
+                selectedId={selectedInstance.name}
                 onSelect={setSelectedId}
                 onCreate={handleOpenCreateModal}
                 instance={selectedInstance}

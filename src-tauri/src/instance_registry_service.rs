@@ -16,7 +16,6 @@ pub struct K8sInfo {
 /// Lima instance structure from limactl list --json
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimaInstance {
-    pub id: String,
     pub name: String,
     pub status: String,
     pub cpus: u32,
@@ -108,7 +107,6 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                 let disk = config.disk.clone().unwrap_or_else(|| "-".to_string());
                 
                 let instance = LimaInstance {
-                    id: raw.name.clone(),
                     name: raw.name,
                     status: raw.status,
                     cpus,

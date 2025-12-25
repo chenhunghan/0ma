@@ -154,7 +154,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     setShowDeleteModal(false);
     setIsProcessing(false);
     setIsSaving(false);
-  }, [instance.id]);
+  }, [instance.name]);
 
   const setActiveTab = (tab: 'lima' | 'k8s' | 'config') => {
     updateUiState({ activeTab: tab });
@@ -188,7 +188,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     setIsSaving(true);
     try {
         // Save using the current object state
-        await limaService.updateConfig(instance.id, configObject);
+        await limaService.updateConfig(instance.name, configObject);
         
         // Clear drafts
         updateUiState(prev => ({
@@ -534,8 +534,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
             <div className="flex-1 relative w-full overflow-hidden min-h-0">
               <TerminalView
-                key={`${instance.id}-${activeTab}`}
-                instanceId={instance.id}
+                key={`${instance.name}-${activeTab}`}
+                instanceId={instance.name}
                 instanceName={instance.name}
                 status={instance.status}
                 mode={activeTab === 'k8s' ? 'k8s' : 'lima'}

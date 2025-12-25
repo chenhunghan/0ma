@@ -5,7 +5,6 @@ import { LimaConfig } from './LimaConfig';
 export type Arch = 'x86_64' | 'aarch64';
 
 export interface LimaInstance {
-  id: string;
   name: string;
   status: InstanceStatus;
   cpus: number;

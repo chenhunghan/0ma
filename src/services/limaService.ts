@@ -14,7 +14,7 @@ class LimaService {
   async startInstance(id: string): Promise<void> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const instance = this.instances.find((i) => i.id === id);
+        const instance = this.instances.find((i) => i.name === id);
         if (instance) instance.status = InstanceStatus.Running;
         resolve();
       }, 1500);
@@ -24,7 +24,7 @@ class LimaService {
   async stopInstance(id: string): Promise<void> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const instance = this.instances.find((i) => i.id === id);
+        const instance = this.instances.find((i) => i.name === id);
         if (instance) instance.status = InstanceStatus.Stopped;
         resolve();
       }, 1500);
@@ -34,7 +34,7 @@ class LimaService {
   async deleteInstance(id: string): Promise<void> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        this.instances = this.instances.filter((i) => i.id !== id);
+        this.instances = this.instances.filter((i) => i.name !== id);
         resolve();
       }, 800);
     });
@@ -43,7 +43,7 @@ class LimaService {
   async updateConfig(id: string, newConfig: LimaConfig): Promise<void> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const instance = this.instances.find((i) => i.id === id);
+        const instance = this.instances.find((i) => i.name === id);
         if (instance) instance.config = newConfig;
         resolve();
       }, 500);
@@ -54,7 +54,6 @@ class LimaService {
     return new Promise((resolve) => {
       setTimeout(() => {
         const newInstance: LimaInstance = {
-            id: Math.random().toString(36).substr(2, 9),
             name: name || `instance-${Math.floor(Math.random() * 1000)}`,
             status: InstanceStatus.Stopped,
             // Fallback values if config is missing them
