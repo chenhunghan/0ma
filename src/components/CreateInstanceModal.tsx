@@ -5,25 +5,22 @@ import { DEFAULT_CONFIG } from '../services/limaService';
 import { LimaConfigForm } from './LimaConfigForm';
 import { LimaConfig } from '../types/LimaConfig';
 import { CreateLogViewer } from './CreateLogViewer';
+import { useLimaCreateLogs } from '../hooks/useLimaCreateLogs';
 
 interface CreateInstanceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (name: string, config: LimaConfig) => Promise<void>;
-  isProcessing: boolean;
-  logs?: Array<{ type: 'stdout' | 'stderr' | 'error'; message: string; timestamp: Date }>;
-  creationError?: string | null;
-  creationSuccess?: boolean;
+  onSuccess?: (instanceName: string) => void;
+  onError?: (error: string) => void;
 }
 
 export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
   isOpen,
   onClose,
   onCreate,
-  isProcessing,
-  logs = [],
-  creationError = null,
-  creationSuccess = false,
+  onSuccess,
+  onError,
 }) => {
   const [name, setName] = useState('');
   const {
@@ -37,12 +34,17 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     removeProbeScript
   } = useLimaConfig(DEFAULT_CONFIG);
 
+  const { logs, isCreating, error: creationError } = useLimaCreateLogs(
+    onSuccess,
+    onError
+  );
+
   // Reset form when modal is opened fresh (not during creation)
   useEffect(() => {
-    if (isOpen && !isProcessing && logs.length === 0) {
+    if (isOpen && !isCreating && logs.length === 0) {
       setName('');
     }
-  }, [isOpen, isProcessing, logs.length]);
+  }, [isOpen, isCreating, logs.length]);
 
   if (!isOpen) return null;
 
@@ -51,7 +53,8 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     await onCreate(name, config);
   };
 
-  const showLogs = isProcessing || logs.length > 0;
+  const showLogs = isCreating || logs.length > 0;
+  const creationSuccess = !isCreating && !creationError && logs.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
@@ -120,12 +123,12 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
                   <div className="flex-1">
                     <div className="text-sm font-bold text-white">{name}</div>
                     <div className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                      {isProcessing && 'Provisioning Instance...'}
+                      {isCreating && 'Provisioning Instance...'}
                       {creationSuccess && 'Instance Created Successfully'}
                       {creationError && 'Creation Failed'}
                     </div>
                   </div>
-                  {isProcessing && <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />}
+                  {isCreating && <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />}
                   {creationSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                   {creationError && <XCircle className="w-4 h-4 text-red-500" />}
                 </div>
@@ -164,10 +167,10 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
             ) : (
               <button 
                   onClick={onClose}
-                  disabled={isProcessing}
+                  disabled={isCreating}
                   className="px-8 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed"
               >
-                  {isProcessing ? 'Creating...' : 'Close'}
+                  {isCreating ? 'Creating...' : 'Close'}
               </button>
             )}
         </div>

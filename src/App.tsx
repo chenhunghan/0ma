@@ -6,7 +6,6 @@ import { InstanceStatus } from './types/InstanceStatus';
 import { LimaConfig } from './types/LimaConfig';
 import { useLimaInstances } from './hooks/useLimaInstances';
 import { useLimaInstance } from './hooks/useLimaInstance';
-import { useLimaCreateLogs } from './hooks/useLimaCreateLogs';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
@@ -36,11 +35,6 @@ export const App: React.FC = () => {
     console.error('Instance creation failed:', error);
     // Keep modal open to show error logs
   }, []);
-
-  const { logs: createLogs, isCreating: isCreatingFromLogs, error: creationError } = useLimaCreateLogs(
-    handleCreateSuccess,
-    handleCreateError
-  );
 
   // Auto-select first instance if none selected
   useEffect(() => {
@@ -114,10 +108,8 @@ export const App: React.FC = () => {
             isOpen={showCreateModal}
             onClose={() => setShowCreateModal(false)}
             onCreate={handleCreateConfirm}
-            isProcessing={isCreatingFromLogs}
-            logs={createLogs}
-            creationError={creationError}
-            creationSuccess={!isCreatingFromLogs && !creationError && createLogs.length > 0}
+            onSuccess={handleCreateSuccess}
+            onError={handleCreateError}
         />
         
         <ConfirmationModal 
