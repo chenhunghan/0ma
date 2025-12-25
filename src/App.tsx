@@ -6,6 +6,8 @@ import { InstanceStatus } from './types/InstanceStatus';
 import { LimaConfig } from './types/LimaConfig';
 import { useLimaInstances } from './hooks/useLimaInstances';
 import { useLimaInstance } from './hooks/useLimaInstance';
+import { useLimaCreateSuccess } from './hooks/useLimaCreateSuccess';
+import { useLimaStartSuccess } from './hooks/useLimaStartSuccess';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
@@ -27,6 +29,22 @@ export const App: React.FC = () => {
     }
   }, [instances, selectedId]);
 
+  // Listen for instance create success to show start prompt
+  useLimaCreateSuccess((instanceName) => {
+    setCreatedInstanceName(instanceName);
+    setSelectedId(instanceName);
+    setShowStartModal(true);
+  });
+
+  // Listen for instance start success to clean up state
+  useLimaStartSuccess((instanceName) => {
+    // Only close modal if the started instance matches the one we're waiting for
+    if (instanceName === createdInstanceName) {
+      setShowStartModal(false);
+      setCreatedInstanceName(null);
+    }
+  });
+
   const handleOpenCreateModal = () => {
     setShowCreateModal(true);
   };
@@ -35,26 +53,15 @@ export const App: React.FC = () => {
     // Close create modal
     setShowCreateModal(false);
     
-    // Create the instance first
+    // Create the instance
     createInstance({ config, instanceName: name });
-    
-    // Store the name for starting later
-    setCreatedInstanceName(name);
-    setSelectedId(name);
-    
-    // Prompt to start
-    setShowStartModal(true);
   };
 
   const handleStartCreatedInstance = () => {
     if (!createdInstanceName) return;
     
-    // Start the instance
+    // Start the instance - modal will close on success
     startInstance(createdInstanceName);
-    
-    // Close modal and clear state
-    setShowStartModal(false);
-    setCreatedInstanceName(null);
   };
 
   const handleDelete = async () => {
@@ -80,7 +87,7 @@ export const App: React.FC = () => {
             isOpen={showCreateModal}
             onClose={() => setShowCreateModal(false)}
             onCreate={handleCreateConfirm}
-            isProcessing={false}
+            isProcessing={isCreating}
         />
         
         <ConfirmationModal 

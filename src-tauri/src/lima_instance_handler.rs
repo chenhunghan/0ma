@@ -86,8 +86,7 @@ pub async fn create_lima_instance_cmd(
         match child.wait().await {
             Ok(status) => {
                 if status.success() {
-                    let success_msg = format!("Lima instance '{}' created successfully!", instance_name_clone);
-                    let _ = app_handle.emit("lima-instance-create-success", &success_msg);
+                    let _ = app_handle.emit("lima-instance-create-success", &instance_name_clone);
                 } else {
                     let error_msg = format!("Failed to create Lima instance. Exit code: {:?}", status.code());
                     let _ = app_handle.emit("lima-instance-error", &error_msg);
@@ -169,8 +168,7 @@ pub async fn start_lima_instance_cmd(
         match child.wait().await {
             Ok(status) => {
                 if status.success() {
-                    let success_msg = format!("Lima instance '{}' started successfully!", instance_name_clone);
-                    let _ = app_handle.emit("lima-instance-start-success", &success_msg);
+                    let _ = app_handle.emit("lima-instance-start-success", &instance_name_clone);
                 } else {
                     let error_msg = format!("Failed to start Lima instance. Exit code: {:?}", status.code());
                     let _ = app_handle.emit("lima-instance-error", &error_msg);

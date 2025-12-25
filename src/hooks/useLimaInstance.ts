@@ -24,12 +24,6 @@ export function useLimaInstance() {
         });
       });
 
-      // Listen for create success event
-      const unlistenCreateSuccess = await listen<string>("lima-instance-create-success", () => {
-        // Invalidate instances query to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["instances"] });
-      });
-
       // Listen for start event
       const unlistenStart = await listen<string>("lima-instance-start", (event) => {
         setOperationLogs({
@@ -58,12 +52,6 @@ export function useLimaInstance() {
         }));
       });
 
-      // Listen for start success event
-      const unlistenStartSuccess = await listen<string>("lima-instance-start-success", () => {
-        // Invalidate instances query to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["instances"] });
-      });
-
       // Listen for stop success event
       const unlistenStopSuccess = await listen<string>("lima-instance-stop-success", () => {
         // Invalidate instances query to refresh the list
@@ -86,12 +74,10 @@ export function useLimaInstance() {
       // Return cleanup function
       return () => {
         unlistenCreate();
-        unlistenCreateSuccess();
         unlistenStart();
         unlistenStop();
         unlistenDelete();
         unlistenOutput();
-        unlistenStartSuccess();
         unlistenStopSuccess();
         unlistenDeleteSuccess();
         unlistenError();
