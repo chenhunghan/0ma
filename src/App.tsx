@@ -16,7 +16,7 @@ import { DeleteInstanceModal } from './components/DeleteInstanceModal';
 export const App: React.FC = () => {
   const { instances, isLoading } = useLimaInstances();
   const { createInstance, startInstance, stopInstance, deleteInstance } = useLimaInstance();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedName, setSelectedName] = useState<string | null>(null);
   
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -33,7 +33,7 @@ export const App: React.FC = () => {
   const handleCreateSuccess = useCallback((instanceName: string) => {
     console.debug(`Instance ${instanceName} created successfully.`);
     setCreatedInstanceName(instanceName);
-    setSelectedId(instanceName);
+    setSelectedName(instanceName);
     setShowCreateModal(false);
     setShowStartModal(true);
   }, []);
@@ -45,10 +45,10 @@ export const App: React.FC = () => {
 
   // Auto-select first instance if none selected
   useEffect(() => {
-    if (!selectedId && instances.length > 0) {
-      setSelectedId(instances[0].name);
+    if (!selectedName && instances.length > 0) {
+      setSelectedName(instances[0].name);
     }
-  }, [instances, selectedId]);
+  }, [instances, selectedName]);
 
   // Listen for instance start success to clean up state
   const handleStartSuccess = useCallback((instanceName: string) => {
@@ -98,11 +98,11 @@ export const App: React.FC = () => {
     if (remainingInstances.length > 0) {
       // Priority 1: Switch to a Running instance
       const runningInstance = remainingInstances.find(i => i.status === InstanceStatus.Running);
-      const nextId = runningInstance ? runningInstance.name : remainingInstances[0].name;
-      setSelectedId(nextId);
+      const nextName = runningInstance ? runningInstance.name : remainingInstances[0].name;
+      setSelectedName(nextName);
     } else {
       // No instances left: clear selection to show the empty state
-      setSelectedId(null);
+      setSelectedName(null);
     }
   }, [instances]);
 
@@ -157,7 +157,7 @@ export const App: React.FC = () => {
     handleDeleteInstance(instanceName);
   };
 
-  const selectedInstance = instances.find(i => i.name === selectedId);
+  const selectedInstance = instances.find(i => i.name === selectedName);
 
   return (
     <div className="h-screen bg-black text-zinc-300 font-mono overflow-hidden flex flex-col selection:bg-zinc-700 selection:text-white">
@@ -234,8 +234,8 @@ export const App: React.FC = () => {
              <InstanceDetail 
                 // We do NOT use a key here to prevent unmounting the header when switching.
                 instances={instances}
-                selectedId={selectedInstance.name}
-                onSelect={setSelectedId}
+                selectedName={selectedInstance.name}
+                onSelect={setSelectedName}
                 onCreate={handleOpenCreateModal}
                 instance={selectedInstance}
                 onDelete={handleDelete}

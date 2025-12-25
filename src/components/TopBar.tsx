@@ -6,7 +6,7 @@ import { InstanceActions } from './InstanceActions';
 
 interface TopBarProps {
   instances: LimaInstance[];
-  selectedId: string;
+  selectedName: string;
   onSelect: (id: string) => void;
   onCreate: () => void;
   isCreating: boolean;
@@ -19,7 +19,7 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({
   instances,
-  selectedId,
+  selectedName,
   onSelect,
   onCreate,
   isCreating,
@@ -33,7 +33,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     <header className="h-12 flex items-center justify-between px-2 border-b border-zinc-800 shrink-0 select-none">
       <InstanceSelector
         instances={instances}
-        selectedId={selectedId}
+        selectedName={selectedName}
         onSelect={onSelect}
         onCreate={onCreate}
         isCreating={isCreating}

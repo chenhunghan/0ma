@@ -27,7 +27,7 @@ import { ConfirmationModal } from './ConfirmationModal';
 
 interface InstanceDetailProps {
   instances: LimaInstance[];
-  selectedId: string;
+  selectedName: string;
   onSelect: (id: string) => void;
   onCreate: () => void;
   isCreating: boolean;
@@ -61,7 +61,7 @@ const DEFAULT_UI_STATE: InstanceUIState = {
 
 const InstanceDetail: React.FC<InstanceDetailProps> = ({
   instances,
-  selectedId,
+  selectedName,
   onSelect,
   onCreate,
   isCreating,
@@ -75,7 +75,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   // Helper to get current instance state or default
   const getCurrentState = (): InstanceUIState => {
-    return instancesState[selectedId] || DEFAULT_UI_STATE;
+    return instancesState[selectedName] || DEFAULT_UI_STATE;
   };
 
   const uiState = getCurrentState();
@@ -83,18 +83,18 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   // Helper to update current instance state
   const updateUiState = useCallback((update: Partial<InstanceUIState> | ((prev: InstanceUIState) => Partial<InstanceUIState>)) => {
     setInstancesState((prevGlobal) => {
-      const currentState = prevGlobal[selectedId] || DEFAULT_UI_STATE;
+      const currentState = prevGlobal[selectedName] || DEFAULT_UI_STATE;
       const changes = typeof update === 'function' ? update(currentState) : update;
       
       return {
         ...prevGlobal,
-        [selectedId]: {
+        [selectedName]: {
           ...currentState,
           ...changes,
         },
       };
     });
-  }, [selectedId]);
+  }, [selectedName]);
 
   // Derived states
   // configObject: The structured config we operate on (Source of Truth)
@@ -382,7 +382,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     <div className="flex flex-col h-full bg-black text-zinc-300 font-mono">
       <TopBar
         instances={instances}
-        selectedId={selectedId}
+        selectedName={selectedName}
         onSelect={onSelect}
         onCreate={onCreate}
         isCreating={isCreating}
