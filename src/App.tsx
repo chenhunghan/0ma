@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Terminal,
 } from 'lucide-react';
@@ -30,20 +30,28 @@ export const App: React.FC = () => {
   }, [instances, selectedId]);
 
   // Listen for instance create success to show start prompt
-  useLimaCreateSuccess((instanceName) => {
+  const handleCreateSuccess = useCallback((instanceName: string) => {
+    console.debug(`Instance ${instanceName} created successfully.`);
     setCreatedInstanceName(instanceName);
     setSelectedId(instanceName);
     setShowStartModal(true);
-  });
+  }, []);
+  useLimaCreateSuccess(handleCreateSuccess);
 
   // Listen for instance start success to clean up state
-  useLimaStartSuccess((instanceName) => {
+  const handleStartSuccess = useCallback((instanceName: string) => {
+    console.debug(`Instance ${instanceName} started successfully.`);
     // Only close modal if the started instance matches the one we're waiting for
-    if (instanceName === createdInstanceName) {
-      setShowStartModal(false);
-      setCreatedInstanceName(null);
-    }
-  });
+    setCreatedInstanceName((current) => {
+      if (instanceName === current) {
+        setShowStartModal(false);
+        // Clear created instance name
+        return null;
+      };
+      return current;
+    });
+  }, []);
+  useLimaStartSuccess(handleStartSuccess);
 
   const handleOpenCreateModal = () => {
     setShowCreateModal(true);
