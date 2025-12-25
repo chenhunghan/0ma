@@ -6,7 +6,7 @@ export interface Image {
 
 export interface Mount {
   location?: string;
-  mount_point?: string;
+  mountPoint?: string;
   writable?: boolean;
 }
 
@@ -29,12 +29,12 @@ export interface Probe {
 export interface CopyToHost {
   guest: string;
   host: string;
-  delete_on_stop?: boolean;
+  deleteOnStop?: boolean;
 }
 
 export interface LimaConfig {
-  minimum_lima_version?: string;
-  vm_type?: string;
+  minimumLimaVersion?: string;
+  vmType?: string;
   cpus?: number;
   memory?: string;
   disk?: string;
@@ -43,5 +43,6 @@ export interface LimaConfig {
   containerd?: ContainerdConfig;
   provision?: Provision[];
   probes?: Probe[];
-  copy_to_host?: CopyToHost[];
+  copyToHost?: CopyToHost[];
+  [key: string]: any; // Allow for other fields
 }

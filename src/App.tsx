@@ -1,582 +1,164 @@
-import { invoke } from "@tauri-apps/api/core";
-import { useLimaYaml } from "./hooks/useLimaYaml";
-import { useLimaVersion } from "./hooks/useLimaVersion";
-import { useLimaInstance } from "./hooks/useLimaInstance";
-import { useInstanceRegistry } from "./hooks/useInstanceRegistry";
-import { LimaConfig } from "./types/LimaConfig";
-import { useState, useEffect } from "react";
-import { LimaConfigEditor } from "./components/LimaConfigEditor";
-import { QuickConfigEditor } from "./components/QuickConfigEditor";
-import { ask } from "@tauri-apps/plugin-dialog";
+import React, { useState, useEffect } from 'react';
+import { 
+  Terminal,
+} from 'lucide-react';
+import { LimaInstance } from './types/LimaInstance';
+import { InstanceStatus } from './types/InstanceStatus';
+import { LimaConfig } from './types/LimaConfig';
+import { limaService } from './services/limaService';
+import InstanceDetail from './components/InstanceDetail';
+import { CreateInstanceModal } from './components/CreateInstanceModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
 
-export function App() {
-  const [showEditor, setShowEditor] = useState(false);
-  const [editableConfig, setEditableConfig] = useState<LimaConfig | null>(null);
-  const [instanceName, setInstanceName] = useState<string>("default");
-  const [selectedInstanceName, setSelectedInstanceName] = useState<string | null>(null);
-
-  const { limaVersion, limaVersionError, isLoadingLimaVersion, checkLimaVersion } =
-    useLimaVersion();
-
-  const {
-    limaConfig,
-    limaError,
-    isLoadingLima,
-    refetchLima,
-    writeLimaYaml,
-    isWritingLima,
-    writeLimaError,
-    limaYamlPath,
-    limaYamlPathError,
-    isLoadingLimaYamlPath,
-    fetchLimaYamlPath,
-    resetLimaYaml,
-    isResettingLima,
-    resetLimaError,
-  } = useLimaYaml(instanceName);
-
-  const {
-    operationLogs,
-    startInstance,
-    stopInstance,
-    deleteInstance,
-    clearStatus: clearInstanceStatus,
-    isStarting,
-    isStopping,
-    isDeleting,
-    startError,
-    stopError,
-    deleteError,
-    isProcessing,
-  } = useLimaInstance();
-  const { instances: registeredInstances, isLoading: loadingInstances, loadInstances: refreshInstances } = useInstanceRegistry();
-
-  // Wrapper function for delete that triggers refresh after successful deletion
-  const handleDeleteInstance = async (instanceName: string) => {
-    console.log('App.tsx: handleDeleteInstance called for', instanceName);
-    try {
-      await deleteInstance(instanceName);
-      console.log('App.tsx: deleteInstance returned, refreshing...');
-      // Refresh the instance registry after deletion
-      refreshInstances();
-      // Clear selected instance if it was deleted
-      if (selectedInstanceName === instanceName) {
-        setSelectedInstanceName(null);
-      }
-    } catch (error) {
-      console.error('App.tsx: Error in handleDeleteInstance:', error);
-    }
-  };
-
+export const App: React.FC = () => {
+  const [instances, setInstances] = useState<LimaInstance[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   
-  // Convert config to YAML for display
-  const [yamlDisplay, setYamlDisplay] = useState<string>("");
+  // Modal States
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [createdInstanceId, setCreatedInstanceId] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
 
-  // Update editable config when limaConfig changes
-  useEffect(() => {
-    if (limaConfig) {
-      setEditableConfig({ ...limaConfig });
+  const fetchInstances = async () => {
+    const data = await limaService.getInstances();
+    setInstances(data);
+    setIsLoading(false);
+    
+    // Auto-select first instance if none selected
+    if (!selectedId && data.length > 0) {
+      setSelectedId(data[0].id);
     }
-  }, [limaConfig]);
+  };
 
-  // Update display when config changes
   useEffect(() => {
-    const updateDisplay = async () => {
-      if (limaConfig) {
-        try {
-          // Convert config to YAML for display
-          const yamlString = await invoke<string>("convert_config_to_yaml_cmd", { config: limaConfig });
-          setYamlDisplay(yamlString);
-        } catch (error) {
-          // Fallback to JSON if YAML conversion fails
-          console.error("Failed to convert to YAML:", error);
-          setYamlDisplay(JSON.stringify(limaConfig, null, 2));
-        }
+    fetchInstances();
+    const interval = setInterval(() => {
+        limaService.getInstances().then(setInstances);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleOpenCreateModal = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleCreateConfirm = async (name: string, config: LimaConfig) => {
+    setIsCreating(true);
+    const newInstance = await limaService.createInstance(name, config);
+    await fetchInstances();
+    
+    // Select the new instance
+    setSelectedId(newInstance.id);
+    
+    setIsCreating(false);
+    setShowCreateModal(false);
+
+    // Prompt to start
+    setCreatedInstanceId(newInstance.id);
+    setShowStartModal(true);
+  };
+
+  const handleStartCreatedInstance = async () => {
+    if (!createdInstanceId) return;
+    setIsStarting(true);
+    await limaService.startInstance(createdInstanceId);
+    await fetchInstances();
+    setIsStarting(false);
+    setShowStartModal(false);
+    setCreatedInstanceId(null);
+  };
+
+  const handleDelete = async () => {
+      // Fetch latest instances to determine what to show next
+      const data = await limaService.getInstances();
+      
+      if (data.length > 0) {
+          // Priority 1: Switch to a Running instance
+          const runningInstance = data.find(i => i.status === InstanceStatus.Running);
+          const nextId = runningInstance ? runningInstance.id : data[0].id;
+          
+          // CRITICAL: Update selectedId FIRST so the UI switches to the valid instance
+          // before the old list (which still contains the deleted one in React state) is updated.
+          // This prevents the "Loading Data Stream" fallback which occurs when selectedId is invalid.
+          setSelectedId(nextId);
+          setInstances(data);
+      } else {
+          // No instances left: Update instances first to clear the list, 
+          // then clear selection to show the empty state.
+          setInstances(data);
+          setSelectedId(null);
       }
-    };
-
-    updateDisplay();
-  }, [limaConfig]);
-
-  const handleWriteTest = async () => {
-    if (limaConfig) {
-      // Modify the structured config
-      const updatedConfig: LimaConfig = {
-        ...limaConfig,
-        cpus: limaConfig.cpus ? limaConfig.cpus + 1 : 2,
-      };
-      writeLimaYaml(updatedConfig);
-    }
   };
 
-  const handleCreateInstance = async () => {
-    if (editableConfig) {
-      // Always provide an instance name - use the input or generate a unique one
-      const nameToUse = instanceName || `zeroma-${Date.now()}`;
-      await startInstance({ config: editableConfig, instanceName: nameToUse });
-    }
-  };
+  const selectedInstance = instances.find(i => i.id === selectedId);
 
   return (
-    <main style={{ padding: "20px", fontFamily: "system-ui" }}>
-      <h1>Lima Manager</h1>
-
-      {/* Lima Version Section */}
-      <section style={{ marginBottom: "30px", padding: "15px", border: "1px solid #ccc", borderRadius: "8px" }}>
-        <h2>Lima Version</h2>
-        <div className="row">
-          <button onClick={() => checkLimaVersion()} disabled={isLoadingLimaVersion}>
-            {isLoadingLimaVersion ? "Checking..." : "Check Lima Version"}
-          </button>
-          {limaVersion && <p>✓ Lima version: {limaVersion}</p>}
-          {limaVersionError && (
-            <p style={{ color: "red" }}>✗ Error: {String(limaVersionError)}</p>
-          )}
-        </div>
-      </section>
-
-      {/* Lima Configuration Section */}
-      <section style={{ marginBottom: "30px", padding: "15px", border: "1px solid #ccc", borderRadius: "8px" }}>
-        <h2>Lima Configuration</h2>
+    <div className="h-screen bg-black text-zinc-300 font-mono overflow-hidden flex flex-col selection:bg-zinc-700 selection:text-white">
+        {/* MODALS */}
+        <CreateInstanceModal 
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onCreate={handleCreateConfirm}
+            isProcessing={isCreating}
+        />
         
-        <div style={{ marginBottom: "15px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <button onClick={() => refetchLima()} disabled={isLoadingLima}>
-            {isLoadingLima ? "Loading..." : "Load Lima YAML"}
-          </button>
-          
-          <button 
-            onClick={() => fetchLimaYamlPath()} 
-            disabled={isLoadingLimaYamlPath}
-          >
-            {isLoadingLimaYamlPath ? "Loading Path..." : "Get YAML Path"}
-          </button>
-          
-          <button
-            onClick={handleWriteTest}
-            disabled={isWritingLima || !limaConfig}
-          >
-            {isWritingLima ? "Writing..." : "Test Write (Add Timestamp)"}
-          </button>
+        <ConfirmationModal 
+            isOpen={showStartModal}
+            title="INSTANCE CREATED"
+            message="The virtual machine has been successfully provisioned. Do you want to initialize the boot sequence now?"
+            confirmLabel="START INSTANCE"
+            cancelLabel="LATER"
+            variant="success"
+            onConfirm={handleStartCreatedInstance}
+            onCancel={() => setShowStartModal(false)}
+            isProcessing={isStarting}
+        />
 
-          <button
-            onClick={() => resetLimaYaml()}
-            disabled={isResettingLima}
-            style={{
-              background: "#ff6b6b",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: isResettingLima ? "not-allowed" : "pointer"
-            }}
-          >
-            {isResettingLima ? "Resetting..." : "Reset to Default"}
-          </button>
-
-          <button
-            onClick={() => setShowEditor(!showEditor)}
-            disabled={!limaConfig}
-            style={{
-              background: showEditor ? "#6c757d" : "#007bff",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: !limaConfig ? "not-allowed" : "pointer"
-            }}
-          >
-            {showEditor ? "Hide Editor" : "Edit Configuration"}
-          </button>
-
-          <button
-            onClick={handleCreateInstance}
-            disabled={!editableConfig || isStarting || !!startError}
-            style={{
-              background: startError ? "#dc3545" : "#28a745",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: (!editableConfig || isStarting || !!startError) ? "not-allowed" : "pointer"
-            }}
-          >
-            {isStarting
-              ? "Starting..."
-              : startError
-                ? "Clear Error to Retry"
-                : "Create Lima Instance"
-            }
-          </button>
-
-          <button
-            onClick={() => {
-              if (selectedInstanceName) {
-                stopInstance(selectedInstanceName);
-              }
-            }}
-            disabled={!selectedInstanceName || isStopping || !!stopError}
-            style={{
-              background: !selectedInstanceName || stopError ? "#6c757d" : "#dc3545",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: (!selectedInstanceName || isStopping || !!stopError) ? "not-allowed" : "pointer"
-            }}
-          >
-            {isStopping
-              ? "Stopping..."
-              : stopError
-                ? "Clear Error First"
-                : !selectedInstanceName
-                  ? "No Instance Selected"
-                  : `Stop Instance (${selectedInstanceName})`
-            }
-          </button>
-
-          <button
-            onClick={() => {
-              if (selectedInstanceName &&
-                  confirm(`Are you sure you want to permanently delete the Lima instance '${selectedInstanceName}'? This action cannot be undone.`)) {
-                deleteInstance(selectedInstanceName);
-              }
-            }}
-            disabled={!selectedInstanceName || isDeleting || !!deleteError}
-            style={{
-              background: !selectedInstanceName || deleteError ? "#6c757d" : "#ffc107",
-              color: (!selectedInstanceName || deleteError) ? "white" : "black",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: (!selectedInstanceName || isDeleting || !!deleteError) ? "not-allowed" : "pointer"
-            }}
-          >
-            {isDeleting
-              ? "Deleting..."
-              : deleteError
-                ? "Clear Error First"
-                : !selectedInstanceName
-                  ? "No Instance Selected"
-                  : `Delete Instance (${selectedInstanceName})`
-            }
-          </button>
-        </div>
-
-        {/* Instance Name Input */}
-        <div style={{ marginTop: "10px" }}>
-          <label style={{ display: "block", marginBottom: "5px" }}>
-            Instance Name (optional):
-          </label>
-          <input
-            type="text"
-            value={instanceName}
-            onChange={(e) => setInstanceName(e.target.value)}
-            placeholder="default"
-            style={{
-              padding: "5px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              width: "300px"
-            }}
-          />
-          <small style={{ color: "#666", fontSize: "12px", marginTop: "3px", display: "block" }}>
-            If empty, a unique name will be generated automatically (e.g., zeroma-1734738140)
-          </small>
-        </div>
-
-        {limaYamlPath && (
-          <div style={{ marginBottom: "10px", padding: "10px", background: "#f0f0f0", borderRadius: "4px" }}>
-            <strong>File Path:</strong> <code>{limaYamlPath}</code>
-          </div>
-        )}
-
-        {/* Registered Instances Section */}
-        {registeredInstances.length > 0 && (
-          <div style={{ marginTop: "15px", padding: "10px", background: "#e8f5e8", border: "1px solid #c3e6cb", borderRadius: "4px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 10px 0" }}>
-  <h4 style={{ margin: 0 }}>
-    ZeroMa-Managed Instances ({registeredInstances.length}):
-  </h4>
-  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-    <button
-      onClick={() => refreshInstances()}
-      disabled={loadingInstances}
-      style={{
-        padding: "4px 8px",
-        fontSize: "12px",
-        background: loadingInstances ? "#6c757d" : "#007bff",
-        color: "white",
-        border: "none",
-        borderRadius: "3px",
-        cursor: loadingInstances ? "not-allowed" : "pointer"
-      }}
-    >
-      {loadingInstances ? "Refreshing..." : "Refresh"}
-    </button>
-  </div>
-</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-              {registeredInstances
-                .sort((a, b) => parseInt(b.created_at) - parseInt(a.created_at))
-                .map((instance) => {
-                  const isInstanceRunning = instance.status === "Running";
-                  const isInstanceStopped = instance.status === "Stopped";
-                  const isSelected = instance.name === selectedInstanceName;
-
-                  // Determine background color based on status
-                  let bgColor = "white";
-                  if (isInstanceStopped) bgColor = "#fff3cd"; // Light yellow for Stopped
-                  else if (isInstanceRunning) bgColor = "#d4edda"; // Light green for Running
-
-                  return (
-                    <div
-                      key={instance.name}
-                      onClick={() => setSelectedInstanceName(instance.name)}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "8px 10px",
-                        background: isSelected ? bgColor : bgColor,
-                        borderRadius: "3px",
-                        border: isSelected ? "2px solid #007bff" : "1px solid #dee2e6",
-                        cursor: "pointer",
-                        transition: "background-color 0.2s, border-color 0.2s"
-                      }}
-                      onMouseOver={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.backgroundColor = "#f8f9fa";
-                        }
-                      }}
-                      onMouseOut={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.backgroundColor = bgColor;
-                        }
-                      }}
-                      title={isSelected ? "Currently selected instance" : "Click to select this instance"}
-                    >
-                      <div>
-                        <strong>{instance.name}</strong>
-                        <small style={{ marginLeft: "10px", color: "#666" }}>
-                          Created: {new Date(parseInt(instance.created_at) * 1000).toLocaleString()}
-                        </small>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        {/* Status badge */}
-                        <span style={{
-                          fontSize: "11px",
-                          padding: "2px 6px",
-                          borderRadius: "3px",
-                          fontWeight: "bold",
-                          backgroundColor: isInstanceRunning ? "#28a745" :
-                                          isInstanceStopped ? "#ffc107" : "#6c757d",
-                          color: "white"
-                        }}>
-                          {instance.status || "Unknown"}
-                        </span>
-
-                        {/* Delete button for each instance */}
-                        <button
-                          onClick={async (e) => {
-                            console.log(`Delete button clicked for instance: ${instance.name}`);
-                            e.stopPropagation(); // Prevent selecting the instance
-                            try {
-                              const confirmed = await ask(
-                                `Are you sure you want to delete instance "${instance.name}"?`,
-                                {
-                                  title: "Confirm Delete Instance",
-                                  kind: "warning"
-                                }
-                              );
-                              console.log('User response:', confirmed);
-                              if (confirmed) {
-                                console.log('User confirmed deletion, calling handleDeleteInstance');
-                                handleDeleteInstance(instance.name);
-                              } else {
-                                console.log('User cancelled deletion');
-                              }
-                            } catch (error) {
-                              console.error('Error showing dialog:', error);
-                            }
-                          }}
-                          disabled={isProcessing}
-                          style={{
-                            padding: "2px 8px",
-                            background: "#dc3545",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "3px",
-                            cursor: isProcessing ? "not-allowed" : "pointer",
-                            fontSize: "11px",
-                            opacity: isProcessing ? 0.6 : 1
-                          }}
-                          title={`Delete instance ${instance.name}`}
-                        >
-                          🗑️
-                        </button>
-
-                        {/* Active/Click indicator */}
-                        {isSelected && (
-                          <span style={{ fontSize: "12px", color: "#007bff", fontWeight: "bold" }}>
-                            [Active]
-                          </span>
-                        )}
-                        {!isSelected && (
-                          <span style={{ fontSize: "12px", color: "#6c757d" }}>
-                            Click to select
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-            <small style={{ marginTop: "8px", color: "#666", fontSize: "12px", fontStyle: "italic" }}>
-              Status auto-refreshes when you return to the window. Click Refresh for immediate update.
-            </small>
-          </div>
-        )}
-
-        {limaYamlPathError && (
-          <p style={{ color: "red" }}>✗ Path Error: {String(limaYamlPathError)}</p>
-        )}
-
-        {limaError && (
-          <p style={{ color: "red" }}>✗ Error: {String(limaError)}</p>
-        )}
-
-        {writeLimaError && (
-          <p style={{ color: "red" }}>✗ Write Error: {String(writeLimaError)}</p>
-        )}
-
-        {resetLimaError && (
-          <p style={{ color: "red" }}>✗ Reset Error: {String(resetLimaError)}</p>
-        )}
-
-        {/* Instance Status */}
-        {(isProcessing || operationLogs.logs.length > 0 || startError || stopError || deleteError) && (
-          <div style={{ marginTop: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px", background: "#f9f9f9" }}>
-            <h3>Instance Status</h3>
-
-            {isProcessing && (
-              <div style={{ marginBottom: "10px", color: "#007bff" }}>
-                ⏳ Operation in progress...
-                {selectedInstanceName && (
-                  <span style={{ marginLeft: "10px", fontWeight: "bold" }}>
-                    Instance: {selectedInstanceName}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {selectedInstanceName && !isProcessing && !startError && !stopError && !deleteError && (
-              <div style={{ marginBottom: "10px", padding: "8px", background: "#e7f3ff", border: "1px solid #b3d9ff", borderRadius: "4px" }}>
-                <strong>Selected Instance:</strong> {selectedInstanceName}
-              </div>
-            )}
-
-            {operationLogs.logs.length > 0 && (
-              <div style={{ marginBottom: "15px" }}>
-                <strong>Logs:</strong>
-                <pre style={{
-                  background: "#1e1e1e",
-                  color: "#d4d4d4",
-                  padding: "10px",
-                  borderRadius: "4px",
-                  overflow: "auto",
-                  maxHeight: "300px",
-                  fontSize: "12px",
-                  lineHeight: "1.4",
-                  marginTop: "5px"
-                }}>
-                  {operationLogs.logs.join('\n')}
-                </pre>
-              </div>
-            )}
-
-            {(startError || stopError || deleteError) && (
-              <div style={{ marginBottom: "10px", padding: "10px", background: "#f8d7da", border: "1px solid #f5c6cb", borderRadius: "4px", color: "#721c24" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ flex: 1 }}>
-                    ❌ <strong>Error:</strong> {String(startError || stopError || deleteError)}
-                  </div>
-                  <button
-                    onClick={clearInstanceStatus}
-                    style={{
-                      marginLeft: "10px",
-                      padding: "4px 12px",
-                      background: "#dc3545",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "14px"
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.background = "#c82333"}
-                    onMouseOut={(e) => e.currentTarget.style.background = "#dc3545"}
-                  >
-                    Clear & Retry
-                  </button>
+        {isLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-4">
+                <div className="font-mono text-sm">
+                    <span className="text-green-500">➜</span> SYSTEM CHECK...
                 </div>
-                <div style={{ marginTop: "8px", fontSize: "14px" }}>
-                  Please check the error details above and fix any configuration issues before retrying.
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {editableConfig && !showEditor && (
-          <QuickConfigEditor
-            config={editableConfig}
-            onChange={setEditableConfig}
-          />
-        )}
-
-        {yamlDisplay && (
-          <div style={{ marginTop: "15px" }}>
-            <h3>YAML Configuration:</h3>
-            <pre style={{
-              background: "#1e1e1e",
-              color: "#d4d4d4",
-              padding: "15px",
-              borderRadius: "4px",
-              overflow: "auto",
-              maxHeight: "500px",
-              fontSize: "12px",
-              lineHeight: "1.5"
-            }}>
-              {yamlDisplay}
-            </pre>
-          </div>
-        )}
-
-        {limaConfig && !showEditor && (
-          <div style={{ marginTop: "15px" }}>
-            <h3>Configuration Summary:</h3>
-            <div style={{ padding: "10px", background: "#f8f8f8", borderRadius: "4px" }}>
-              <ul style={{ marginLeft: "20px", marginTop: "5px" }}>
-                <li>Images: {limaConfig.images?.length || 0} configured</li>
-                <li>Mounts: {limaConfig.mounts?.length || 0} configured</li>
-                <li>Provision Scripts: {limaConfig.provision?.length || 0} scripts</li>
-                <li>Probes: {limaConfig.probes?.length || 0} probes</li>
-                <li>Copy To Host: {limaConfig.copy_to_host?.length || 0} items</li>
-              </ul>
             </div>
-          </div>
+        ) : instances.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-6">
+                <div className="w-24 h-24 border border-zinc-800 flex items-center justify-center bg-zinc-900/50">
+                    <Terminal className="w-10 h-10 opacity-50" />
+                </div>
+                <div className="text-center font-mono">
+                    <h2 className="text-lg font-bold text-zinc-300 uppercase">No Instances Detected</h2>
+                    <p className="text-xs text-zinc-600 mt-2 max-w-xs mx-auto">
+                        SYSTEM READY. AWAITING INPUT.
+                    </p>
+                </div>
+                <button 
+                    onClick={handleOpenCreateModal}
+                    className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 px-6 py-2 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
+                >
+                    [ CREATE INSTANCE ]
+                </button>
+            </div>
+        ) : selectedInstance ? (
+             <InstanceDetail 
+                // We do NOT use a key here to prevent unmounting the header when switching.
+                instances={instances}
+                selectedId={selectedInstance.id}
+                onSelect={setSelectedId}
+                onCreate={handleOpenCreateModal}
+                instance={selectedInstance}
+                onUpdate={fetchInstances}
+                onDelete={handleDelete}
+                isCreating={isCreating}
+             />
+        ) : (
+            <div className="flex-1 flex items-center justify-center">
+                 <div className="animate-pulse text-zinc-600 font-mono text-xs">LOADING DATA STREAM...</div>
+            </div>
         )}
-      </section>
-
-      {/* Configuration Editor Section */}
-      {showEditor && editableConfig && (
-        <section style={{ marginBottom: "30px", padding: "15px", border: "2px solid #007bff", borderRadius: "8px" }}>
-          <LimaConfigEditor
-            config={editableConfig}
-            onSave={writeLimaYaml}
-            isSaving={isWritingLima}
-          />
-        </section>
-      )}
-    </main>
+    </div>
   );
-}
+};

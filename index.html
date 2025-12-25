@@ -3,8 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+        <style>
+      /* Custom Scrollbar for TUI design */
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 0px;
+      }
+      /* Show scrollbar thumb when hovering over the container */
+      :hover::-webkit-scrollbar-thumb {
+        background: #3f3f46; 
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #52525b; 
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+      
+      /* Editor Overrides */
+      .prism-editor textarea {
+        outline: none !important;
+      }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
+    <title>0ma</title>
   </head>
 
   <body>
