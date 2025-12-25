@@ -19,32 +19,28 @@ export function useLimaInstance() {
     const setupListeners = async () => {
       // Listen for start event
       const unlistenStart = await listen<string>("lima-instance-start", (event) => {
-        setOperationLogs(prev => ({
-          ...prev,
+        setOperationLogs({
           logs: [event.payload],
-        }));
+        });
       });
 
       // Listen for stop event
       const unlistenStop = await listen<string>("lima-instance-stop", (event) => {
-        setOperationLogs(prev => ({
-          ...prev,
+        setOperationLogs({
           logs: [event.payload],
-        }));
+        });
       });
 
       // Listen for delete event
       const unlistenDelete = await listen<string>("lima-instance-delete", (event) => {
-        setOperationLogs(prev => ({
-          ...prev,
+        setOperationLogs({
           logs: [event.payload],
-        }));
+        });
       });
 
       // Listen for output events
       const unlistenOutput = await listen<string>("lima-instance-output", (event) => {
         setOperationLogs(prev => ({
-          ...prev,
           logs: [...prev.logs, event.payload],
         }));
       });
