@@ -6,7 +6,7 @@ import { InstanceStatus } from './types/InstanceStatus';
 import { LimaConfig } from './types/LimaConfig';
 import { useLimaInstances } from './hooks/useLimaInstances';
 import { useLimaInstance } from './hooks/useLimaInstance';
-import { useLimaCreateSuccess } from './hooks/useLimaCreateSuccess';
+import { useLimaCreateLogs } from './hooks/useLimaCreateLogs';
 import { useLimaStartSuccess } from './hooks/useLimaStartSuccess';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
@@ -22,21 +22,34 @@ export const App: React.FC = () => {
   const [showStartModal, setShowStartModal] = useState(false);
   const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(null);
 
+  // Listen for create events and logs
+  const handleCreateSuccess = useCallback((instanceName: string) => {
+    console.debug(`Instance ${instanceName} created successfully.`);
+    setCreatedInstanceName(instanceName);
+    setSelectedId(instanceName);
+    // Show start modal after a brief delay to see the success state
+    setTimeout(() => {
+      setShowCreateModal(false);
+      setShowStartModal(true);
+    }, 1500);
+  }, []);
+
+  const handleCreateError = useCallback((error: string) => {
+    console.error('Instance creation failed:', error);
+    // Keep modal open to show error logs
+  }, []);
+
+  const { logs: createLogs, isCreating: isCreatingFromLogs, error: creationError } = useLimaCreateLogs(
+    handleCreateSuccess,
+    handleCreateError
+  );
+
   // Auto-select first instance if none selected
   useEffect(() => {
     if (!selectedId && instances.length > 0) {
       setSelectedId(instances[0].id);
     }
   }, [instances, selectedId]);
-
-  // Listen for instance create success to show start prompt
-  const handleCreateSuccess = useCallback((instanceName: string) => {
-    console.debug(`Instance ${instanceName} created successfully.`);
-    setCreatedInstanceName(instanceName);
-    setSelectedId(instanceName);
-    setShowStartModal(true);
-  }, []);
-  useLimaCreateSuccess(handleCreateSuccess);
 
   // Listen for instance start success to clean up state
   const handleStartSuccess = useCallback((instanceName: string) => {
@@ -58,8 +71,8 @@ export const App: React.FC = () => {
   };
 
   const handleCreateConfirm = async (name: string, config: LimaConfig) => {
-    // Close create modal
-    setShowCreateModal(false);
+    // Don't close modal - it will stay open to show logs
+    // Modal will close after creation succeeds
     
     // Create the instance
     createInstance({ config, instanceName: name });
@@ -95,7 +108,10 @@ export const App: React.FC = () => {
             isOpen={showCreateModal}
             onClose={() => setShowCreateModal(false)}
             onCreate={handleCreateConfirm}
-            isProcessing={isCreating}
+            isProcessing={isCreatingFromLogs}
+            logs={createLogs}
+            creationError={creationError}
+            creationSuccess={!isCreatingFromLogs && !creationError && createLogs.length > 0}
         />
         
         <ConfirmationModal 
