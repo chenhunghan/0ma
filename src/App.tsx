@@ -3,7 +3,6 @@ import {
   Terminal,
 } from 'lucide-react';
 import { InstanceStatus } from './types/InstanceStatus';
-import { LimaConfig } from './types/LimaConfig';
 import { useLimaInstances } from './hooks/useLimaInstances';
 import { useLimaInstance } from './hooks/useLimaInstance';
 import InstanceDetail from './components/InstanceDetail';
@@ -15,7 +14,7 @@ import { DeleteInstanceModal } from './components/DeleteInstanceModal';
 
 export const App: React.FC = () => {
   const { instances, isLoading } = useLimaInstances();
-  const { createInstance, startInstance, stopInstance, deleteInstance } = useLimaInstance();
+  const { startInstance, stopInstance, deleteInstance } = useLimaInstance();
   const [selectedName, setSelectedName] = useState<string | null>(null);
   
   // Modal States
@@ -115,14 +114,6 @@ export const App: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleCreateConfirm = async (name: string, config: LimaConfig) => {
-    // Don't close modal - it will stay open to show logs
-    // Modal will close after creation succeeds
-    
-    // Create the instance
-    createInstance({ config, instanceName: name });
-  };
-
   const handleStartCreatedInstance = () => {
     if (!createdInstanceName) return;
     
@@ -165,7 +156,6 @@ export const App: React.FC = () => {
         <CreateInstanceModal 
             isOpen={showCreateModal}
             onClose={() => setShowCreateModal(false)}
-            onCreate={handleCreateConfirm}
             onSuccess={handleCreateSuccess}
             onError={handleCreateError}
         />

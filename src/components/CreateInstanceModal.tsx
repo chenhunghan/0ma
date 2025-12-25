@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Terminal, X, CheckCircle2, XCircle } from 'lucide-react';
 import { useLimaConfig } from '../hooks/useLimaConfig';
 import { LimaConfigForm } from './LimaConfigForm';
-import { LimaConfig } from '../types/LimaConfig';
 import { CreateLogViewer } from './CreateLogViewer';
 import { useLimaCreateLogs } from '../hooks/useLimaCreateLogs';
 import { useDefaultK0sLimaConfig } from '../hooks/useDefaultK0sLimaConfig';
+import { useLimaInstance } from '../hooks/useLimaInstance';
 
 function  getRandomInstanceName (): string {
   const hash = Math.random().toString(36).substring(2, 6);
@@ -15,7 +15,6 @@ function  getRandomInstanceName (): string {
 interface CreateInstanceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, config: LimaConfig) => Promise<void>;
   onSuccess?: (instanceName: string) => void;
   onError?: (error: string) => void;
 }
@@ -23,7 +22,6 @@ interface CreateInstanceModalProps {
 export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
   isOpen,
   onClose,
-  onCreate,
   onSuccess,
   onError,
 }) => {
@@ -39,6 +37,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     addProbeScript,
     removeProbeScript
   } = useLimaConfig(defaultConfig);
+  const { createInstance } = useLimaInstance();
 
   const { logs, isCreating, error: creationError } = useLimaCreateLogs(
     onSuccess,
@@ -54,9 +53,8 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async () => {
-    if (!name.trim()) return;
-    await onCreate(name, config);
+  const handleSubmit = () => {
+    createInstance({ config, instanceName: name });
   };
 
   const showLogs = isCreating || logs.length > 0;
