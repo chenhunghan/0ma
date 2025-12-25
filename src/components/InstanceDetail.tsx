@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { Save } from 'lucide-react';
 import { LimaInstance } from '../types/LimaInstance';
 import { InstanceStatus } from '../types/InstanceStatus';
@@ -6,7 +7,6 @@ import { InstanceUIState } from '../types/InstanceUIState';
 import { SessionType } from '../types/TerminalSession';
 import { LimaConfig } from '../types/LimaConfig';
 import TerminalView from './TerminalView';
-import { limaService } from '../services/limaService';
 import { parse, stringify } from 'yaml';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
@@ -188,7 +188,10 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     setIsSaving(true);
     try {
         // Save using the current object state
-        await limaService.updateConfig(instance.name, configObject);
+        await invoke('write_lima_yaml_cmd', { 
+          instanceName: instance.name, 
+          config: configObject 
+        });
         
         // Clear drafts
         updateUiState(prev => ({
