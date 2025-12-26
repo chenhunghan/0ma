@@ -1,7 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import { LimaConfig } from "../types/LimaConfig";
-import { useEffect, useState } from "react";
-import { listen } from "@tauri-apps/api/event";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface LimaOperationLogs {
@@ -10,97 +8,12 @@ export interface LimaOperationLogs {
 
 export function useLimaInstance() {
   const queryClient = useQueryClient();
-  const [operationLogs, setOperationLogs] = useState<LimaOperationLogs>({
-    logs: [],
-  });
-
-  // Listen for Lima instance events
-  useEffect(() => {
-    const setupListeners = async () => {
-      // Listen for create event
-      const unlistenCreate = await listen<string>("lima-instance-create", (event) => {
-        setOperationLogs({
-          logs: [event.payload],
-        });
-      });
-
-      // Listen for start event
-      const unlistenStart = await listen<string>("lima-instance-start", (event) => {
-        setOperationLogs({
-          logs: [event.payload],
-        });
-      });
-
-      // Listen for stop event
-      const unlistenStop = await listen<string>("lima-instance-stop", (event) => {
-        setOperationLogs({
-          logs: [event.payload],
-        });
-      });
-
-      // Listen for delete event
-      const unlistenDelete = await listen<string>("lima-instance-delete", (event) => {
-        setOperationLogs({
-          logs: [event.payload],
-        });
-      });
-
-      // Listen for output events
-      const unlistenOutput = await listen<string>("lima-instance-output", (event) => {
-        setOperationLogs(prev => ({
-          logs: [...prev.logs, event.payload],
-        }));
-      });
-
-      // Listen for stop success event
-      const unlistenStopSuccess = await listen<string>("lima-instance-stop-success", () => {
-        // Invalidate instances query to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["instances"] });
-      });
-
-      // Listen for delete success event
-      const unlistenDeleteSuccess = await listen<string>("lima-instance-delete-success", () => {
-        // Invalidate instances query to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["instances"] });
-      });
-
-      // Listen for error events
-      const unlistenError = await listen<string>("lima-instance-error", (event) => {
-        console.error("Lima instance error:", event.payload);
-        // Invalidate instances query to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["instances"] });
-      });
-
-      // Return cleanup function
-      return () => {
-        unlistenCreate();
-        unlistenStart();
-        unlistenStop();
-        unlistenDelete();
-        unlistenOutput();
-        unlistenStopSuccess();
-        unlistenDeleteSuccess();
-        unlistenError();
-      };
-    };
-
-    const cleanup = setupListeners();
-
-    return () => {
-      cleanup.then(fn => fn());
-    };
-  }, [queryClient]);
 
   const createMutation = useMutation({
     mutationFn: async ({ config, instanceName }: { config: LimaConfig; instanceName: string }) => {
       return await invoke<string>("create_lima_instance_cmd", {
         config,
         instanceName
-      });
-    },
-    onMutate: () => {
-      setOperationLogs({
-        logs: [],
       });
     },
     onSuccess: () => {
@@ -112,11 +25,6 @@ export function useLimaInstance() {
     mutationFn: async (instanceName: string) => {
       return await invoke<string>("start_lima_instance_cmd", { instanceName });
     },
-    onMutate: () => {
-      setOperationLogs({
-        logs: [],
-      });
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instances"] });
     },
@@ -125,11 +33,6 @@ export function useLimaInstance() {
   const stopMutation = useMutation({
     mutationFn: async (instanceName: string) => {
       return await invoke<string>("stop_lima_instance_cmd", { instanceName });
-    },
-    onMutate: () => {
-      setOperationLogs({
-        logs: [],
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instances"] });
@@ -140,30 +43,19 @@ export function useLimaInstance() {
     mutationFn: async (instanceName: string) => {
       return await invoke<string>("delete_lima_instance_cmd", { instanceName });
     },
-    onMutate: () => {
-      setOperationLogs({
-        logs: [],
-      });
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instances"] });
     },
   });
 
   const clearStatus = () => {
-    setOperationLogs({
-      logs: [],
-    });
     createMutation.reset();
     startMutation.reset();
     stopMutation.reset();
     deleteMutation.reset();
   };
 
-  return {
-    // Streaming logs from lifecycle operations (create/start/stop/delete)
-    operationLogs,
-    
+  return {    
     // Create instance mutation
     createInstance: createMutation.mutate,
     createError: createMutation.error,
