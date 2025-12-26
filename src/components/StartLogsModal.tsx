@@ -18,7 +18,7 @@ export const StartLogsModal: React.FC<StartLogsModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const { logs, isStarting, error } = useLimaStartLogs(onSuccess, onError);
+  const { logs, isStarting, isEssentiallyReady, error } = useLimaStartLogs(onSuccess, onError);
 
   if (!isOpen) return null;
 
@@ -41,8 +41,9 @@ export const StartLogsModal: React.FC<StartLogsModalProps> = ({
            </div>
            <button 
              onClick={onClose} 
-             disabled={isStarting}
+             disabled={isStarting && !isEssentiallyReady}
              className="p-1 hover:text-white text-zinc-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+             title={isEssentiallyReady ? "Instance is ready - you can close this and let it finish in background" : ""}
            >
               <X className="w-5 h-5" />
            </button>
@@ -56,12 +57,14 @@ export const StartLogsModal: React.FC<StartLogsModalProps> = ({
               <div className="flex-1">
                 <div className="text-sm font-bold text-white">{instanceName}</div>
                 <div className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                  {isStarting && 'Starting Instance...'}
+                  {isStarting && !isEssentiallyReady && 'Starting Instance...'}
+                  {isEssentiallyReady && isStarting && '✓ Ready - Initializing Optional Components...'}
                   {startSuccess && 'Instance Started Successfully'}
                   {error && 'Start Failed'}
                 </div>
               </div>
-              {isStarting && <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />}
+              {isStarting && !isEssentiallyReady && <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />}
+              {isEssentiallyReady && isStarting && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
               {startSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
               {error && <XCircle className="w-4 h-4 text-red-500" />}
             </div>
@@ -79,12 +82,17 @@ export const StartLogsModal: React.FC<StartLogsModalProps> = ({
 
         {/* FOOTER */}
         <div className="h-16 border-t border-zinc-800 flex items-center justify-end px-6 gap-4 bg-zinc-900/50">
+            {isEssentiallyReady && isStarting && (
+              <div className="flex-1 text-xs text-emerald-400">
+                ✓ Instance is ready for use. You can close this window.
+              </div>
+            )}
             <button 
                 onClick={onClose}
-                disabled={isStarting}
+                disabled={isStarting && !isEssentiallyReady}
                 className="px-8 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white font-bold uppercase tracking-wider text-xs shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed"
             >
-                {isStarting ? 'Starting...' : 'Close'}
+                {isStarting && !isEssentiallyReady ? 'Starting...' : 'Close'}
             </button>
         </div>
 

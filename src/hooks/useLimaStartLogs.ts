@@ -11,6 +11,7 @@ interface StartLog {
 interface UseLimaStartLogsReturn {
   logs: StartLog[];
   isStarting: boolean;
+  isEssentiallyReady: boolean; // VM is ready, but optional probes still running
   error: string | null;
 }
 
@@ -20,6 +21,7 @@ export function useLimaStartLogs(
 ): UseLimaStartLogsReturn {
   const [logs, setLogs] = useState<StartLog[]>([]);
   const [isStarting, setIsStarting] = useState(false);
+  const [isEssentiallyReady, setIsEssentiallyReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -30,6 +32,7 @@ export function useLimaStartLogs(
     unlistenPromises.push(
       listen<string>('lima-instance-start', () => {
         setIsStarting(true);
+        setIsEssentiallyReady(false);
         setLogs([]);
         setError(null);
       })
@@ -38,6 +41,17 @@ export function useLimaStartLogs(
     // Listen for stdout
     unlistenPromises.push(
       listen<string>('lima-instance-start-stdout', (event) => {
+        setLogs((prev) => [
+          ...prev,
+          { type: 'stdout', message: event.payload, timestamp: new Date() },
+        ]);
+      })
+    );
+
+    // Listen for ready state (VM is ready, optional probes still running)
+    unlistenPromises.push(
+      listen<string>('lima-instance-start-ready', (event) => {
+        setIsEssentiallyReady(true);
         setLogs((prev) => [
           ...prev,
           { type: 'stdout', message: event.payload, timestamp: new Date() },
@@ -89,5 +103,5 @@ export function useLimaStartLogs(
     };
   }, [onSuccess, onError, queryClient]);
 
-  return { logs, isStarting, error };
+  return { logs, isStarting, isEssentiallyReady, error };
 }

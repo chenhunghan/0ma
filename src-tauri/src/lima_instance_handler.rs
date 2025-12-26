@@ -153,10 +153,28 @@ pub async fn start_lima_instance_cmd(
         // Stream stdout
         if let Some(stdout) = child.stdout.take() {
             let app_handle_stdout = app_handle.clone();
+            let instance_name_stdout = instance_name_clone.clone();
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stdout).lines();
+                let mut essential_ready = false;
+                
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stdout.emit("lima-instance-start-stdout", &line);
+                    
+                    // Detect when VM is essentially ready (SSH + provisions done)
+                    // Lima transitions from "essential" to "optional" requirements
+                    // Multiple patterns for robustness (plain text and JSON log format)
+                    if !essential_ready && (
+                        line.contains("Waiting for the optional requirement") ||
+                        (line.contains("optional requirement") && line.contains("msg")) ||
+                        line.contains("The optional requirement") && line.contains("is satisfied")
+                    ) {
+                        essential_ready = true;
+                        let _ = app_handle_stdout.emit(
+                            "lima-instance-start-ready",
+                            &format!("Instance '{}' is ready for use (waiting for optional hooks to complete)", instance_name_stdout)
+                        );
+                    }
                 }
             });
         }
@@ -164,10 +182,28 @@ pub async fn start_lima_instance_cmd(
         // Stream stderr
         if let Some(stderr) = child.stderr.take() {
             let app_handle_stderr = app_handle.clone();
+            let instance_name_stderr = instance_name_clone.clone();
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
+                let mut essential_ready = false;
+                
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stderr.emit("lima-instance-start-stderr", &line);
+                    
+                    // Detect when VM is essentially ready (SSH + provisions done)
+                    // Lima transitions from "essential" to "optional" requirements
+                    // Multiple patterns for robustness (plain text and JSON log format)
+                    if !essential_ready && (
+                        line.contains("Waiting for the optional requirement") ||
+                        (line.contains("optional requirement") && line.contains("msg")) ||
+                        line.contains("The optional requirement") && line.contains("is satisfied")
+                    ) {
+                        essential_ready = true;
+                        let _ = app_handle_stderr.emit(
+                            "lima-instance-start-ready",
+                            &format!("Instance '{}' is ready for use (waiting for optional hooks to complete)", instance_name_stderr)
+                        );
+                    }
                 }
             });
         }
@@ -299,9 +335,9 @@ pub async fn delete_lima_instance_cmd(
             }
         };
 
-        // Run limactl delete command
+        // Run limactl delete command with --force to ensure complete deletion
         let child = TokioCommand::new(&lima_cmd)
-            .args(["delete", "--tty=false", &instance_name_clone])
+            .args(["delete", "--force", "--tty=false", &instance_name_clone])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
