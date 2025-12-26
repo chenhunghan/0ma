@@ -59,6 +59,9 @@ export function useLimaDeleteLogs(
         setError(event.payload);
         setIsDeleting(false);
         
+        // Invalidate to ensure UI reflects actual state even on error
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
+        
         if (onError) {
           onError(event.payload);
         }

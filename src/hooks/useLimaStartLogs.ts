@@ -64,6 +64,10 @@ export function useLimaStartLogs(
           ...prev,
           { type: 'error', message: event.payload, timestamp: new Date() },
         ]);
+        
+        // Invalidate to ensure UI reflects actual state even on error
+        queryClient.invalidateQueries({ queryKey: ['instances'] });
+        
         onError?.(event.payload);
       })
     );
