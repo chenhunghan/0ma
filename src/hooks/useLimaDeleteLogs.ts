@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface LogEntry {
   type: "info" | "stdout" | "stderr" | "error" | "success";
@@ -14,6 +15,7 @@ export function useLimaDeleteLogs(
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const setupListeners = async () => {
@@ -38,6 +40,9 @@ export function useLimaDeleteLogs(
       const unlistenSuccess = await listen<string>("lima-instance-delete-success", (event) => {
         setLogs((prev) => [...prev, { type: "success", message: event.payload, timestamp: new Date() }]);
         setIsDeleting(false);
+        
+        // Invalidate instances query to refresh the list immediately
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
         
         // Extract instance name from success message
         const match = event.payload.match(/Lima instance '([^']+)' deleted successfully!/);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface LogEntry {
   type: "info" | "stdout" | "stderr" | "error" | "success";
@@ -14,6 +15,7 @@ export function useLimaStopLogs(
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isStopping, setIsStopping] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const setupListeners = async () => {
@@ -38,6 +40,9 @@ export function useLimaStopLogs(
       const unlistenSuccess = await listen<string>("lima-instance-stop-success", (event) => {
         setLogs((prev) => [...prev, { type: "success", message: event.payload, timestamp: new Date() }]);
         setIsStopping(false);
+        
+        // Invalidate instances query to refresh the status immediately
+        queryClient.invalidateQueries({ queryKey: ["instances"] });
         
         // Extract instance name from success message
         const match = event.payload.match(/Lima instance '([^']+)' stopped successfully!/);
