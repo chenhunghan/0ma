@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Loader2, Trash2, X, CheckCircle2, XCircle } from "lucide-react";
-import { CreateLogViewer } from "./CreateLogViewer";
+import { InstanceModalLogViewer } from "./InstanceModalLogViewer";
 import { useLimaDeleteLogs } from "../hooks/useLimaDeleteLogs";
 
 interface DeleteInstanceModalProps {
@@ -86,7 +86,7 @@ export const DeleteInstanceModal: React.FC<DeleteInstanceModalProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Delete Logs</span>
               </div>
               <div className="flex-1 overflow-hidden">
-                <CreateLogViewer logs={logs} />
+                <InstanceModalLogViewer logs={logs} />
               </div>
             </div>
         </div>

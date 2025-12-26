@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Loader2, Power, X, CheckCircle2, XCircle } from "lucide-react";
-import { CreateLogViewer } from "./CreateLogViewer";
+import { InstanceModalLogViewer } from "./InstanceModalLogViewer";
 import { useLimaStopLogs } from "../hooks/useLimaStopLogs";
 
 interface StopInstanceModalProps {
@@ -86,7 +86,7 @@ export const StopInstanceModal: React.FC<StopInstanceModalProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Stop Logs</span>
               </div>
               <div className="flex-1 overflow-hidden">
-                <CreateLogViewer logs={logs} />
+                <InstanceModalLogViewer logs={logs} />
               </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Loader2, Play, X, CheckCircle2, XCircle } from 'lucide-react';
-import { CreateLogViewer } from './CreateLogViewer';
+import { InstanceModalLogViewer } from './InstanceModalLogViewer';
 import { useLimaStartLogs } from '../hooks/useLimaStartLogs';
 
 interface StartLogsModalProps {
@@ -72,7 +72,7 @@ export const StartLogsModal: React.FC<StartLogsModalProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Start Logs</span>
               </div>
               <div className="flex-1 overflow-hidden">
-                <CreateLogViewer logs={logs} />
+                <InstanceModalLogViewer logs={logs} />
               </div>
             </div>
         </div>
