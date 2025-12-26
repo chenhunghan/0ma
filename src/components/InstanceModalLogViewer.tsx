@@ -1,7 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import '@xterm/xterm/css/xterm.css';
+import { Terminal, FitAddon } from 'ghostty-web';
 
 interface InstanceModalLog {
   type: 'stdout' | 'stderr' | 'error' | 'info' | 'success';
@@ -18,6 +16,7 @@ const TERM_CONFIG = {
   fontSize: 11,
   lineHeight: 1.15,
   theme: {
+    cusort: '#000000',
     background: '#000000',
     foreground: '#d4d4d8', // zinc-300
     cursor: '#10b981', // emerald-500
@@ -45,20 +44,19 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const processedLogsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!terminalContainerRef.current) return;
 
-    // Create terminal instance
+    // Create new terminal instance (init() should already be called globally)
     const term = new Terminal({
       ...TERM_CONFIG,
       cursorBlink: false,
-      cursorStyle: 'block',
+      cursorStyle: 'underline',
       disableStdin: true,
-      allowProposedApi: true,
     });
 
+    // Create and load FitAddon
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
 
@@ -66,8 +64,6 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
 
     terminalRef.current = term;
     fitAddonRef.current = fitAddon;
-
-    // Initial fit
     requestAnimationFrame(() => {
       try {
         fitAddon.fit();
@@ -86,7 +82,6 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
         }
       });
     });
-
     resizeObserver.observe(terminalContainerRef.current);
 
     return () => {
@@ -94,26 +89,18 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
       term.dispose();
       terminalRef.current = null;
       fitAddonRef.current = null;
-      processedLogsRef.current.clear();
     };
   }, []);
 
-  // Write logs to terminal
+  // Write logs to terminal - now always writing to a fresh terminal instance
   useEffect(() => {
     const term = terminalRef.current;
     if (!term) return;
 
+    // Write all logs to the fresh terminal
     logs.forEach((log) => {
-      const logKey = `${log.timestamp.getTime()}-${log.type}-${log.message}`;
-      
-      // Skip if already processed
-      if (processedLogsRef.current.has(logKey)) return;
-      
-      processedLogsRef.current.add(logKey);
-
       try {
         term.writeln(log.message);
-        
         // Auto-scroll to bottom
         term.scrollToBottom();
       } catch (e) {
