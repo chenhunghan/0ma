@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Terminal, X, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { useLimaConfig } from '../hooks/useLimaConfig';
 import { LimaConfigForm } from './LimaConfigForm';
-import { CreateLogViewer } from './CreateLogViewer';
+import { InstanceModalLogViewer } from './InstanceModalLogViewer';
 import { useLimaCreateLogs } from '../hooks/useLimaCreateLogs';
 import { useDefaultK0sLimaConfig } from '../hooks/useDefaultK0sLimaConfig';
 import { useLimaInstance } from '../hooks/useLimaInstance';
@@ -159,7 +159,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
                     <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Creation Logs</span>
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <CreateLogViewer logs={logs} />
+                    <InstanceModalLogViewer logs={logs} />
                   </div>
                 </div>
               </>
