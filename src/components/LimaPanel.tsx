@@ -114,18 +114,42 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
                 Port Forwarding
               </span>
               <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-xs text-zinc-400">
-                  <ArrowRight className="w-3 h-3 text-zinc-600" />
-                  <span>127.0.0.1:8080</span>
-                  <span className="text-zinc-600 px-1">→</span>
-                  <span>80 (Guest)</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-zinc-400">
-                  <ArrowRight className="w-3 h-3 text-zinc-600" />
-                  <span>127.0.0.1:4433</span>
-                  <span className="text-zinc-600 px-1">→</span>
-                  <span>443 (Guest)</span>
-                </div>
+                {parsedConfig?.portForwards && parsedConfig.portForwards.length > 0 ? (
+                  parsedConfig.portForwards
+                    .filter(pf => !pf.ignore)
+                    .slice(0, 5)
+                    .map((pf, idx) => {
+                      // Format host part
+                      const hostPart = pf.hostSocket 
+                        ? pf.hostSocket.split('/').pop() || pf.hostSocket
+                        : pf.hostPortRange && pf.hostPortRange[0] !== pf.hostPortRange[1]
+                        ? `${pf.hostIP || '127.0.0.1'}:${pf.hostPortRange[0]}-${pf.hostPortRange[1]}`
+                        : `${pf.hostIP || '127.0.0.1'}:${pf.hostPort || pf.hostPortRange?.[0] || '?'}`;
+                      
+                      // Format guest part
+                      const guestPart = pf.guestSocket
+                        ? pf.guestSocket.split('/').pop() || pf.guestSocket
+                        : pf.guestPortRange && pf.guestPortRange[0] !== pf.guestPortRange[1]
+                        ? `${pf.guestPortRange[0]}-${pf.guestPortRange[1]}`
+                        : String(pf.guestPort || pf.guestPortRange?.[0] || '?');
+                      
+                      return (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-zinc-400">
+                          <ArrowRight className="w-3 h-3 text-zinc-600" />
+                          <span className="truncate max-w-30" title={hostPart}>{hostPart}</span>
+                          <span className="text-zinc-600 px-1">→</span>
+                          <span className="truncate max-w-30" title={guestPart}>
+                            {guestPart}
+                            {pf.proto && pf.proto !== 'any' ? ` (${pf.proto})` : ''}
+                          </span>
+                        </div>
+                      );
+                    })
+                ) : (
+                  <div className="text-xs text-zinc-500 italic">
+                    No port forwards configured
+                  </div>
+                )}
               </div>
             </div>
           </div>

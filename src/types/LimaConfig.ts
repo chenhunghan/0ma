@@ -32,6 +32,20 @@ export interface CopyToHost {
   deleteOnStop?: boolean;
 }
 
+export interface PortForward {
+  guestIPMustBeZero?: boolean;
+  guestIP?: string;
+  guestPort?: number;
+  guestPortRange?: [number, number];
+  guestSocket?: string;
+  hostIP?: string;
+  hostPort?: number;
+  hostPortRange?: [number, number];
+  hostSocket?: string;
+  proto?: string;
+  ignore?: boolean;
+}
+
 export interface LimaConfig {
   minimumLimaVersion?: string;
   vmType?: string;
@@ -44,5 +58,6 @@ export interface LimaConfig {
   provision?: Provision[];
   probes?: Probe[];
   copyToHost?: CopyToHost[];
+  portForwards?: PortForward[];
   [key: string]: any; // Allow for other fields
 }

@@ -66,6 +66,9 @@ pub struct LimaConfig {
     /// Files to copy from guest to host
     #[serde(rename = "copyToHost", skip_serializing_if = "skip_vec_none")]
     pub copy_to_host: Option<Vec<CopyToHost>>,
+    /// Port forwarding configuration
+    #[serde(rename = "portForwards", skip_serializing_if = "skip_vec_none")]
+    pub port_forwards: Option<Vec<PortForward>>,
 
 }
 
@@ -125,6 +128,44 @@ pub struct CopyToHost {
     pub delete_on_stop: Option<bool>,
 }
 
+/// Port forwarding configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PortForward {
+    /// Whether guest IP must be zero
+    #[serde(rename = "guestIPMustBeZero", skip_serializing_if = "Option::is_none")]
+    pub guest_ip_must_be_zero: Option<bool>,
+    /// Guest IP address (optional)
+    #[serde(rename = "guestIP", skip_serializing_if = "Option::is_none")]
+    pub guest_ip: Option<String>,
+    /// Guest port (optional when using socket)
+    #[serde(rename = "guestPort", skip_serializing_if = "Option::is_none")]
+    pub guest_port: Option<u16>,
+    /// Guest port range (optional)
+    #[serde(rename = "guestPortRange", skip_serializing_if = "Option::is_none")]
+    pub guest_port_range: Option<(u16, u16)>,
+    /// Guest socket (optional)
+    #[serde(rename = "guestSocket", skip_serializing_if = "Option::is_none")]
+    pub guest_socket: Option<String>,
+    /// Host IP address (optional, defaults to 127.0.0.1)
+    #[serde(rename = "hostIP", skip_serializing_if = "Option::is_none")]
+    pub host_ip: Option<String>,
+    /// Host port (optional when using socket)
+    #[serde(rename = "hostPort", skip_serializing_if = "Option::is_none")]
+    pub host_port: Option<u16>,
+    /// Host port range (optional)
+    #[serde(rename = "hostPortRange", skip_serializing_if = "Option::is_none")]
+    pub host_port_range: Option<(u16, u16)>,
+    /// Host socket (optional)
+    #[serde(rename = "hostSocket", skip_serializing_if = "Option::is_none")]
+    pub host_socket: Option<String>,
+    /// Protocol (e.g., "tcp", "udp", "any")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proto: Option<String>,
+    /// Whether to ignore this port forward
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore: Option<bool>,
+}
+
 impl Default for LimaConfig {
     fn default() -> Self {
         Self {
@@ -139,6 +180,7 @@ impl Default for LimaConfig {
             provision: Some(vec![]),
             probes: Some(vec![]),
             copy_to_host: Some(vec![]),
+            port_forwards: Some(vec![]),
             cpus: None,
             memory: None,
             disk: None,
@@ -245,6 +287,7 @@ fi
             host: kubeconfig_path.to_string_lossy().to_string(),
             delete_on_stop: Some(true),
         }]),
+        port_forwards: Some(vec![]),
     })
 }
 
@@ -289,6 +332,7 @@ mod tests {
                 host: "{{.Dir}}/copied-from-guest/kubeconfig.yaml".to_string(),
                 delete_on_stop: Some(true),
             }]),
+            port_forwards: Some(vec![]),
         };
 
         // Mutate all fields
@@ -471,6 +515,7 @@ probes:
             provision: Some(vec![]),
             probes: Some(vec![]),
             copy_to_host: Some(vec![]),
+            port_forwards: Some(vec![]),
         };
 
         let yaml = config.to_yaml().expect("Failed to serialize");
@@ -481,6 +526,7 @@ probes:
         assert!(!yaml.contains("provision: []"));
         assert!(!yaml.contains("probes: []"));
         assert!(!yaml.contains("copyToHost: []"));
+        assert!(!yaml.contains("portForwards: []"));
         
         // Fields with values should appear
         assert!(yaml.contains("vmType: vz"));
