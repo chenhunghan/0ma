@@ -31,15 +31,10 @@ pub(crate) fn get_lima_home(app: &AppHandle) -> Result<PathBuf, String> {
 
 /// Get the instance directory path from Lima's directory structure
 /// ~/.lima/<instance_name> or $LIMA_HOME/<instance_name>
-/// + Ensures the directory exists
 pub(crate) fn get_instance_dir(app: &AppHandle, instance_name: &str) -> Result<PathBuf, String> {
     let lima_home = get_lima_home(app)?;
     let instance_dir = lima_home.join(instance_name);
     
-    // Ensure the directory exists
-    fs::create_dir_all(&instance_dir)
-        .map_err(|e| format!("Failed to create instance directory: {}", e))?;
-
     Ok(instance_dir)
 }
 
