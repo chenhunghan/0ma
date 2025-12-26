@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::find_lima_executable;
 
 /// Get Lima home directory from limactl info or fallback to ~/.lima
-fn get_lima_home(app: &AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn get_lima_home(app: &AppHandle) -> Result<PathBuf, String> {
     // Try to get from limactl info
     if let Some(lima_cmd) = find_lima_executable() {
         if let Ok(output) = Command::new(&lima_cmd)

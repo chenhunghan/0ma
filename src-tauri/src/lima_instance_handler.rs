@@ -4,6 +4,7 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
 use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
+use crate::yaml_handler::get_lima_home;
 
 /// Create a Lima instance using the managed configuration
 /// This handler creates a temporary config file (to avoid `limactl create` complains the instance already exists) and runs limactl create
@@ -377,6 +378,17 @@ pub async fn delete_lima_instance_cmd(
         match child.wait().await {
             Ok(status) => {
                 if status.success() {
+                    // Manually clean up the instance directory if it still exists
+                    // This ensures complete cleanup even if `limactl delete`` has bugs
+                    if let Ok(lima_home) = get_lima_home(&app_handle) {
+                        let instance_dir = lima_home.join(&instance_name_clone);
+                        if instance_dir.exists() {
+                            if let Err(e) = tokio::fs::remove_dir_all(&instance_dir).await {
+                                eprintln!("Warning: Failed to remove instance directory: {}", e);
+                            }
+                        }
+                    }
+                    
                     let success_msg = format!("Lima instance '{}' deleted successfully!", instance_name_clone);
                     let _ = app_handle.emit("lima-instance-delete-success", &success_msg);
                 } else {
