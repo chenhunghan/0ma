@@ -1,13 +1,12 @@
 use std::process::Stdio;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
 use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
-use crate::lima_config_service::{get_lima_yaml_path, write_lima_yaml};
 
 /// Create a Lima instance using the managed configuration
-/// This handler wrote config file and runs limactl create with stored config
+/// This handler creates a temporary config file (to avoid `limactl create` complains the instance already exists) and runs limactl create
 /// It streams the output back to the frontend via Tauri events
 #[tauri::command]
 pub async fn create_lima_instance_cmd(
@@ -15,12 +14,16 @@ pub async fn create_lima_instance_cmd(
     config: LimaConfig,
     instance_name: String,
 ) -> Result<String, String> {
-    // Write the config
-    write_lima_yaml(&app, &config, &instance_name)?;
-
-    // Get the path to the stored config file (lima.yaml)
-    let config_path = get_lima_yaml_path(&app, &instance_name)
-        .map_err(|e| format!("Failed to get Lima config path: {}", e))?;
+    // Create a temporary config file for limactl create
+    let temp_dir = app.path().temp_dir()
+        .map_err(|e| format!("Failed to get temp directory: {}", e))?;
+    let temp_config_path = temp_dir.join(format!("{}-lima-config.yaml", instance_name));
+    
+    // Write config to temp file
+    let yaml_content = config.to_yaml_pretty()
+        .map_err(|e| format!("Failed to serialize YAML: {}", e))?;
+    std::fs::write(&temp_config_path, yaml_content)
+        .map_err(|e| format!("Failed to write temporary config: {}", e))?;
 
     // Emit create event
     app.emit("lima-instance-create", &format!("Creating Lima instance '{}'...", instance_name))
@@ -29,7 +32,7 @@ pub async fn create_lima_instance_cmd(
     // Spawn async task to run limactl and stream output
     let app_handle = app.clone();
     let instance_name_clone = instance_name.clone();
-    let config_path_clone = config_path.clone();
+    let temp_config_path_clone = temp_config_path.clone();
 
     tokio::spawn(async move {
         let lima_cmd = match find_lima_executable() {
@@ -40,12 +43,12 @@ pub async fn create_lima_instance_cmd(
             }
         };
 
-        // Run limactl create command with the stored config file and explicit instance name
+        // Run limactl create command with the temporary config file and explicit instance name
         let child = TokioCommand::new(&lima_cmd)
             .args([
                 "create",
                 "--name", &instance_name_clone,
-                &config_path_clone.to_string_lossy()
+                &temp_config_path_clone.to_string_lossy()
             ])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -56,6 +59,7 @@ pub async fn create_lima_instance_cmd(
             Ok(c) => c,
             Err(e) => {
                 let _ = app_handle.emit("lima-instance-create-error", &e.to_string());
+                let _ = std::fs::remove_file(&temp_config_path_clone);
                 return;
             }
         };
@@ -85,6 +89,9 @@ pub async fn create_lima_instance_cmd(
         // Wait for process to complete
         match child.wait().await {
             Ok(status) => {
+                // Clean up temporary config file
+                let _ = std::fs::remove_file(&temp_config_path_clone);
+                
                 if status.success() {
                     let _ = app_handle.emit("lima-instance-create-success", &instance_name_clone);
                 } else {
@@ -93,6 +100,7 @@ pub async fn create_lima_instance_cmd(
                 }
             }
             Err(e) => {
+                let _ = std::fs::remove_file(&temp_config_path_clone);
                 let error_msg = format!("Failed to wait for limactl create process: {}", e);
                 let _ = app_handle.emit("lima-instance-create-error", &error_msg);
             }

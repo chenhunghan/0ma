@@ -1,17 +1,40 @@
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 use tauri::{AppHandle, Manager};
+use serde_json::Value;
+use crate::find_lima_executable;
 
-/// Get the instance directory path
+/// Get Lima home directory from limactl info or fallback to ~/.lima
+fn get_lima_home(app: &AppHandle) -> Result<PathBuf, String> {
+    // Try to get from limactl info
+    if let Some(lima_cmd) = find_lima_executable() {
+        if let Ok(output) = Command::new(&lima_cmd)
+            .args(["info"])
+            .output()
+        {
+            if output.status.success() {
+                if let Ok(json) = serde_json::from_slice::<Value>(&output.stdout) {
+                    if let Some(lima_home) = json["limaHome"].as_str() {
+                        return Ok(PathBuf::from(lima_home));
+                    }
+                }
+            }
+        }
+    }
+    
+    // Fallback to default: ~/.lima (what Lima uses by default)
+    let home = app.path().home_dir()
+        .map_err(|e| format!("Failed to get home directory: {}", e))?;
+    Ok(home.join(".lima"))
+}
+
+/// Get the instance directory path from Lima's directory structure
+/// ~/.lima/<instance_name> or $LIMA_HOME/<instance_name>
 /// + Ensures the directory exists
-/// /Users/you/Library/Application Support/chh.zeroma/<instance_name>
 pub(crate) fn get_instance_dir(app: &AppHandle, instance_name: &str) -> Result<PathBuf, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
-
-    let instance_dir = app_data_dir.join(instance_name);
+    let lima_home = get_lima_home(app)?;
+    let instance_dir = lima_home.join(instance_name);
     
     // Ensure the directory exists
     fs::create_dir_all(&instance_dir)
@@ -21,15 +44,15 @@ pub(crate) fn get_instance_dir(app: &AppHandle, instance_name: &str) -> Result<P
 }
 
 /// Generic function to get the path to a YAML file in the instance directory
-/// This is where the app stores its YAML files per instance
-/// e.g., /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
+/// Uses Lima's native directory structure
+/// e.g., ~/.lima/<instance_name>/<filename>.yaml or $LIMA_HOME/<instance_name>/<filename>.yaml
 pub(crate) fn get_yaml_path(app: &AppHandle, instance_name: &str, filename: &str) -> Result<PathBuf, String> {
     let instance_dir = get_instance_dir(app, instance_name)?;
     Ok(instance_dir.join(filename))
 }
 
 /// Generic function to write a YAML file for an instance
-/// e.g. Write /Users/you/Library/Application Support/chh.zeroma/<instance_name>/<filename>.yaml
+/// e.g. Write ~/.lima/<instance_name>/<filename>.yaml or $LIMA_HOME/<instance_name>/<filename>.yaml
 pub(crate) fn write_yaml(app: &AppHandle, instance_name: &str, filename: &str, content: String) -> Result<(), String> {
     let yaml_path = get_yaml_path(app, instance_name, filename)?;
 
