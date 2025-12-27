@@ -40,7 +40,7 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
   } = useLimaConfig(defaultConfig);
   const { createInstance } = useLimaInstance();
 
-  const { logs, isCreating, error: creationError } = useLimaCreateLogs(
+  const { logs, isCreating, error: creationError, reset } = useLimaCreateLogs(
     onSuccess,
     onError
   );
@@ -53,12 +53,14 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
     !showLogs // Only check when not showing logs
   );
 
-  // Reset form when modal is opened fresh (not during creation)
+  // Reset form when modal is closed
   useEffect(() => {
-    if (isOpen && !isCreating && logs.length === 0) {
+    if (!isOpen) {
+      // Reset everything when modal closes
       setName(getRandomInstanceName());
+      reset();
     }
-  }, [isOpen, isCreating, logs.length]);
+  }, [isOpen, reset]);
 
   if (!isOpen) return null;
 

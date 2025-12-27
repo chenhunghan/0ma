@@ -8,20 +8,20 @@ interface CreateLog {
   timestamp: Date;
 }
 
-interface UseLimaCreateLogsReturn {
-  logs: CreateLog[];
-  isCreating: boolean;
-  error: string | null;
-}
-
 export function useLimaCreateLogs(
   onSuccess?: (instanceName: string) => void,
   onError?: (error: string) => void
-): UseLimaCreateLogsReturn {
+) {
   const [logs, setLogs] = useState<CreateLog[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const reset = () => {
+    setLogs([]);
+    setIsCreating(false);
+    setError(null);
+  };
 
   useEffect(() => {
     const unlistenPromises: Promise<() => void>[] = [];
@@ -85,5 +85,5 @@ export function useLimaCreateLogs(
     };
   }, [onSuccess, onError, queryClient]);
 
-  return { logs, isCreating, error };
+  return { logs, isCreating, error, reset };
 }
