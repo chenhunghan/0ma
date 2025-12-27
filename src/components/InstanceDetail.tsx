@@ -24,6 +24,8 @@ import { K8sPodPanel } from './K8sPodPanel';
 import { K8sSvcPanel } from './K8sSvcPanel';
 import { ConfirmationModal } from './ConfirmationModal';
 import { useLimaYaml } from '../hooks/useLimaYaml';
+import { useLimaStartLogs } from '../hooks/useLimaStartLogs';
+import { InstanceModalLogViewer } from './InstanceModalLogViewer';
 
 interface InstanceDetailProps {
   instances: LimaInstance[];
@@ -71,6 +73,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   onStop,
 }) => {
   const { limaConfig, writeLimaYaml, isWritingLima } = useLimaYaml(instance.name);
+  const { logs: startLogs, isEssentiallyReady } = useLimaStartLogs();
 
   // Global instances state map
   const [instancesState, setInstancesState] = useState<Record<string, InstanceUIState>>({});
@@ -382,6 +385,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   }, [handlePanelResizeMove, handlePanelResizeEnd]);
 
   const isRunning = instance.status === InstanceStatus.Running;
+  // Track starting state from event stream, not from Lima status (Lima only reports Running/Stopped)
+  const isStarting = startLogs.length > 0 && !isRunning;
   const activeTab = uiState.activeTab;
   const currentSessions = activeTab === 'k8s' ? uiState.k8s.sessions : uiState.lima.sessions;
 
@@ -556,20 +561,40 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
               {!isRunning && (
                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
-                  <div className="border border-zinc-700 bg-zinc-950 p-6 min-w-75 text-center shadow-2xl">
-                    <div className="text-red-500 font-bold mb-2 uppercase tracking-widest text-lg animate-pulse">
-                      SYSTEM HALTED
+                  {isStarting ? (
+                    // Show logs during startup
+                    <div className="border border-zinc-700 bg-zinc-950 w-full max-w-2xl h-96 flex flex-col shadow-2xl">
+                      <div className="px-4 py-3 border-b border-zinc-700 bg-zinc-900">
+                        <div className="text-emerald-500 font-bold uppercase tracking-widest text-sm">
+                          ⚡ INSTANCE STARTING
+                        </div>
+                        <div className="text-zinc-500 text-xs font-mono mt-1">
+                          {isEssentiallyReady 
+                            ? 'Instance ready - initializing optional components...' 
+                            : 'Booting system and running provision scripts...'}
+                        </div>
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <InstanceModalLogViewer logs={startLogs} />
+                      </div>
                     </div>
-                    <div className="text-zinc-500 text-xs mb-6 font-mono">
-                      Instance {instance.name} is currently stopped.
+                  ) : (
+                    // Show halted state when stopped
+                    <div className="border border-zinc-700 bg-zinc-950 p-6 min-w-75 text-center shadow-2xl">
+                      <div className="text-red-500 font-bold mb-2 uppercase tracking-widest text-lg animate-pulse">
+                        SYSTEM HALTED
+                      </div>
+                      <div className="text-zinc-500 text-xs mb-6 font-mono">
+                        Instance {instance.name} is currently stopped.
+                      </div>
+                      <button
+                        onClick={handleStart}
+                        className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-mono text-sm uppercase border border-zinc-600 hover:border-zinc-500 transition-colors"
+                      >
+                        [ INITIALIZE BOOT ]
+                      </button>
                     </div>
-                    <button
-                      onClick={handleStart}
-                      className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-mono text-sm uppercase border border-zinc-600 hover:border-zinc-500 transition-colors"
-                    >
-                      [ INITIALIZE BOOT ]
-                    </button>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
