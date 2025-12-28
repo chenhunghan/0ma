@@ -252,8 +252,8 @@ pub fn get_default_k0s_lima_config(
                 mode: "dependency".to_string(),
                 script: r#"#!/bin/bash
 set -eux -o pipefail
-if ! command -v htop >/dev/null 2>&1; then
-  apt-get update && apt-get install -y htop
+if ! command -v btop >/dev/null 2>&1; then
+  apt-get update && apt-get install -y btop
 fi
 "#.to_string(),
             },
