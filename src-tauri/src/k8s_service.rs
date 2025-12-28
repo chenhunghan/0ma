@@ -79,6 +79,58 @@ pub struct PodStatus {
     pub start_time: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceList {
+    pub items: Vec<Service>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Service {
+    pub metadata: Metadata,
+    pub spec: Option<ServiceSpec>,
+    pub status: Option<ServiceStatus>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceSpec {
+    pub ports: Option<Vec<ServicePort>>,
+    pub selector: Option<std::collections::HashMap<String, String>>,
+    #[serde(rename = "clusterIP")]
+    pub cluster_ip: Option<String>,
+    #[serde(rename = "externalIPs")]
+    pub external_ips: Option<Vec<String>>,
+    #[serde(rename = "type")]
+    pub type_: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServicePort {
+    pub name: Option<String>,
+    pub port: i32,
+    pub protocol: Option<String>,
+    #[serde(rename = "targetPort")]
+    pub target_port: Option<serde_json::Value>,
+    #[serde(rename = "nodePort")]
+    pub node_port: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceStatus {
+    #[serde(rename = "loadBalancer")]
+    pub load_balancer: Option<LoadBalancerStatus>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoadBalancerStatus {
+    pub ingress: Option<Vec<LoadBalancerIngress>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoadBalancerIngress {
+    pub ip: Option<String>,
+    pub hostname: Option<String>,
+}
+
 pub fn get_k8s_pods(instance_name: &str) -> Result<Vec<Pod>, String> {
     let lima_cmd = find_lima_executable().ok_or_else(|| "Lima (limactl) not found".to_string())?;
 
@@ -109,6 +161,35 @@ fi
         .map_err(|e| format!("Failed to parse kubectl JSON output: {}", e))?;
 
     Ok(pod_list.items)
+}
+
+pub fn get_k8s_services(instance_name: &str) -> Result<Vec<Service>, String> {
+    let lima_cmd = find_lima_executable().ok_or_else(|| "Lima (limactl) not found".to_string())?;
+
+    let script = r#"
+if command -v k0s >/dev/null 2>&1; then
+    k0s kubectl get services -A -o json
+else
+    kubectl get services -A -o json
+fi
+"#;
+
+    let output = Command::new(&lima_cmd)
+        .args(["shell", instance_name, "sh", "-c", script])
+        .output()
+        .map_err(|e| format!("Failed to execute limactl shell: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Command failed: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    let service_list: ServiceList = serde_json::from_str(&stdout)
+        .map_err(|e| format!("Failed to parse kubectl JSON output: {}", e))?;
+
+    Ok(service_list.items)
 }
 
 #[cfg(test)]

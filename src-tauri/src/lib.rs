@@ -123,6 +123,7 @@ pub fn run() {
             lima_instance_handler::stop_lima_instance_cmd,
             lima_instance_handler::delete_lima_instance_cmd,
             k8s_handler::get_k8s_pods_cmd,
+            k8s_handler::get_k8s_services_cmd,
             k8s_log_handler::get_k8s_log_port
         ])
         .run(tauri::generate_context!())

@@ -27,6 +27,7 @@ import { ConfirmationModal } from './ConfirmationModal';
 import { useLimaYaml } from '../hooks/useLimaYaml';
 import { useLimaStartLogs } from '../hooks/useLimaStartLogs';
 import { useK8sPods } from '../hooks/useK8sPods';
+import { useK8sServices } from '../hooks/useK8sServices';
 import { InstanceModalLogViewer } from './InstanceModalLogViewer';
 
 interface InstanceDetailProps {
@@ -79,6 +80,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   const { logs: startLogs, isEssentiallyReady } = useLimaStartLogs();
   const { data: realPods } = useK8sPods(instance.name);
   const pods = realPods || []; // Fallback to empty array if loading or error
+  const { data: realServices } = useK8sServices(instance.name);
+  const services = realServices || [];
 
   // Global instances state map
   const [instancesState, setInstancesState] = useState<Record<string, InstanceUIState>>({});
@@ -164,7 +167,13 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
       setSelectedPodId(pods[0].id);
     }
   }, [pods, selectedPodId]);
-  const [selectedServiceId, setSelectedServiceId] = useState<string>(MOCK_SERVICES[0].id);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>('');
+
+  useEffect(() => {
+    if (services.length > 0 && !selectedServiceId) {
+      setSelectedServiceId(services[0].id);
+    }
+  }, [services, selectedServiceId]);
 
   // Reset ephemeral UI state when instance ID changes.
   useEffect(() => {
@@ -614,7 +623,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
           {uiState.k8s.showServicesPanel && activeTab === 'k8s' && (
             <K8sSvcPanel
-              mockServices={MOCK_SERVICES}
+              mockServices={services.length > 0 ? services : MOCK_SERVICES}
               selectedServiceId={selectedServiceId}
               setSelectedServiceId={setSelectedServiceId}
               panelHeight={uiState.panelHeight}
