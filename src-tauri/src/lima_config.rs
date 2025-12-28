@@ -279,6 +279,18 @@ fi
 systemctl start k0scontroller
 "#.to_string(),
             },
+            Provision {
+                mode: "system".to_string(),
+                script: r#"#!/bin/bash
+set -eux -o pipefail
+
+# Wait for k0s to create the kubeconfig
+timeout 120s bash -c "until test -f /var/lib/k0s/pki/admin.conf; do sleep 3; done"
+
+# Allow the default user to access the k0s generated kubeconfig
+chmod 644 /var/lib/k0s/pki/admin.conf
+"#.to_string(),
+            },
         ]),
         probes: Some(vec![Probe {
             description: "k0s to be running".to_string(),
