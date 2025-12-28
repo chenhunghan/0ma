@@ -14,6 +14,8 @@ import { LimaConfig } from '../types/LimaConfig';
 
 import { useInstanceDiskUsage } from '../hooks/useInstanceDiskUsage';
 
+import { useInstanceIp } from '../hooks/useInstanceIp';
+
 interface LimaPanelProps {
   instance: LimaInstance;
   parsedConfig?: LimaConfig;
@@ -31,6 +33,7 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
 }) => {
   const isRunning = instance.status === 'Running';
   const { data: diskUsage } = useInstanceDiskUsage(instance.name, isRunning);
+  const { data: hostIp } = useInstanceIp(instance.name, isRunning);
 
   return (
     <div
@@ -103,14 +106,29 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
             </span>
           </div>
           <div className="p-4 overflow-y-auto space-y-4 flex-1 min-h-0 [scrollbar-gutter:stable]">
-            <div>
-              <div className="flex items-center gap-4 p-2 rounded bg-zinc-950/50 border border-zinc-800">
-                <div className="flex items-center gap-2 shrink-0">
-                  <Wifi className="w-3.5 h-3.5 text-zinc-600" />
-                  <span className="text-[10px] font-bold uppercase text-zinc-500">Host IP</span>
-                </div>
-                <span className="text-zinc-300 text-xs font-mono">192.168.105.2</span>
-              </div>
+            <div className="space-y-2">
+              {hostIp?.split(/\s+/).map((ip, idx) => {
+                const isInternal = ip.startsWith('10.') || ip.startsWith('172.');
+                const label = isInternal ? 'Internal Bridge' : ip.startsWith('192.168.5.') ? 'Host IP' : 'Other IP';
+
+                return (
+                  <div key={idx} className="flex items-center gap-4 p-2 rounded bg-zinc-950/50 border border-zinc-800">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Wifi className={`w-3.5 h-3.5 ${isInternal ? 'text-indigo-600' : 'text-emerald-600'}`} />
+                      <span className="text-[10px] font-bold uppercase text-zinc-500 min-w-16">{label}</span>
+                    </div>
+                    <span className="text-zinc-300 text-xs font-mono truncate" title={ip}>{ip}</span>
+                  </div>
+                );
+              }) || (
+                  <div className="flex items-center gap-4 p-2 rounded bg-zinc-950/50 border border-zinc-800">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Wifi className="w-3.5 h-3.5 text-zinc-600" />
+                      <span className="text-[10px] font-bold uppercase text-zinc-500">Host IP</span>
+                    </div>
+                    <span className="text-zinc-300 text-xs font-mono">Searching...</span>
+                  </div>
+                )}
             </div>
 
             <div className="pt-3 border-t border-zinc-800/50">

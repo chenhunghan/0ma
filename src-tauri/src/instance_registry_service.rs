@@ -195,3 +195,23 @@ pub async fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
         use_percent: parts[3].to_string(),
     })
 }
+
+/// Get the internal IP address of a Lima instance (async)
+pub async fn get_instance_ip(instance_name: &str) -> Result<String, String> {
+    let lima_cmd = find_lima_executable()
+        .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
+
+    let output = Command::new(&lima_cmd)
+        .args(["shell", instance_name, "hostname", "-I"])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to run hostname command: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Failed to get instance IP: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout.trim().to_string())
+}

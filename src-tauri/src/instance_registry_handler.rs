@@ -28,3 +28,9 @@ pub async fn is_instance_registered_cmd(
 pub async fn get_instance_disk_usage_cmd(instance_name: String) -> Result<DiskUsage, String> {
     get_disk_usage(&instance_name).await
 }
+
+/// Get the internal IP address of a Lima instance
+#[tauri::command]
+pub async fn get_instance_ip_cmd(instance_name: String) -> Result<String, String> {
+    crate::instance_registry_service::get_instance_ip(&instance_name).await
+}

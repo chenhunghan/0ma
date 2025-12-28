@@ -108,6 +108,7 @@ pub fn run() {
             instance_registry_handler::get_all_lima_instances_cmd,
             instance_registry_handler::is_instance_registered_cmd,
             instance_registry_handler::get_instance_disk_usage_cmd,
+            instance_registry_handler::get_instance_ip_cmd,
             lima_instance_handler::create_lima_instance_cmd,
             lima_instance_handler::start_lima_instance_cmd,
             lima_instance_handler::stop_lima_instance_cmd,
