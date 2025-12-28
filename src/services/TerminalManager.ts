@@ -6,6 +6,7 @@ export interface TerminalInstance {
     fitAddon: FitAddon;
     initialized: boolean;
     intervalId?: ReturnType<typeof setInterval>;
+    cleanup?: () => void;
 }
 
 class TerminalManager {
@@ -29,6 +30,7 @@ class TerminalManager {
         const inst = this.instances.get(id);
         if (inst) {
             if (inst.intervalId) clearInterval(inst.intervalId);
+            if (inst.cleanup) inst.cleanup();
             inst.term.dispose();
             this.instances.delete(id);
         }

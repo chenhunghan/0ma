@@ -4,6 +4,7 @@ import { LimaInstance } from '../types/LimaInstance';
 import { InstanceStatus } from '../types/InstanceStatus';
 import { InstanceUIState } from '../types/InstanceUIState';
 import { SessionType, LogSession } from '../types/TerminalSession';
+import { terminalManager } from '../services/TerminalManager';
 import { LimaConfig } from '../types/LimaConfig';
 import TerminalView from './TerminalView';
 import { parse, stringify } from 'yaml';
@@ -374,6 +375,9 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
 
   const handleCloseSession = (id: string) => {
+    // Clean up backend resources and terminal instance
+    terminalManager.dispose(id);
+
     if (uiState.activeTab === 'k8s') {
       updateUiState(prev => ({
         k8s: { ...prev.k8s, sessions: prev.k8s.sessions.filter(s => s.id !== id) }

@@ -146,6 +146,13 @@ export const SingleLogViewer: React.FC<SingleLogViewerProps> = ({ session }) => 
                         termInstance.initialized = false;
                     };
 
+                    // Register cleanup to close socket when terminal is disposed via TerminalManager
+                    termInstance.cleanup = () => {
+                        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+                            socket.close();
+                        }
+                    };
+
                 } catch (err) {
                     console.error("Failed to get log port:", err);
                     term.writeln("\r\n\x1b[31m[ERROR: LOG SERVICE MIGHT NOT BE RUNNING]\x1b[0m");
