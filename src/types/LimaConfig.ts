@@ -59,5 +59,5 @@ export interface LimaConfig {
   probes?: Probe[];
   copyToHost?: CopyToHost[];
   portForwards?: PortForward[];
-  [key: string]: any; // Allow for other fields
+  [key: string]: unknown; // Allow for other fields
 }

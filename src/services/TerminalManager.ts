@@ -5,7 +5,7 @@ export interface TerminalInstance {
     term: Terminal;
     fitAddon: FitAddon;
     initialized: boolean;
-    intervalId?: any;
+    intervalId?: ReturnType<typeof setInterval>;
 }
 
 class TerminalManager {

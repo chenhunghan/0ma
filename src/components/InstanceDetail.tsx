@@ -213,7 +213,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   // --- Configuration Modification Helpers (Object Manipulation) ---
 
-  const updateConfigField = (field: string, value: any) => {
+  const updateConfigField = (field: string, value: unknown) => {
     if (!configObject) return;
     const newConfig = { ...configObject, [field]: value };
     setConfig(newConfig);
@@ -256,8 +256,10 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   ) => {
     if (!configObject) return;
     const newProbes = [...(configObject.probes || [])];
-    if (!newProbes[index]) return;
-    (newProbes[index] as any)[key] = value;
+    const probe = { ...newProbes[index] };
+    // @ts-expect-error - dynamic assignment to probe fields
+    probe[key] = value;
+    newProbes[index] = probe;
     const newConfig = { ...configObject, probes: newProbes };
     setConfig(newConfig);
   };

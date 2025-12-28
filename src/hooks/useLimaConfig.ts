@@ -26,7 +26,7 @@ export const useLimaConfig = (initialConfig: LimaConfig) => {
         }
     }, []);
 
-    const updateConfigField = useCallback((field: string, value: any) => {
+    const updateConfigField = useCallback((field: string, value: unknown) => {
         setConfig((prev) => {
             const newConfig = { ...prev, [field]: value };
             setYamlString(stringify(newConfig));
@@ -73,7 +73,7 @@ export const useLimaConfig = (initialConfig: LimaConfig) => {
         setConfig((prev) => {
             const newProbes = [...(prev.probes || [])];
             if (!newProbes[index]) return prev;
-            (newProbes[index] as any)[key] = value;
+            (newProbes[index] as unknown as Record<string, unknown>)[key] = value;
             const newConfig = { ...prev, probes: newProbes };
             setYamlString(stringify(newConfig));
             return newConfig;

@@ -18,11 +18,11 @@ import Prism from 'prismjs';
 import 'prismjs/components/prism-yaml';
 import 'prismjs/components/prism-bash';
 import { Select } from './Select';
-import { LimaConfig } from '../types/LimaConfig';
+import { LimaConfig, Image, Mount, CopyToHost, Provision, Probe } from '../types/LimaConfig';
 
 interface LimaConfigFormProps {
   parsedConfig?: LimaConfig;
-  updateConfigField: (field: string, value: any) => void;
+  updateConfigField: (field: string, value: unknown) => void;
   updateProvisionScript: (index: number, key: 'mode' | 'script', value: string) => void;
   addProvisionScript: () => void;
   removeProvisionScript: (index: number) => void;
@@ -82,8 +82,8 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
     else setLocalShowProbes(val);
   };
 
-  const updateArrayItem = (field: keyof LimaConfig, index: number, subField: string, value: any) => {
-    const list = [...(parsedConfig[field] as any[] || [])];
+  const updateArrayItem = (field: keyof LimaConfig, index: number, subField: string, value: unknown) => {
+    const list = [...(parsedConfig[field] as unknown[] || [])];
     if (list[index]) {
       list[index] = { ...list[index], [subField]: value };
       updateConfigField(field as string, list);
@@ -91,13 +91,13 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
   };
 
   const removeArrayItem = (field: keyof LimaConfig, index: number) => {
-    const list = [...(parsedConfig[field] as any[] || [])];
+    const list = [...(parsedConfig[field] as unknown[] || [])];
     list.splice(index, 1);
     updateConfigField(field as string, list);
   };
 
-  const addArrayItem = (field: keyof LimaConfig, defaultItem: any) => {
-    const list = [...(parsedConfig[field] as any[] || [])];
+  const addArrayItem = (field: keyof LimaConfig, defaultItem: unknown) => {
+    const list = [...(parsedConfig[field] as unknown[] || [])];
     list.push(defaultItem);
     updateConfigField(field as string, list);
   };
@@ -216,7 +216,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
             </div>
             {showImages && (
               <div className="space-y-3 animate-in slide-in-from-top-2 fade-in duration-200">
-                {parsedConfig.images?.map((img: any, i: number) => (
+                {(parsedConfig.images as Image[] | undefined)?.map((img: Image, i: number) => (
                   <div key={i} className="bg-zinc-950/50 border border-zinc-800 rounded p-2 space-y-2 relative group">
                     <button
                       onClick={() => removeArrayItem('images', i)}
@@ -271,7 +271,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
             </div>
             {showMounts && (
               <div className="space-y-2 animate-in slide-in-from-top-2 fade-in duration-200">
-                {parsedConfig.mounts?.map((mnt: any, i: number) => (
+                {(parsedConfig.mounts as Mount[] | undefined)?.map((mnt: Mount, i: number) => (
                   <div key={i} className="bg-zinc-950/50 border border-zinc-800 rounded p-2 flex items-center gap-2 group">
                     <div className="flex-1 space-y-1">
                       <input
@@ -326,7 +326,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
             </div>
             {showCopyToHost && (
               <div className="space-y-3 animate-in slide-in-from-top-2 fade-in duration-200">
-                {parsedConfig.copyToHost?.map((rule: any, i: number) => (
+                {(parsedConfig.copyToHost as CopyToHost[] | undefined)?.map((rule: CopyToHost, i: number) => (
                   <div key={i} className="bg-zinc-950/50 border border-zinc-800 rounded p-2 space-y-2 relative group">
                     <button
                       onClick={() => removeArrayItem('copyToHost', i)}
@@ -410,7 +410,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
             {effectiveShowScripts && (
               <div className="space-y-4 animate-in slide-in-from-top-2 fade-in duration-200">
                 {parsedConfig.provision &&
-                  parsedConfig.provision.map((script: any, index: number) => (
+                  (parsedConfig.provision as Provision[]).map((script: Provision, index: number) => (
                     <div key={index} className="bg-zinc-950/50 border border-zinc-800 rounded p-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -490,7 +490,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
             {effectiveShowProbes && (
               <div className="space-y-4 animate-in slide-in-from-top-2 fade-in duration-200">
                 {parsedConfig.probes &&
-                  parsedConfig.probes.map((probe: any, index: number) => (
+                  (parsedConfig.probes as Probe[]).map((probe: Probe, index: number) => (
                     <div key={index} className="bg-zinc-950/50 border border-zinc-800 rounded p-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex-1 flex items-center gap-2 mr-4">

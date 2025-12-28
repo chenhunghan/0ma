@@ -1,6 +1,18 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { InstanceStatus } from '../types/InstanceStatus';
 import { terminalManager } from '../services/TerminalManager';
+import { Terminal, ITerminalOptions } from '@xterm/xterm';
+
+interface TerminalWithCore extends Terminal {
+    _core: {
+        _renderService: {
+            dimensions: {
+                canvasWidth: number;
+                canvasHeight: number;
+            };
+        };
+    };
+}
 
 export interface SingleTerminalProps {
     id: string; // Unique ID for persistence
@@ -68,7 +80,7 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
             allowProposedApi: true,
             cursorStyle: 'block',
             disableStdin: isLogs,
-        });
+        } as ITerminalOptions);
 
         const { term, fitAddon } = termInstance;
 
@@ -87,7 +99,7 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
             }
 
             try {
-                const core = (term as any)._core;
+                const core = (term as TerminalWithCore)._core;
                 if (!core || !core._renderService || !core._renderService.dimensions) {
                     return;
                 }

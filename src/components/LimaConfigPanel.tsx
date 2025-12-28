@@ -8,7 +8,7 @@ import { LimaConfig } from '../types/LimaConfig';
 
 interface LimaConfigPanelProps {
   parsedConfig?: LimaConfig;
-  updateConfigField: (field: string, value: any) => void;
+  updateConfigField: (field: string, value: unknown) => void;
   updateProvisionScript: (index: number, key: 'mode' | 'script', value: string) => void;
   addProvisionScript: () => void;
   removeProvisionScript: (index: number) => void;
@@ -46,9 +46,9 @@ export const LimaConfigPanel: React.FC<LimaConfigPanelProps> = ({
   handlePanelResizeStart,
 }) => {
   return (
-    <div 
-        className="bg-zinc-900 border-b border-zinc-800 shadow-xl relative z-10 flex-none animate-in slide-in-from-top-2 fade-in duration-200 font-mono"
-        style={{ height: panelHeight }}
+    <div
+      className="bg-zinc-900 border-b border-zinc-800 shadow-xl relative z-10 flex-none animate-in slide-in-from-top-2 fade-in duration-200 font-mono"
+      style={{ height: panelHeight }}
     >
       <button
         onClick={onClose}
@@ -59,7 +59,7 @@ export const LimaConfigPanel: React.FC<LimaConfigPanelProps> = ({
       </button>
 
       {/* Reuse the shared form layout */}
-      <LimaConfigForm 
+      <LimaConfigForm
         parsedConfig={parsedConfig}
         updateConfigField={updateConfigField}
         updateProvisionScript={updateProvisionScript}
