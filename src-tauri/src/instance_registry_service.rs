@@ -23,6 +23,8 @@ pub struct LimaInstance {
     pub disk: String,
     pub arch: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub k8s: Option<K8sInfo>,
 }
 
@@ -37,6 +39,8 @@ struct LimaListOutput {
     dir: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     arch: Option<String>,
+    #[serde(rename = "limaVersion", skip_serializing_if = "Option::is_none")]
+    lima_version: Option<String>,
 }
 
 /// Disk usage information
@@ -46,6 +50,12 @@ pub struct DiskUsage {
     pub used: String,
     pub available: String,
     pub use_percent: String,
+}
+
+/// Guest information (engine, etc)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GuestInfo {
+    pub engine: String,
 }
 
 /// Get all Lima instances from limactl list --json (async)
@@ -117,6 +127,7 @@ async fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                     memory,
                     disk,
                     arch,
+                    version: raw.lima_version,
                     k8s: None, // K8s info would need to be fetched separately
                 };
                 instances.push(instance);
@@ -214,4 +225,52 @@ pub async fn get_instance_ip(instance_name: &str) -> Result<String, String> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     Ok(stdout.trim().to_string())
+}
+
+/// Get instance uptime (async)
+pub async fn get_uptime(instance_name: &str) -> Result<String, String> {
+    let lima_cmd = find_lima_executable()
+        .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
+
+    let output = Command::new(&lima_cmd)
+        .args(["shell", instance_name, "uptime", "-p"])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to run uptime command: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Failed to get uptime: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout.trim().replace("up ", "").to_string())
+}
+
+/// Get guest information like container engine
+pub async fn get_guest_info(instance_name: &str) -> Result<GuestInfo, String> {
+    let lima_cmd = find_lima_executable()
+        .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
+
+    // Check for common engines/orchestrators in order
+    let engines = ["k0s", "nerdctl", "docker", "podman"];
+    let mut detected_engine = "none".to_string();
+
+    for engine in engines {
+        let output = Command::new(&lima_cmd)
+            .args(["shell", instance_name, "command", "-v", engine])
+            .output()
+            .await;
+
+        if let Ok(out) = output {
+            if out.status.success() {
+                detected_engine = engine.to_string();
+                break;
+            }
+        }
+    }
+
+    Ok(GuestInfo {
+        engine: detected_engine,
+    })
 }

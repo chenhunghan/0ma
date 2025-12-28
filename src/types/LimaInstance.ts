@@ -10,5 +10,6 @@ export interface LimaInstance {
   memory: string;
   disk: string;
   arch: Arch;
+  version?: string;
   k8s?: K8sInfo;
 }

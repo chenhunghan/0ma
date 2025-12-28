@@ -15,6 +15,7 @@ import { LimaConfig } from '../types/LimaConfig';
 import { useInstanceDiskUsage } from '../hooks/useInstanceDiskUsage';
 
 import { useInstanceIp } from '../hooks/useInstanceIp';
+import { useInstanceUptime } from '../hooks/useInstanceUptime';
 
 interface LimaPanelProps {
   instance: LimaInstance;
@@ -34,6 +35,7 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
   const isRunning = instance.status === 'Running';
   const { data: diskUsage } = useInstanceDiskUsage(instance.name, isRunning);
   const { data: hostIp } = useInstanceIp(instance.name, isRunning);
+  const { data: uptime } = useInstanceUptime(instance.name, isRunning);
 
   return (
     <div
@@ -77,11 +79,15 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
             <div className="grid grid-cols-2 gap-y-3 gap-x-2">
               <div>
                 <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">Uptime</span>
-                <span className="text-zinc-300 text-xs">2d 15h 22m</span>
+                <span className="text-zinc-300 text-xs truncate" title={uptime}>
+                  {uptime || (isRunning ? 'Calculating...' : '-')}
+                </span>
               </div>
               <div>
                 <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">Version</span>
-                <span className="text-zinc-300 text-xs text-zinc-500">?</span>
+                <span className="text-zinc-400 text-xs truncate italic">
+                  {instance.version ? `v${instance.version}` : 'unknown'}
+                </span>
               </div>
               <div>
                 <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">VM Type</span>
@@ -208,13 +214,6 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
               </div>
             </div>
 
-            <div className="pt-3 border-t border-zinc-800/50">
-              <div className="flex items-center gap-2 text-xs">
-                <Radio className="w-3.5 h-3.5 text-zinc-600" />
-                <span className="text-zinc-500">Engine: </span>
-                <span className="text-zinc-300 font-bold">containerd</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

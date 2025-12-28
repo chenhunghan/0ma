@@ -34,3 +34,17 @@ pub async fn get_instance_disk_usage_cmd(instance_name: String) -> Result<DiskUs
 pub async fn get_instance_ip_cmd(instance_name: String) -> Result<String, String> {
     crate::instance_registry_service::get_instance_ip(&instance_name).await
 }
+
+/// Get instance uptime
+#[tauri::command]
+pub async fn get_instance_uptime_cmd(instance_name: String) -> Result<String, String> {
+    crate::instance_registry_service::get_uptime(&instance_name).await
+}
+
+/// Get guest-specific info (like container engine)
+#[tauri::command]
+pub async fn get_instance_guest_info_cmd(
+    instance_name: String,
+) -> Result<crate::instance_registry_service::GuestInfo, String> {
+    crate::instance_registry_service::get_guest_info(&instance_name).await
+}
