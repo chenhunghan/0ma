@@ -67,7 +67,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({
     };
 
     const allSessions = useMemo(() => [
-        { id: 'main', title: mode === 'k8s' ? 'KUBECTL' : 'MAIN SHELL', icon: <TerminalIcon className="w-3.5 h-3.5" />, type: 'main' },
+        { id: 'main', title: 'SHELL', icon: <TerminalIcon className="w-3.5 h-3.5" />, type: 'main' },
         ...sessions.map(s => ({ ...s, ...getSessionProps(s) }))
     ], [sessions, mode, getSessionProps]);
 
