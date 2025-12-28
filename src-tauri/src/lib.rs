@@ -5,6 +5,8 @@ use tauri::Manager;
 mod instance_registry_handler;
 mod instance_registry_service;
 mod k8s_handler;
+mod k8s_log_handler; // Added log handler module
+mod k8s_log_service; // Added log service module
 mod k8s_service;
 mod lima_config;
 mod lima_config_handler;
@@ -83,6 +85,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let handle = app.handle().clone();
+            k8s_log_handler::init();
+
             tauri::async_runtime::spawn(async move {
                 match terminal_service::TerminalService::start().await {
                     Ok((port, _join_handle)) => {
@@ -118,7 +122,8 @@ pub fn run() {
             lima_instance_handler::stop_lima_instance_cmd,
             lima_instance_handler::stop_lima_instance_cmd,
             lima_instance_handler::delete_lima_instance_cmd,
-            k8s_handler::get_k8s_pods_cmd
+            k8s_handler::get_k8s_pods_cmd,
+            k8s_log_handler::get_k8s_log_port
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

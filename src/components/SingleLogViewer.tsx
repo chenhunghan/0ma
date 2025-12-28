@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { InstanceStatus } from '../types/InstanceStatus';
 import { terminalManager } from '../services/TerminalManager';
 import { Terminal, ITerminalOptions } from '@xterm/xterm';
 import { AttachAddon } from '@xterm/addon-attach';
 import { invoke } from '@tauri-apps/api/core';
+import { LogSession } from '../types/LogSession';
 
 interface TerminalWithCore extends Terminal {
     _core: {
@@ -16,22 +16,18 @@ interface TerminalWithCore extends Terminal {
     };
 }
 
-export interface SingleTerminalProps {
-    id: string; // Unique ID for persistence
-    instanceName: string;
-    status: InstanceStatus;
+interface SingleLogViewerProps {
+    session: LogSession;
 }
 
 const TERM_CONFIG = {
     fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
-    fontSize: 12,
-    lineHeight: 1.2,
+    fontSize: 11,
+    lineHeight: 1.15,
     theme: {
-        background: '#000000',
+        background: '#0a0a0a', // Slightly lighter/different than shell to distinguish
         foreground: '#d4d4d8',
-        // ... (keep existing theme values if possible, but for brevity I'll assume I can just replace the needed parts or I should be careful not to delete theme if I don't provide it all. I will provide the whole config to be safe or just the changed parts if possible. ReplaceFileContent requires exact target match.)
-        // Actually, let's keep TERM_CONFIG valid.
-        cursor: '#10b981',
+        cursor: 'transparent', // Hide cursor
         selectionBackground: '#27272a',
         black: '#000000',
         red: '#ef4444',
@@ -52,25 +48,22 @@ const TERM_CONFIG = {
     }
 };
 
-export const SingleTerminal: React.FC<SingleTerminalProps> = ({
-    id,
-    instanceName,
-    status
-}) => {
+export const SingleLogViewer: React.FC<SingleLogViewerProps> = ({ session }) => {
     const terminalContainerRef = useRef<HTMLDivElement>(null);
     const socketRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
         if (!terminalContainerRef.current) return;
 
-        const termInstance = terminalManager.getOrCreate(id, {
-            cursorBlink: true,
+        const termInstance = terminalManager.getOrCreate(session.id, {
+            cursorBlink: false,
             fontSize: TERM_CONFIG.fontSize,
             fontFamily: TERM_CONFIG.fontFamily,
             lineHeight: TERM_CONFIG.lineHeight,
             theme: TERM_CONFIG.theme,
             allowProposedApi: true,
-            cursorStyle: 'block',
+            cursorStyle: 'underline', // Should be hidden by transparent color
+            disableStdin: true, // Read-only
         } as ITerminalOptions);
 
         const { term, fitAddon } = termInstance;
@@ -91,7 +84,7 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
                 }
                 fitAddon.fit();
 
-                // If interactive, send resize command to backend
+                // Send resize command to backend
                 if (socketRef.current?.readyState === WebSocket.OPEN) {
                     socketRef.current.send(JSON.stringify({
                         type: 'resize',
@@ -100,31 +93,39 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
                     }));
                 }
             } catch (e) {
-                console.debug("Terminal fit skipped:", e);
+                console.debug("Log Terminal fit skipped:", e);
             }
         };
 
         requestAnimationFrame(() => {
             safeFit();
-            term.focus();
         });
 
         // Backend Connection Logic
-        if (!termInstance.initialized && status === InstanceStatus.Running) {
+        if (!termInstance.initialized) {
             termInstance.initialized = true;
 
             const setupConnection = async () => {
                 try {
-                    const port = await invoke<number>('get_terminal_port');
+                    // Use new K8s Log Handler
+                    const port = await invoke<number>('get_k8s_log_port');
                     const socket = new WebSocket(`ws://127.0.0.1:${port}`);
                     socketRef.current = socket;
 
                     socket.onopen = () => {
-                        // Handshake
-                        socket.send(instanceName);
+                        term.writeln(`\x1b[34m[Connecting to K8s Log Service for ${session.pod} in ${session.namespace}...]\x1b[0m`);
+
+                        // Handshake for Log Service
+                        socket.send(JSON.stringify({
+                            instance: session.instanceName,
+                            pod: session.pod,
+                            namespace: session.namespace
+                        }));
 
                         // Attach addon
                         const attachAddon = new AttachAddon(socket);
+                        // AttachAddon handles read/write automatically.
+                        // Since disableStdin is true on xterm, user input won't be sent.
                         term.loadAddon(attachAddon);
 
                         // Initial resize
@@ -136,18 +137,18 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
                     };
 
                     socket.onerror = (err) => {
-                        console.error("Terminal WebSocket error:", err);
-                        term.writeln("\r\n\x1b[31m[CONNECTION ERROR: FAILED TO CONNECT TO BACKEND TERMINAL SERVICE]\x1b[0m");
+                        console.error("Log WebSocket error:", err);
+                        term.writeln("\r\n\x1b[31m[CONNECTION ERROR: FAILED TO CONNECT TO LOG SERVICE]\x1b[0m");
                     };
 
                     socket.onclose = () => {
-                        term.writeln("\r\n\x1b[33m[SESSION ENDED]\x1b[0m");
+                        term.writeln("\r\n\x1b[33m[LOG SESSION ENDED]\x1b[0m");
                         termInstance.initialized = false;
                     };
 
                 } catch (err) {
-                    console.error("Failed to get terminal port:", err);
-                    term.writeln("\r\n\x1b[31m[ERROR: TERMINAL SERVICE NOT AVAILABLE]\x1b[0m");
+                    console.error("Failed to get log port:", err);
+                    term.writeln("\r\n\x1b[31m[ERROR: LOG SERVICE MIGHT NOT BE RUNNING]\x1b[0m");
                 }
             };
 
@@ -165,7 +166,7 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
         return () => {
             resizeObserver.disconnect();
         };
-    }, [id, instanceName, status]);
+    }, [session.id, session.instanceName, session.pod, session.namespace]);
 
     return <div className="h-full w-full pl-1 pt-1 overflow-hidden" ref={terminalContainerRef} />;
 };

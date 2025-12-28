@@ -1,7 +1,7 @@
 use futures_util::{SinkExt, StreamExt};
 use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 use serde::{Deserialize, Serialize};
-use std::io::{Read, Write};
+use std::io::Read;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio_tungstenite::accept_async;
@@ -9,21 +9,28 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum TerminalCommand {
+pub enum LogCommand {
     #[serde(rename = "resize")]
     Resize { cols: u16, rows: u16 },
 }
 
-pub struct TerminalService;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct K8sLogRequest {
+    pub instance: String,
+    pub pod: String,
+    pub namespace: String,
+}
 
-impl TerminalService {
+pub struct K8sLogService;
+
+impl K8sLogService {
     pub async fn start() -> Result<(u16, tokio::task::JoinHandle<()>), String> {
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
             .map_err(|e| format!("Failed to bind to port: {}", e))?;
         let port = listener.local_addr().unwrap().port();
 
-        println!("Terminal service listening on 127.0.0.1:{}", port);
+        println!("K8s Log service listening on 127.0.0.1:{}", port);
 
         let handle = tokio::spawn(async move {
             while let Ok((stream, _)) = listener.accept().await {
@@ -42,17 +49,30 @@ impl TerminalService {
 async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>) {
     let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
-    // The first message is the handshake (instance name)
+    // Handshake: Expect JSON with instance, pod, namespace
     let handshake_text = match ws_receiver.next().await {
         Some(Ok(Message::Text(text))) => text,
         _ => return,
     };
 
-    println!("Terminal connection handshake: {}", handshake_text);
+    println!("Log connection handshake: {}", handshake_text);
 
-    let instance_name = handshake_text.to_string();
+    let request = match serde_json::from_str::<K8sLogRequest>(&handshake_text) {
+        Ok(req) => req,
+        Err(e) => {
+            let _ = ws_sender
+                .send(Message::Text(
+                    format!("Error: Invalid handshake: {}", e).into(),
+                ))
+                .await;
+            return;
+        }
+    };
 
-    println!("Starting terminal for instance: {}", instance_name);
+    println!(
+        "Starting logs for pod {} in {} on instance {}",
+        request.pod, request.namespace, request.instance
+    );
 
     let pty_system = NativePtySystem::default();
     let pty_pair = match pty_system.openpty(PtySize {
@@ -77,7 +97,20 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
 
     let mut cmd = CommandBuilder::new(lima_cmd);
     cmd.arg("shell");
-    cmd.arg(&instance_name);
+    cmd.arg(&request.instance);
+
+    // Script to detect k0s and run kubectl logs
+    // We use -f for follow
+    let script = format!(
+        r#"if command -v k0s >/dev/null 2>&1; then k0s kubectl logs -f -n {} {}; else kubectl logs -f -n {} {}; fi"#,
+        request.namespace, request.pod, request.namespace, request.pod
+    );
+
+    cmd.arg("sh");
+    cmd.arg("-c");
+    cmd.arg(script);
+
+    // TERM=xterm-256color for color output
     cmd.env("TERM", "xterm-256color");
 
     let _child = match pty_pair.slave.spawn_command(cmd) {
@@ -85,7 +118,7 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
         Err(e) => {
             let _ = ws_sender
                 .send(Message::Text(
-                    format!("Error: Failed to spawn shell: {}", e).into(),
+                    format!("Error: Failed to spawn logs: {}", e).into(),
                 ))
                 .await;
             return;
@@ -93,13 +126,13 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
     };
 
     let mut reader = pty_pair.master.try_clone_reader().unwrap();
-    let mut writer = pty_pair.master.take_writer().unwrap();
+    // We don't take the writer because this is read-only for the user (except resize)
     let master = Arc::new(Mutex::new(pty_pair.master));
 
-    // Channel for PTY to WS
+    // Channel for PTY output to WS
     let (pty_to_ws_tx, mut pty_to_ws_rx) = tokio::sync::mpsc::channel::<Vec<u8>>(1024);
 
-    // Thread for PTY reader (blocking IO)
+    // Thread for reading PTY output
     std::thread::spawn(move || {
         let mut buf = [0u8; 8192];
         loop {
@@ -115,23 +148,16 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
         }
     });
 
-    // Master clone for resizing
     let master_for_cmds = master.clone();
 
-    // Task for WS to PTY (commands and user input)
+    // Task for handling WS messages (Resize only, ignore others)
     let ws_to_pty_task = tokio::spawn(async move {
         while let Some(msg) = ws_receiver.next().await {
             match msg {
-                Ok(Message::Binary(data)) => {
-                    if writer.write_all(&data).is_err() {
-                        break;
-                    }
-                    let _ = writer.flush();
-                }
                 Ok(Message::Text(text)) => {
-                    if let Ok(cmd) = serde_json::from_str::<TerminalCommand>(&text) {
+                    if let Ok(cmd) = serde_json::from_str::<LogCommand>(&text) {
                         match cmd {
-                            TerminalCommand::Resize { cols, rows } => {
+                            LogCommand::Resize { cols, rows } => {
                                 let master = master_for_cmds.lock().unwrap();
                                 let _ = master.resize(PtySize {
                                     rows,
@@ -141,11 +167,9 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
                                 });
                             }
                         }
-                    } else if writer.write_all(text.as_bytes()).is_err() {
-                        break;
                     }
                 }
-                _ => break,
+                _ => {} // Ignore binary or other messages
             }
         }
     });
@@ -158,5 +182,5 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
     }
 
     ws_to_pty_task.abort();
-    println!("Terminal session for {} ended", instance_name);
+    println!("Log session ended");
 }

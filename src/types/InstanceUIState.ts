@@ -1,4 +1,4 @@
-import { TerminalSession } from './TerminalSession';
+import { Session } from './TerminalSession';
 import { LimaConfig } from './LimaConfig';
 
 export interface InstanceUIState {
@@ -8,12 +8,12 @@ export interface InstanceUIState {
         showNodePanel: boolean;
         showPodsPanel: boolean;
         showServicesPanel: boolean;
-        sessions: TerminalSession[];
+        sessions: Session[];
         activeSessionId?: string;
     };
     lima: {
         showPanel: boolean;
-        sessions: TerminalSession[];
+        sessions: Session[];
         activeSessionId?: string;
     };
     config: {

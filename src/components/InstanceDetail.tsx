@@ -3,7 +3,7 @@ import { Save } from 'lucide-react';
 import { LimaInstance } from '../types/LimaInstance';
 import { InstanceStatus } from '../types/InstanceStatus';
 import { InstanceUIState } from '../types/InstanceUIState';
-import { SessionType } from '../types/TerminalSession';
+import { SessionType, LogSession } from '../types/TerminalSession';
 import { LimaConfig } from '../types/LimaConfig';
 import TerminalView from './TerminalView';
 import { parse, stringify } from 'yaml';
@@ -48,6 +48,7 @@ const DEFAULT_UI_STATE: InstanceUIState = {
     showPodsPanel: true,
     showServicesPanel: false,
     sessions: [],
+    activeSessionId: undefined,
   },
   lima: {
     showPanel: true,
@@ -301,15 +302,50 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   // --- End Configuration Helpers ---
 
-  const addSession = (type: SessionType, target: string) => {
+  const addSession = (type: SessionType | 'pod-logs', target: string, namespace?: string) => {
+    // 1. Handle Log Sessions
+    if (type === 'pod-logs') {
+      if (namespace && uiState.activeTab === 'k8s') {
+        const id = `log-${target}`;
+        const exists = uiState.k8s.sessions.find(s => s.id === id);
+        if (!exists) {
+          const newSession: LogSession = {
+            id,
+            type: 'pod-logs',
+            target,
+            instanceName: instance.name,
+            pod: target,
+            namespace, // Only valid if namespace is present
+          };
+          updateUiState(prev => ({
+            k8s: {
+              ...prev.k8s,
+              sessions: [...prev.k8s.sessions, newSession],
+              activeSessionId: id
+            }
+          }));
+        } else {
+          updateUiState(prev => ({
+            k8s: { ...prev.k8s, activeSessionId: id }
+          }));
+        }
+      }
+      return;
+    }
+
+    // 2. Handle Shell Sessions
     const id = type === 'lima-shell' ? `lima-shell-${Date.now()}` : `${type}-${target}`;
+
+    // Narrowing: We know type is NOT 'pod-logs' here because of the early return above.
+    const shellType = type as 'node-shell' | 'pod-shell' | 'lima-shell';
+
     if (uiState.activeTab === 'k8s') {
       const exists = uiState.k8s.sessions.find(s => s.id === id);
       if (!exists) {
         updateUiState(prev => ({
           k8s: {
             ...prev.k8s,
-            sessions: [...prev.k8s.sessions, { id, type, target }],
+            sessions: [...prev.k8s.sessions, { id, type: shellType, target }],
             activeSessionId: id
           }
         }));
@@ -324,7 +360,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
         updateUiState(prev => ({
           lima: {
             ...prev.lima,
-            sessions: [...prev.lima.sessions, { id, type, target }],
+            sessions: [...prev.lima.sessions, { id, type: shellType, target }],
             activeSessionId: id
           }
         }));
@@ -351,7 +387,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   const handleOpenNodeShell = () => addSession('node-shell', 'node-01');
   const handleOpenPodShell = (podName: string) => addSession('pod-shell', podName);
-  const handleOpenPodLogs = (podName: string) => addSession('pod-logs', podName);
+  const handleOpenPodLogs = (podName: string, namespace: string) => addSession('pod-logs', podName, namespace);
   const handleAddLimaShell = () => addSession('lima-shell', 'shell');
 
   const toggleNodePanel = () => {
@@ -606,6 +642,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
               />
             </div>
 
+            {/* K8s Terminal View - Always mounted, hidden when inactive */}
             {/* K8s Terminal View - Always mounted, hidden when inactive */}
             <div
               className="absolute inset-0 w-full h-full"

@@ -24,7 +24,7 @@ interface K8sPodPanelProps {
   panelHeight: number | 'auto';
   handlePanelResizeStart: (e: React.MouseEvent<HTMLDivElement>) => void;
   onClose: () => void;
-  handleOpenPodLogs: (name: string) => void;
+  handleOpenPodLogs: (name: string, namespace: string) => void;
   handleOpenPodShell: (name: string) => void;
 }
 
@@ -89,7 +89,7 @@ export const K8sPodPanel: React.FC<K8sPodPanelProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleOpenPodLogs(pod.name);
+                      handleOpenPodLogs(pod.name, pod.namespace);
                     }}
                     className="p-1 rounded bg-zinc-950 hover:bg-zinc-700 text-zinc-500 hover:text-white border border-zinc-800 transition-colors"
                     title="Logs"
