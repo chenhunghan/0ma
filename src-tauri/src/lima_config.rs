@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::lima_config_service::get_kubeconfig_path;
+use serde::{Deserialize, Serialize};
 use sysinfo::System;
 
 /// Helper function to skip serializing empty Vec<Option> fields
@@ -69,7 +69,6 @@ pub struct LimaConfig {
     /// Port forwarding configuration
     #[serde(rename = "portForwards", skip_serializing_if = "skip_vec_none")]
     pub port_forwards: Option<Vec<PortForward>>,
-
 }
 
 /// Mount configuration
@@ -213,23 +212,25 @@ impl LimaConfig {
 }
 
 /// Get the default k0s Lima configuration
-pub fn get_default_k0s_lima_config(app: &tauri::AppHandle, instance_name: &str) -> Result<LimaConfig, String> {
-    
+pub fn get_default_k0s_lima_config(
+    app: &tauri::AppHandle,
+    instance_name: &str,
+) -> Result<LimaConfig, String> {
     let kubeconfig_path = get_kubeconfig_path(app, instance_name)?;
-    
+
     // Get system information
     let mut sys = System::new_all();
     sys.refresh_all();
-    
+
     // Calculate 1/2 of host CPU cores (minimum 1)
     let host_cpus = sys.cpus().len() as u32;
     let vm_cpus = std::cmp::max(1, host_cpus / 2);
-    
+
     // Calculate 1/2 of host memory in GiB (minimum 1 GiB)
     let host_memory_bytes = sys.total_memory();
     let vm_memory_gib = std::cmp::max(1, (host_memory_bytes / 2) / (1024 * 1024 * 1024));
     let vm_memory = format!("{}GiB", vm_memory_gib);
-    
+
     Ok(LimaConfig {
         minimum_lima_version: Some("2.0.0".to_string()),
         vm_type: Some("vz".to_string()),
@@ -268,6 +269,34 @@ if ! systemctl status k0scontroller >/dev/null 2>&1; then
 fi
 
 systemctl start k0scontroller
+"#.to_string(),
+            },
+            Provision {
+                mode: "system".to_string(),
+                script: r#"#!/bin/bash
+set -eux -o pipefail
+if command -v kubectl >/dev/null 2>&1; then
+  exit 0
+fi
+
+# Detect architecture
+ARCH=$(uname -m)
+case $ARCH in
+  x86_64) ARCH="amd64" ;;
+  aarch64) ARCH="arm64" ;;
+esac
+
+# Install kubectl
+KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+curl -SLO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl"
+chmod +x kubectl
+mv kubectl /usr/local/bin/
+
+# Configure kubectl for the k0s control plane
+# Note: k0s stores the kubeconfig at /var/lib/k0s/pki/admin.conf
+mkdir -p "/home/{{.User}}.linux/.kube"
+ln -sf /var/lib/k0s/pki/admin.conf "/home/{{.User}}.linux/.kube/config"
+chown -R "{{.User}}" "/home/{{.User}}.linux/.kube"
 "#.to_string(),
             },
         ]),
@@ -375,9 +404,10 @@ mod tests {
 
         // Serialize to YAML
         let yaml = config.to_yaml().expect("Failed to serialize to YAML");
-        
+
         // Verify YAML is valid and can be deserialized
-        let deserialized: LimaConfig = LimaConfig::from_yaml(&yaml).expect("Failed to deserialize YAML");
+        let deserialized: LimaConfig =
+            LimaConfig::from_yaml(&yaml).expect("Failed to deserialize YAML");
 
         // Assert all mutated values are as expected
         assert_eq!(deserialized.minimum_lima_version, Some("2.1.0".to_string()));
@@ -484,7 +514,10 @@ probes:
         assert_eq!(probes[0].description, "k0s to be running");
 
         // Verify copy_to_host
-        assert!(config.copy_to_host.is_some(), "copy_to_host should be Some after parsing");
+        assert!(
+            config.copy_to_host.is_some(),
+            "copy_to_host should be Some after parsing"
+        );
         let copy_to_host = config.copy_to_host.as_ref().unwrap();
         assert_eq!(copy_to_host.len(), 1);
         assert_eq!(copy_to_host[0].guest, "/var/lib/k0s/pki/admin.conf");
@@ -519,7 +552,7 @@ probes:
         };
 
         let yaml = config.to_yaml().expect("Failed to serialize");
-        
+
         // Empty vecs should not appear in YAML
         assert!(!yaml.contains("images: []"));
         assert!(!yaml.contains("mounts: []"));
@@ -527,7 +560,7 @@ probes:
         assert!(!yaml.contains("probes: []"));
         assert!(!yaml.contains("copyToHost: []"));
         assert!(!yaml.contains("portForwards: []"));
-        
+
         // Fields with values should appear
         assert!(yaml.contains("vmType: vz"));
         assert!(yaml.contains("cpus: 4"));
@@ -536,7 +569,7 @@ probes:
     #[test]
     fn test_default_lima_config() {
         let config = LimaConfig::default();
-        
+
         assert_eq!(config.minimum_lima_version, None);
         assert_eq!(config.vm_type, None);
         assert!(config.images.is_some());
@@ -553,32 +586,38 @@ probes:
     #[test]
     fn test_cpu_memory_calculation_logic() {
         use sysinfo::System;
-        
+
         // Test the same CPU/memory calculation logic used in get_default_k0s_lima_config
         let mut sys = System::new_all();
         sys.refresh_all();
-        
+
         let host_cpus = sys.cpus().len() as u32;
         let vm_cpus = std::cmp::max(1, host_cpus / 2);
-        
+
         let host_memory_bytes = sys.total_memory();
         let vm_memory_gib = std::cmp::max(1, (host_memory_bytes / 2) / (1024 * 1024 * 1024));
-        
+
         // Verify CPU calculations (varies by host, but should be reasonable)
         assert!(vm_cpus >= 1, "VM CPUs should be at least 1");
         assert!(vm_cpus <= host_cpus, "VM CPUs should not exceed host CPUs");
-        assert!(vm_cpus == host_cpus / 2 || vm_cpus == 1, 
-            "VM CPUs should be half of host CPUs or 1 (minimum)");
-        
+        assert!(
+            vm_cpus == host_cpus / 2 || vm_cpus == 1,
+            "VM CPUs should be half of host CPUs or 1 (minimum)"
+        );
+
         // Verify memory calculations (varies by host, but should be reasonable)
         assert!(vm_memory_gib >= 1, "VM memory should be at least 1 GiB");
         let host_memory_gib = host_memory_bytes / (1024 * 1024 * 1024);
-        assert!(vm_memory_gib <= host_memory_gib, 
-            "VM memory should not exceed host memory");
-        
+        assert!(
+            vm_memory_gib <= host_memory_gib,
+            "VM memory should not exceed host memory"
+        );
+
         // Log values for debugging (varies by test host)
         println!("Host CPUs: {}, VM CPUs: {}", host_cpus, vm_cpus);
-        println!("Host Memory: {} GiB, VM Memory: {} GiB", host_memory_gib, vm_memory_gib);
+        println!(
+            "Host Memory: {} GiB, VM Memory: {} GiB",
+            host_memory_gib, vm_memory_gib
+        );
     }
 }
-
