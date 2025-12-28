@@ -30,26 +30,39 @@ export function useLimaStopLogs(
   };
 
   useEffect(() => {
-    const setupListeners = async () => {
-      // Listen for stop initialization
-      const unlistenStop = await listen<string>("lima-instance-stop", (event) => {
+    let active = true;
+    const unlistenPromises: Promise<() => void>[] = [];
+
+    // Listen for stop initialization
+    unlistenPromises.push(
+      listen<string>("lima-instance-stop", (event) => {
+        if (!active) return;
         setIsStopping(true);
         setError(null);
         setLogs([{ type: "info", message: event.payload, timestamp: new Date() }]);
-      });
+      })
+    );
 
-      // Listen for stdout
-      const unlistenStdout = await listen<string>("lima-instance-stop-stdout", (event) => {
+    // Listen for stdout
+    unlistenPromises.push(
+      listen<string>("lima-instance-stop-stdout", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "stdout", message: event.payload, timestamp: new Date() }]);
-      });
+      })
+    );
 
-      // Listen for stderr
-      const unlistenStderr = await listen<string>("lima-instance-stop-stderr", (event) => {
+    // Listen for stderr
+    unlistenPromises.push(
+      listen<string>("lima-instance-stop-stderr", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "stderr", message: event.payload, timestamp: new Date() }]);
-      });
+      })
+    );
 
-      // Listen for success
-      const unlistenSuccess = await listen<string>("lima-instance-stop-success", (event) => {
+    // Listen for success
+    unlistenPromises.push(
+      listen<string>("lima-instance-stop-success", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "success", message: event.payload, timestamp: new Date() }]);
         setIsStopping(false);
 
@@ -61,10 +74,13 @@ export function useLimaStopLogs(
         const instanceName = match ? match[1] : '';
 
         onSuccessRef.current?.(instanceName);
-      });
+      })
+    );
 
-      // Listen for errors
-      const unlistenError = await listen<string>("lima-instance-stop-error", (event) => {
+    // Listen for errors
+    unlistenPromises.push(
+      listen<string>("lima-instance-stop-error", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "error", message: event.payload, timestamp: new Date() }]);
         setError(event.payload);
         setIsStopping(false);
@@ -73,22 +89,16 @@ export function useLimaStopLogs(
         queryClient.invalidateQueries({ queryKey: ["instances"] });
 
         onErrorRef.current?.(event.payload);
-      });
+      })
+    );
 
-      return () => {
-        unlistenStop();
-        unlistenStdout();
-        unlistenStderr();
-        unlistenSuccess();
-        unlistenError();
-      };
-    };
-
-    const cleanup = setupListeners();
     return () => {
-      cleanup.then((fn) => fn());
+      active = false;
+      unlistenPromises.forEach(p => {
+        p.then(unlisten => unlisten()).catch(e => console.error('Failed to unlisten:', e));
+      });
     };
-  }, [queryClient]); // Include queryClient, use refs for callbacks
+  }, [queryClient]);
 
   return {
     logs,

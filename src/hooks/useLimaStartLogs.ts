@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -33,12 +33,20 @@ export function useLimaStartLogs(
     setError(null);
   };
 
+  // Use refs for callbacks to avoid re-running effect when they change
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  onSuccessRef.current = onSuccess;
+  onErrorRef.current = onError;
+
   useEffect(() => {
+    let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
     // Listen for start event
     unlistenPromises.push(
       listen<string>('lima-instance-start', () => {
+        if (!active) return;
         setIsStarting(true);
         setIsEssentiallyReady(false);
         setLogs([]);
@@ -46,70 +54,55 @@ export function useLimaStartLogs(
       })
     );
 
-    // Listen for stdout
+    // Listen for logs (stdout/stderr combined)
     unlistenPromises.push(
-      listen<string>('lima-instance-start-stdout', (event) => {
+      listen<string>('lima-instance-start-logs', (event) => {
+        if (!active) return;
         setLogs((prev) => [
           ...prev,
           { type: 'stdout', message: event.payload, timestamp: new Date() },
         ]);
-      })
-    );
 
-    // Listen for ready state (VM is ready, optional probes still running)
-    unlistenPromises.push(
-      listen<string>('lima-instance-start-ready', (event) => {
-        setIsEssentiallyReady(true);
-        setLogs((prev) => [
-          ...prev,
-          { type: 'stdout', message: event.payload, timestamp: new Date() },
-        ]);
-      })
-    );
-
-    // Listen for stderr
-    unlistenPromises.push(
-      listen<string>('lima-instance-start-stderr', (event) => {
-        setLogs((prev) => [
-          ...prev,
-          { type: 'stderr', message: event.payload, timestamp: new Date() },
-        ]);
+        // Check for a specific message to indicate readiness
+        if (event.payload.includes('LIMA-CHECK: READY')) {
+          setIsEssentiallyReady(true);
+        }
       })
     );
 
     // Listen for errors
     unlistenPromises.push(
       listen<string>('lima-instance-start-error', (event) => {
+        if (!active) return;
         setError(event.payload);
         setIsStarting(false);
         setLogs((prev) => [
           ...prev,
           { type: 'error', message: event.payload, timestamp: new Date() },
         ]);
-        
-        // Invalidate to ensure UI reflects actual state even on error
+
         queryClient.invalidateQueries({ queryKey: ['instances'] });
-        
-        onError?.(event.payload);
+        onErrorRef.current?.(event.payload);
       })
     );
 
     // Listen for success
     unlistenPromises.push(
       listen<string>('lima-instance-start-success', (event) => {
+        if (!active) return;
         setIsStarting(false);
         queryClient.invalidateQueries({ queryKey: ['instances'] });
-        onSuccess?.(event.payload);
+        onSuccessRef.current?.(event.payload);
       })
     );
 
-    // Cleanup
     return () => {
-      Promise.all(unlistenPromises).then((unlisteners) => {
-        unlisteners.forEach((unlisten) => unlisten());
+      active = false;
+      unlistenPromises.forEach(p => {
+        p.then(unlisten => unlisten()).catch(e => console.error('Failed to unlisten:', e));
       });
     };
-  }, [onSuccess, onError, queryClient]);
+  }, [queryClient]); // Stable dependencies
 
   return { logs, isStarting, isEssentiallyReady, error, reset };
 }

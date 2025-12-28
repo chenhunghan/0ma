@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -23,12 +23,20 @@ export function useLimaCreateLogs(
     setError(null);
   };
 
+  // Use refs for callbacks to avoid re-running effect when they change
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  onSuccessRef.current = onSuccess;
+  onErrorRef.current = onError;
+
   useEffect(() => {
+    let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
     // Listen for create start
     unlistenPromises.push(
       listen<string>('lima-instance-create', () => {
+        if (!active) return;
         setIsCreating(true);
         setLogs([]);
         setError(null);
@@ -38,6 +46,7 @@ export function useLimaCreateLogs(
     // Listen for stdout
     unlistenPromises.push(
       listen<string>('lima-instance-create-stdout', (event) => {
+        if (!active) return;
         setLogs((prev) => [
           ...prev,
           { type: 'stdout', message: event.payload, timestamp: new Date() },
@@ -48,6 +57,7 @@ export function useLimaCreateLogs(
     // Listen for stderr
     unlistenPromises.push(
       listen<string>('lima-instance-create-stderr', (event) => {
+        if (!active) return;
         setLogs((prev) => [
           ...prev,
           { type: 'stderr', message: event.payload, timestamp: new Date() },
@@ -58,32 +68,34 @@ export function useLimaCreateLogs(
     // Listen for errors
     unlistenPromises.push(
       listen<string>('lima-instance-create-error', (event) => {
+        if (!active) return;
         setError(event.payload);
         setIsCreating(false);
         setLogs((prev) => [
           ...prev,
           { type: 'error', message: event.payload, timestamp: new Date() },
         ]);
-        onError?.(event.payload);
+        onErrorRef.current?.(event.payload);
       })
     );
 
     // Listen for success
     unlistenPromises.push(
       listen<string>('lima-instance-create-success', (event) => {
+        if (!active) return;
         setIsCreating(false);
         queryClient.invalidateQueries({ queryKey: ['instances'] });
-        onSuccess?.(event.payload);
+        onSuccessRef.current?.(event.payload);
       })
     );
 
-    // Cleanup
     return () => {
-      Promise.all(unlistenPromises).then((unlisteners) => {
-        unlisteners.forEach((unlisten) => unlisten());
+      active = false;
+      unlistenPromises.forEach(p => {
+        p.then(unlisten => unlisten()).catch(e => console.error('Failed to unlisten:', e));
       });
     };
-  }, [onSuccess, onError, queryClient]);
+  }, [queryClient]);
 
   return { logs, isCreating, error, reset };
 }

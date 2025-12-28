@@ -30,26 +30,39 @@ export function useLimaDeleteLogs(
   };
 
   useEffect(() => {
-    const setupListeners = async () => {
-      // Listen for delete initialization
-      const unlistenDelete = await listen<string>("lima-instance-delete", (event) => {
+    let active = true;
+    const unlistenPromises: Promise<() => void>[] = [];
+
+    // Listen for delete initialization
+    unlistenPromises.push(
+      listen<string>("lima-instance-delete", (event) => {
+        if (!active) return;
         setIsDeleting(true);
         setError(null);
         setLogs([{ type: "info", message: event.payload, timestamp: new Date() }]);
-      });
+      })
+    );
 
-      // Listen for stdout
-      const unlistenStdout = await listen<string>("lima-instance-delete-stdout", (event) => {
+    // Listen for stdout
+    unlistenPromises.push(
+      listen<string>("lima-instance-delete-stdout", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "stdout", message: event.payload, timestamp: new Date() }]);
-      });
+      })
+    );
 
-      // Listen for stderr
-      const unlistenStderr = await listen<string>("lima-instance-delete-stderr", (event) => {
+    // Listen for stderr
+    unlistenPromises.push(
+      listen<string>("lima-instance-delete-stderr", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "stderr", message: event.payload, timestamp: new Date() }]);
-      });
+      })
+    );
 
-      // Listen for success
-      const unlistenSuccess = await listen<string>("lima-instance-delete-success", (event) => {
+    // Listen for success
+    unlistenPromises.push(
+      listen<string>("lima-instance-delete-success", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "success", message: event.payload, timestamp: new Date() }]);
         setIsDeleting(false);
 
@@ -61,10 +74,13 @@ export function useLimaDeleteLogs(
         const instanceName = match ? match[1] : '';
 
         onSuccessRef.current?.(instanceName);
-      });
+      })
+    );
 
-      // Listen for errors
-      const unlistenError = await listen<string>("lima-instance-delete-error", (event) => {
+    // Listen for errors
+    unlistenPromises.push(
+      listen<string>("lima-instance-delete-error", (event) => {
+        if (!active) return;
         setLogs((prev) => [...prev, { type: "error", message: event.payload, timestamp: new Date() }]);
         setError(event.payload);
         setIsDeleting(false);
@@ -73,22 +89,16 @@ export function useLimaDeleteLogs(
         queryClient.invalidateQueries({ queryKey: ["instances"] });
 
         onErrorRef.current?.(event.payload);
-      });
+      })
+    );
 
-      return () => {
-        unlistenDelete();
-        unlistenStdout();
-        unlistenStderr();
-        unlistenSuccess();
-        unlistenError();
-      };
-    };
-
-    const cleanup = setupListeners();
     return () => {
-      cleanup.then((fn) => fn());
+      active = false;
+      unlistenPromises.forEach(p => {
+        p.then(unlisten => unlisten()).catch(e => console.error('Failed to unlisten:', e));
+      });
     };
-  }, [queryClient]); // Include queryClient, use refs for callbacks
+  }, [queryClient]);
 
   return {
     logs,
