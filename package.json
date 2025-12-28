@@ -1,6 +1,7 @@
 {
   "name": "zeroma",
   "private": true,
+  "author": "Hung-Han Chen <chenhungh@gmail.com>",
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "scripts": {
