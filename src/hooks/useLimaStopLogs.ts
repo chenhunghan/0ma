@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -16,6 +16,12 @@ export function useLimaStopLogs(
   const [isStopping, setIsStopping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Use refs to store callbacks to avoid re-running effect when they change
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  onSuccessRef.current = onSuccess;
+  onErrorRef.current = onError;
 
   const reset = () => {
     setLogs([]);
@@ -46,17 +52,15 @@ export function useLimaStopLogs(
       const unlistenSuccess = await listen<string>("lima-instance-stop-success", (event) => {
         setLogs((prev) => [...prev, { type: "success", message: event.payload, timestamp: new Date() }]);
         setIsStopping(false);
-        
+
         // Invalidate instances query to refresh the status immediately
         queryClient.invalidateQueries({ queryKey: ["instances"] });
-        
+
         // Extract instance name from success message
         const match = event.payload.match(/Lima instance '([^']+)' stopped successfully!/);
         const instanceName = match ? match[1] : '';
-        
-        if (onSuccess) {
-          onSuccess(instanceName);
-        }
+
+        onSuccessRef.current?.(instanceName);
       });
 
       // Listen for errors
@@ -64,13 +68,11 @@ export function useLimaStopLogs(
         setLogs((prev) => [...prev, { type: "error", message: event.payload, timestamp: new Date() }]);
         setError(event.payload);
         setIsStopping(false);
-        
+
         // Invalidate to ensure UI reflects actual state even on error
         queryClient.invalidateQueries({ queryKey: ["instances"] });
-        
-        if (onError) {
-          onError(event.payload);
-        }
+
+        onErrorRef.current?.(event.payload);
       });
 
       return () => {
@@ -86,7 +88,7 @@ export function useLimaStopLogs(
     return () => {
       cleanup.then((fn) => fn());
     };
-  }, [onSuccess, onError]);
+  }, [queryClient]); // Include queryClient, use refs for callbacks
 
   return {
     logs,
