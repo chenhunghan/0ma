@@ -249,13 +249,21 @@ pub fn get_default_k0s_lima_config(
         }),
         provision: Some(vec![
             Provision {
-                mode: "system".to_string(),
+                mode: "dependency".to_string(),
                 script: r#"#!/bin/bash
 set -eux -o pipefail
-command -v k0s >/dev/null 2>&1 && exit 0
-
-# install k0s prerequisites
-curl -sfL https://get.k0s.sh | sh
+if ! command -v htop >/dev/null 2>&1; then
+  apt-get update && apt-get install -y htop
+fi
+"#.to_string(),
+            },
+            Provision {
+                mode: "dependency".to_string(),
+                script: r#"#!/bin/bash
+set -eux -o pipefail
+if ! command -v k0s >/dev/null 2>&1; then
+  curl -sfL https://get.k0s.sh | sh
+fi
 "#.to_string(),
             },
             Provision {
@@ -272,7 +280,7 @@ systemctl start k0scontroller
 "#.to_string(),
             },
             Provision {
-                mode: "system".to_string(),
+                mode: "dependency".to_string(),
                 script: r#"#!/bin/bash
 set -eux -o pipefail
 if command -v kubectl >/dev/null 2>&1; then
@@ -294,9 +302,9 @@ mv kubectl /usr/local/bin/
 
 # Configure kubectl for the k0s control plane
 # Note: k0s stores the kubeconfig at /var/lib/k0s/pki/admin.conf
-mkdir -p "/home/{{.User}}.linux/.kube"
-ln -sf /var/lib/k0s/pki/admin.conf "/home/{{.User}}.linux/.kube/config"
-chown -R "{{.User}}" "/home/{{.User}}.linux/.kube"
+mkdir -p "/home/{{.User}}/.kube"
+ln -sf /var/lib/k0s/pki/admin.conf "/home/{{.User}}/.kube/config"
+chown -R "{{.User}}" "/home/{{.User}}/.kube"
 "#.to_string(),
             },
         ]),
