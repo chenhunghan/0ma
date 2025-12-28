@@ -21,7 +21,7 @@ export const useLimaConfig = (initialConfig: LimaConfig) => {
             if (parsed && typeof parsed === 'object') {
                 setConfig(parsed as LimaConfig);
             }
-        } catch (e) {
+        } catch {
             // Ignore parse errors, just update string so user can keep typing
         }
     }, []);
@@ -44,7 +44,7 @@ export const useLimaConfig = (initialConfig: LimaConfig) => {
             return newConfig;
         });
     }, []);
-    
+
     const addProvisionScript = useCallback(() => {
         setConfig((prev) => {
             const newScript = { mode: 'system', script: '# New Script\n' };
@@ -54,7 +54,7 @@ export const useLimaConfig = (initialConfig: LimaConfig) => {
             return newConfig;
         });
     }, []);
-    
+
     const removeProvisionScript = useCallback((index: number) => {
         setConfig((prev) => {
             const newProvision = [...(prev.provision || [])];
@@ -64,23 +64,22 @@ export const useLimaConfig = (initialConfig: LimaConfig) => {
             return newConfig;
         });
     }, []);
-    
+
     const updateProbeScript = useCallback((
         index: number,
         key: 'description' | 'script' | 'hint' | 'mode',
         value: string
-      ) => {
+    ) => {
         setConfig((prev) => {
             const newProbes = [...(prev.probes || [])];
             if (!newProbes[index]) return prev;
-            // @ts-ignore - dynamic key assignment
-            newProbes[index] = { ...newProbes[index], [key]: value };
+            (newProbes[index] as any)[key] = value;
             const newConfig = { ...prev, probes: newProbes };
             setYamlString(stringify(newConfig));
             return newConfig;
         });
     }, []);
-    
+
     const addProbeScript = useCallback(() => {
         setConfig((prev) => {
             const newProbe = {
@@ -94,7 +93,7 @@ export const useLimaConfig = (initialConfig: LimaConfig) => {
             return newConfig;
         });
     }, []);
-    
+
     const removeProbeScript = useCallback((index: number) => {
         setConfig((prev) => {
             const newProbes = [...(prev.probes || [])];

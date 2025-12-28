@@ -3,12 +3,12 @@ import { InstanceStatus } from '../types/InstanceStatus';
 import { terminalManager } from '../services/TerminalManager';
 
 export interface SingleTerminalProps {
-  id: string; // Unique ID for persistence
-  instanceName: string;
-  status: InstanceStatus;
-  prompt: string;
-  welcomeMessage?: string[];
-  isLogs?: boolean;
+    id: string; // Unique ID for persistence
+    instanceName: string;
+    status: InstanceStatus;
+    prompt: string;
+    welcomeMessage?: string[];
+    isLogs?: boolean;
 }
 
 // Consistent font settings matching Tailwind's font-mono stack
@@ -40,18 +40,20 @@ const TERM_CONFIG = {
     }
 };
 
-export const SingleTerminal: React.FC<SingleTerminalProps> = ({ 
+export const SingleTerminal: React.FC<SingleTerminalProps> = ({
     id,
-    instanceName, 
-    status, 
-    prompt, 
+    instanceName,
+    status,
+    prompt,
     welcomeMessage,
     isLogs = false
 }) => {
     const terminalContainerRef = useRef<HTMLDivElement>(null);
-    
+
     // Stable welcome message to prevent unnecessary updates in useEffect
-    const stableWelcomeMessage = useMemo(() => welcomeMessage, [JSON.stringify(welcomeMessage)]);
+    const welcomeMessageStr = JSON.stringify(welcomeMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const stableWelcomeMessage = useMemo(() => welcomeMessage, [welcomeMessageStr]);
 
     useEffect(() => {
         if (!terminalContainerRef.current) return;
@@ -78,16 +80,14 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
         // Safe Fit Function
         const safeFit = () => {
             if (!terminalContainerRef.current) return;
-            if (terminalContainerRef.current.clientWidth === 0 || 
+            if (terminalContainerRef.current.clientWidth === 0 ||
                 terminalContainerRef.current.clientHeight === 0 ||
                 !terminalContainerRef.current.offsetParent) {
                 return;
             }
 
             try {
-                // @ts-ignore
-                const core = term._core;
-                // @ts-ignore
+                const core = (term as any)._core;
                 if (!core || !core._renderService || !core._renderService.dimensions) {
                     return;
                 }
@@ -100,22 +100,22 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
 
         // Initial Fit
         requestAnimationFrame(() => {
-             safeFit();
-             // Focus if not logs (interactive)
-             if (!isLogs) term.focus();
+            safeFit();
+            // Focus if not logs (interactive)
+            if (!isLogs) term.focus();
         });
 
         // 3. Initialize Simulation Logic (Only Once)
         if (!termInstance.initialized && status === InstanceStatus.Running) {
-             termInstance.initialized = true;
+            termInstance.initialized = true;
 
-             if (stableWelcomeMessage) {
-                 stableWelcomeMessage.forEach(line => {
-                    try { term.writeln(line); } catch(e) {}
-                 });
-             }
-             
-             if (isLogs) {
+            if (stableWelcomeMessage) {
+                stableWelcomeMessage.forEach(line => {
+                    try { term.writeln(line); } catch { /* ignore */ }
+                });
+            }
+
+            if (isLogs) {
                 // Simulate Log Streaming
                 const logLines = [
                     `[${new Date().toISOString()}] INFO: Starting application v1.2.0...`,
@@ -123,40 +123,40 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
                     `[${new Date().toISOString()}] INFO: Connecting to database at 10.42.0.12:5432`,
                     `[${new Date().toISOString()}] INFO: Database connection established successfully`,
                 ];
-                
+
                 logLines.forEach(l => {
-                    try { term.writeln(l); } catch(e) {}
+                    try { term.writeln(l); } catch { /* ignore */ }
                 });
 
                 // Store interval in manager so it survives unmounts
                 termInstance.intervalId = setInterval(() => {
-                     const now = new Date().toISOString();
-                     const ms = Math.floor(Math.random() * 200);
-                     const methods = ['GET', 'POST', 'PUT'];
-                     const method = methods[Math.floor(Math.random() * methods.length)];
-                     const paths = ['/api/v1/users', '/api/v1/data', '/healthz', '/metrics'];
-                     const path = paths[Math.floor(Math.random() * paths.length)];
-                     const statusCodes = [200, 201, 200, 200, 404, 500]; 
-                     const statusCode = statusCodes[Math.floor(Math.random() * statusCodes.length)];
-                     
-                     try {
+                    const now = new Date().toISOString();
+                    const ms = Math.floor(Math.random() * 200);
+                    const methods = ['GET', 'POST', 'PUT'];
+                    const method = methods[Math.floor(Math.random() * methods.length)];
+                    const paths = ['/api/v1/users', '/api/v1/data', '/healthz', '/metrics'];
+                    const path = paths[Math.floor(Math.random() * paths.length)];
+                    const statusCodes = [200, 201, 200, 200, 404, 500];
+                    const statusCode = statusCodes[Math.floor(Math.random() * statusCodes.length)];
+
+                    try {
                         term.writeln(`[${now}] INFO: Incoming request ${method} ${path} - ${statusCode} (${ms}ms)`);
                         // Optional: Auto scroll
                         term.scrollToBottom();
-                     } catch (e) {
+                    } catch {
                         // Silent catch
-                     }
+                    }
                 }, 2000);
-             } else {
-                 // Interactive Shell Simulation
-                 setTimeout(() => {
-                     try {
+            } else {
+                // Interactive Shell Simulation
+                setTimeout(() => {
+                    try {
                         // Don't clear if we re-attached and it has content, but here we are in the !initialized block
                         if (stableWelcomeMessage && stableWelcomeMessage.length > 0) term.clear();
                         term.write(prompt);
-                     } catch(e) {}
-                 }, 300);
-             }
+                    } catch { /* ignore */ }
+                }, 300);
+            }
         }
 
         // 4. Setup Event Listeners (Re-attach every mount)
@@ -173,15 +173,15 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
                 } else {
                     term.write(data);
                 }
-            } catch (e) {
+            } catch {
                 // Ignore errors
             }
         });
-        
+
         const resizeObserver = new ResizeObserver(() => {
-             requestAnimationFrame(safeFit);
+            requestAnimationFrame(safeFit);
         });
-        
+
         if (terminalContainerRef.current) {
             resizeObserver.observe(terminalContainerRef.current);
         }
@@ -190,11 +190,11 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
             // Cleanup on Unmount
             resizeObserver.disconnect();
             dataDisposable.dispose();
-            
+
             // IMPORTANT: We do NOT dispose the terminal itself here.
             // We just let it detach from the DOM naturally.
         };
-    }, [id, instanceName, status, prompt, isLogs, stableWelcomeMessage]); 
+    }, [id, instanceName, status, prompt, isLogs, stableWelcomeMessage]);
 
     return <div className="h-full w-full pl-1 pt-1 overflow-hidden" ref={terminalContainerRef} />;
 };

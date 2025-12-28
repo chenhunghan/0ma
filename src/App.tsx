@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { 
+import {
   Terminal,
 } from 'lucide-react';
 import { InstanceStatus } from './types/InstanceStatus';
@@ -19,7 +19,7 @@ export const App: React.FC = () => {
   const { instances, isLoading } = useLimaInstances();
   const { startInstance, stopInstance, deleteInstance } = useLimaInstance();
   const { setSelectedName, selectedInstance } = useSelectedInstance(instances);
-  
+
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showConfirmStartModal, setShowConfirmStartModal] = useState(false);
@@ -38,7 +38,7 @@ export const App: React.FC = () => {
     setSelectedName(instanceName);
     setShowCreateModal(false);
     setShowConfirmStartModal(true);
-  }, []);
+  }, [setSelectedName]);
 
   const handleCreateError = useCallback((error: string) => {
     console.error('Instance creation failed:', error);
@@ -49,7 +49,7 @@ export const App: React.FC = () => {
   const handleStartSuccess = useCallback((instanceName: string) => {
     console.debug(`Instance ${instanceName} started successfully.`);
     setShowStartLogsModal(false);
-    
+
     // Clear created instance name if it matches
     setCreatedInstanceName((current) => {
       if (instanceName === current) {
@@ -57,7 +57,7 @@ export const App: React.FC = () => {
       }
       return current;
     });
-    
+
     // Clear starting instance name if it matches
     setStartingInstanceName((current) => {
       if (instanceName === current) {
@@ -87,7 +87,7 @@ export const App: React.FC = () => {
     console.debug(`Instance ${instanceName} deleted successfully.`);
     setShowDeleteLogsModal(false);
     setDeletingInstanceName(null);
-    
+
     // Switch to another instance after successful deletion
     const remainingInstances = instances.filter(i => i.name !== instanceName);
     if (remainingInstances.length > 0) {
@@ -99,7 +99,7 @@ export const App: React.FC = () => {
       // No instances left: clear selection to show the empty state
       setSelectedName(null);
     }
-  }, [instances]);
+  }, [instances, setSelectedName]);
 
   const handleDeleteError = useCallback((error: string) => {
     console.error('Instance delete failed:', error);
@@ -115,11 +115,11 @@ export const App: React.FC = () => {
       console.error('No created instance to start. Somthing went wrong.');
       return;
     };
-    
+
     // Close confirmation modal and open logs modal
     setShowConfirmStartModal(false);
     setShowStartLogsModal(true);
-    
+
     // Start the instance - logs modal will close on success
     startInstance(createdInstanceName);
   };
@@ -149,93 +149,93 @@ export const App: React.FC = () => {
 
   return (
     <div className="h-screen bg-black text-zinc-300 font-mono overflow-hidden flex flex-col selection:bg-zinc-700 selection:text-white">
-        {/* MODALS */}
-        <CreateInstanceModal 
-            isOpen={showCreateModal}
-            onClose={() => setShowCreateModal(false)}
-            onSuccess={handleCreateSuccess}
-            onError={handleCreateError}
-        />
-        
-        <ConfirmationModal 
-            isOpen={showConfirmStartModal}
-            title="INSTANCE CREATED"
-            message="The virtual machine has been successfully provisioned. Do you want to initialize the boot sequence now?"
-            confirmLabel="START INSTANCE"
-            cancelLabel="LATER"
-            variant="success"
-            onConfirm={handleConfirmStartInstance}
-            onCancel={() => setShowConfirmStartModal(false)}
-            // immediate not in loading state since we already created the instance
-            isProcessing={false}
-        />
-        
-        <StartLogsModal 
-            isOpen={showStartLogsModal}
-            onClose={() => setShowStartLogsModal(false)}
-            instanceName={startingInstanceName || createdInstanceName || ''}
-            onSuccess={handleStartSuccess}
-            onError={handleStartError}
-        />
-        
-        <StopInstanceModal 
-            isOpen={showStopLogsModal}
-            onClose={() => setShowStopLogsModal(false)}
-            instanceName={stoppingInstanceName || ''}
-            onSuccess={handleStopSuccess}
-            onError={handleStopError}
-        />
-        
-        <DeleteInstanceModal 
-            isOpen={showDeleteLogsModal}
-            onClose={() => setShowDeleteLogsModal(false)}
-            instanceName={deletingInstanceName || ''}
-            onSuccess={handleDeleteSuccess}
-            onError={handleDeleteError}
-        />
+      {/* MODALS */}
+      <CreateInstanceModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+        onError={handleCreateError}
+      />
 
-        {isLoading || isGhosttyLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-4">
-                <div className="font-mono text-sm">
-                    <span className="text-green-500">➜</span> SYSTEM CHECK...
-                </div>
-            </div>
-        ) : instances.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-6">
-                <div className="w-24 h-24 border border-zinc-800 flex items-center justify-center bg-zinc-900/50">
-                    <Terminal className="w-10 h-10 opacity-50" />
-                </div>
-                <div className="text-center font-mono">
-                    <h2 className="text-lg font-bold text-zinc-300 uppercase">No Instances Detected</h2>
-                    <p className="text-xs text-zinc-600 mt-2 max-w-xs mx-auto">
-                        SYSTEM READY. AWAITING INPUT.
-                    </p>
-                </div>
-                <button 
-                    onClick={handleOpenCreateModal}
-                    className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 px-6 py-2 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
-                >
-                    [ CREATE INSTANCE ]
-                </button>
-            </div>
-        ) : selectedInstance ? (
-             <InstanceDetail 
-                // We do NOT use a key here to prevent unmounting the header when switching.
-                instances={instances}
-                selectedName={selectedInstance.name}
-                onSelect={setSelectedName}
-                onCreate={handleOpenCreateModal}
-                instance={selectedInstance}
-                onDelete={handleDelete}
-                onStart={handleStartInstance}
-                onStop={handleStopInstance}
-                isCreating={false}
-             />
-        ) : (
-            <div className="flex-1 flex items-center justify-center">
-                 <div className="animate-pulse text-zinc-600 font-mono text-xs">LOADING DATA STREAM...</div>
-            </div>
-        )}
+      <ConfirmationModal
+        isOpen={showConfirmStartModal}
+        title="INSTANCE CREATED"
+        message="The virtual machine has been successfully provisioned. Do you want to initialize the boot sequence now?"
+        confirmLabel="START INSTANCE"
+        cancelLabel="LATER"
+        variant="success"
+        onConfirm={handleConfirmStartInstance}
+        onCancel={() => setShowConfirmStartModal(false)}
+        // immediate not in loading state since we already created the instance
+        isProcessing={false}
+      />
+
+      <StartLogsModal
+        isOpen={showStartLogsModal}
+        onClose={() => setShowStartLogsModal(false)}
+        instanceName={startingInstanceName || createdInstanceName || ''}
+        onSuccess={handleStartSuccess}
+        onError={handleStartError}
+      />
+
+      <StopInstanceModal
+        isOpen={showStopLogsModal}
+        onClose={() => setShowStopLogsModal(false)}
+        instanceName={stoppingInstanceName || ''}
+        onSuccess={handleStopSuccess}
+        onError={handleStopError}
+      />
+
+      <DeleteInstanceModal
+        isOpen={showDeleteLogsModal}
+        onClose={() => setShowDeleteLogsModal(false)}
+        instanceName={deletingInstanceName || ''}
+        onSuccess={handleDeleteSuccess}
+        onError={handleDeleteError}
+      />
+
+      {isLoading || isGhosttyLoading ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-4">
+          <div className="font-mono text-sm">
+            <span className="text-green-500">➜</span> SYSTEM CHECK...
+          </div>
+        </div>
+      ) : instances.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-6">
+          <div className="w-24 h-24 border border-zinc-800 flex items-center justify-center bg-zinc-900/50">
+            <Terminal className="w-10 h-10 opacity-50" />
+          </div>
+          <div className="text-center font-mono">
+            <h2 className="text-lg font-bold text-zinc-300 uppercase">No Instances Detected</h2>
+            <p className="text-xs text-zinc-600 mt-2 max-w-xs mx-auto">
+              SYSTEM READY. AWAITING INPUT.
+            </p>
+          </div>
+          <button
+            onClick={handleOpenCreateModal}
+            className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 px-6 py-2 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
+          >
+            [ CREATE INSTANCE ]
+          </button>
+        </div>
+      ) : selectedInstance ? (
+        <InstanceDetail
+          // We do NOT use a key here to prevent unmounting the header when switching.
+          instances={instances}
+          selectedName={selectedInstance.name}
+          onSelect={setSelectedName}
+          onCreate={handleOpenCreateModal}
+          instance={selectedInstance}
+          onDelete={handleDelete}
+          onStart={handleStartInstance}
+          onStop={handleStopInstance}
+          isCreating={false}
+        />
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse text-zinc-600 font-mono text-xs">LOADING DATA STREAM...</div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,12 +6,12 @@ import { SingleTerminal } from './SingleTerminal';
 import { InstanceStatus } from '../types/InstanceStatus';
 
 interface TerminalViewProps {
-  instanceId: string;
-  instanceName: string;
-  status: InstanceStatus;
-  mode: 'lima' | 'k8s';
-  sessions: TerminalSession[];
-  onCloseSession: (id: string) => void;
+    instanceId: string;
+    instanceName: string;
+    status: InstanceStatus;
+    mode: 'lima' | 'k8s';
+    sessions: TerminalSession[];
+    onCloseSession: (id: string) => void;
 }
 
 const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, status, mode, sessions, onCloseSession }) => {
@@ -31,10 +31,10 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
     } | null>(null);
 
     // Props for Main Terminal
-    const mainPrompt = mode === 'lima' 
+    const mainPrompt = mode === 'lima'
         ? `\x1b[32m${instanceName}\x1b[0m:\x1b[34m~\x1b[0m$ `
         : `\x1b[34m${instanceName}-k8s\x1b[0m:\x1b[32m/namespaces/default\x1b[0m$ `;
-    
+
     // Stable ID for Main Terminal
     const mainTerminalId = `${instanceId}-${mode}-main`;
 
@@ -72,15 +72,15 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
     // --- SECONDARY SPLIT LOGIC ---
     useEffect(() => {
         if (sessions.length === 0) {
-             setSessionSizes([]);
+            setSessionSizes([]);
         } else {
-             setSessionSizes(new Array(sessions.length).fill(100 / sessions.length));
+            setSessionSizes(new Array(sessions.length).fill(100 / sessions.length));
         }
     }, [sessions.length]);
 
     const handleSecondaryMouseDown = (index: number, e: React.MouseEvent) => {
         e.preventDefault();
-        e.stopPropagation(); 
+        e.stopPropagation();
         if (!secondaryContainerRef.current) return;
 
         dragSecondaryInfo.current = {
@@ -98,14 +98,14 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
     const handleSecondaryMouseMove = useCallback((e: MouseEvent) => {
         if (!dragSecondaryInfo.current) return;
         const { index, startX, startSizes, containerWidth } = dragSecondaryInfo.current;
-        
+
         const deltaX = e.clientX - startX;
         const deltaPercent = (deltaX / containerWidth) * 100;
 
         const newSizes = [...startSizes];
-        let left = newSizes[index];
-        let right = newSizes[index+1];
-        
+        const left = newSizes[index];
+        const right = newSizes[index + 1];
+
         if (left === undefined || right === undefined) return;
 
         let newLeft = left + deltaPercent;
@@ -123,7 +123,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
         }
 
         newSizes[index] = newLeft;
-        newSizes[index+1] = newRight;
+        newSizes[index + 1] = newRight;
         setSessionSizes(newSizes);
     }, []);
 
@@ -134,8 +134,8 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
         document.removeEventListener('mouseup', handleSecondaryMouseUp);
     }, [handleSecondaryMouseMove]);
 
-    const renderSizes = (sessionSizes.length === sessions.length) 
-        ? sessionSizes 
+    const renderSizes = (sessionSizes.length === sessions.length)
+        ? sessionSizes
         : new Array(sessions.length).fill(100 / sessions.length);
 
     const getSessionProps = (session: TerminalSession) => {
@@ -147,12 +147,12 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
                 isLogs: false
             };
         } else if (session.type === 'pod-shell') {
-             return {
+            return {
                 prompt: `\x1b[31mroot@${session.target}\x1b[0m:\x1b[34m/app\x1b[0m# `,
                 welcome: [`Exec into ${session.target}...`, `Connected.`],
                 title: `SHELL: ${session.target}`,
                 isLogs: false
-             };
+            };
         } else { // pod-logs
             return {
                 prompt: '',
@@ -172,31 +172,31 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
 
     return (
         <div className="h-full w-full bg-black flex overflow-hidden" ref={mainContainerRef}>
-            <div 
+            <div
                 className="h-full relative transition-[width] duration-0 ease-linear overflow-hidden"
                 style={{ width: hasSessions ? `${mainSplitRatio}%` : '100%' }}
             >
-                <SingleTerminal 
+                <SingleTerminal
                     id={mainTerminalId}
                     key={mainTerminalId}
-                    instanceName={instanceName} 
-                    status={status} 
-                    prompt={mainPrompt} 
+                    instanceName={instanceName}
+                    status={status}
+                    prompt={mainPrompt}
                     welcomeMessage={mainWelcome}
                 />
                 {hasSessions && <div className="absolute top-0 right-0 bg-zinc-900 text-[10px] px-2 py-0.5 text-zinc-500 font-mono z-10 border-b border-l border-zinc-800">KUBECTL</div>}
             </div>
-            
+
             {hasSessions && (
                 <>
-                    <div 
+                    <div
                         className="w-1 h-full bg-zinc-900 hover:bg-blue-600 cursor-col-resize z-20 flex items-center justify-center transition-colors shrink-0 border-x border-zinc-800"
                         onMouseDown={handleMainMouseDown}
                     >
                         <GripVertical className="w-2 h-4 text-zinc-600" />
                     </div>
 
-                    <div 
+                    <div
                         className="h-full relative min-w-0 flex flex-row bg-black"
                         style={{ width: `calc(${100 - mainSplitRatio}% - 4px)` }}
                         ref={secondaryContainerRef}
@@ -205,30 +205,30 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
                             const { prompt, welcome, title, isLogs } = getSessionProps(session);
                             const widthPercent = renderSizes[index];
                             const sessionId = `${instanceId}-${session.id}`;
-                            
+
                             return (
                                 <React.Fragment key={session.id}>
                                     {index > 0 && (
-                                         <div 
+                                        <div
                                             className="w-1 h-full bg-zinc-900 hover:bg-blue-600 cursor-col-resize z-20 flex items-center justify-center transition-colors shrink-0 border-x border-zinc-800"
                                             onMouseDown={(e) => handleSecondaryMouseDown(index - 1, e)}
-                                         >
-                                             <GripVertical className="w-2 h-4 text-zinc-600" />
-                                         </div>
+                                        >
+                                            <GripVertical className="w-2 h-4 text-zinc-600" />
+                                        </div>
                                     )}
                                     <div className="relative min-w-0 h-full overflow-hidden" style={{ width: `${widthPercent}%` }}>
-                                        <SingleTerminal 
+                                        <SingleTerminal
                                             id={sessionId}
                                             key={sessionId}
-                                            instanceName={instanceName} 
-                                            status={status} 
-                                            prompt={prompt} 
+                                            instanceName={instanceName}
+                                            status={status}
+                                            prompt={prompt}
                                             welcomeMessage={welcome}
                                             isLogs={isLogs}
                                         />
                                         <div className="absolute top-0 right-0 flex items-center bg-zinc-900 border-b border-l border-zinc-800 z-10 max-w-full">
                                             <span className="text-[10px] px-2 py-0.5 text-zinc-500 font-mono border-r border-zinc-800 truncate max-w-[150px]" title={title}>{title}</span>
-                                            <button 
+                                            <button
                                                 onClick={() => handleClose(session.id)}
                                                 className="p-0.5 hover:bg-red-900/50 hover:text-red-500 text-zinc-500 transition-colors shrink-0"
                                                 title="Close"

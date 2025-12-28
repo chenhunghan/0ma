@@ -1,6 +1,8 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
+import reactPlugin from 'eslint-plugin-react';
+import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tseslint.config(
     js.configs.recommended,
@@ -8,12 +10,38 @@ export default tseslint.config(
     {
         files: ['src/**/*.{ts,tsx}'],
         plugins: {
+            'react': reactPlugin,
             'react-hooks': reactHooks,
+            'react-refresh': reactRefresh,
+        },
+        settings: {
+            react: {
+                version: 'detect',
+            },
+        },
+        languageOptions: {
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
         },
         rules: {
-            // React Hooks rules - these catch the dependency issues we just fixed
+            // React specific rules
+            ...reactPlugin.configs.recommended.rules,
+            ...reactPlugin.configs['jsx-runtime'].rules,
+            'react/prop-types': 'off', // Since we use TypeScript
+            'react/jsx-no-target-blank': 'warn',
+
+            // React Hooks rules
             'react-hooks/rules-of-hooks': 'error',
             'react-hooks/exhaustive-deps': 'warn',
+
+            // React Refresh rule
+            'react-refresh/only-export-components': [
+                'warn',
+                { allowConstantExport: true },
+            ],
 
             // TypeScript specific rules
             '@typescript-eslint/no-unused-vars': ['warn', {

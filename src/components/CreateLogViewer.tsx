@@ -89,12 +89,14 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
 
     resizeObserver.observe(terminalContainerRef.current);
 
+    const processedLogs = processedLogsRef.current;
+
     return () => {
       resizeObserver.disconnect();
       term.dispose();
       terminalRef.current = null;
       fitAddonRef.current = null;
-      processedLogsRef.current.clear();
+      processedLogs.clear();
     };
   }, []);
 
@@ -105,15 +107,15 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
 
     logs.forEach((log) => {
       const logKey = `${log.timestamp.getTime()}-${log.type}-${log.message}`;
-      
+
       // Skip if already processed
       if (processedLogsRef.current.has(logKey)) return;
-      
+
       processedLogsRef.current.add(logKey);
 
       try {
         term.writeln(log.message);
-        
+
         // Auto-scroll to bottom
         term.scrollToBottom();
       } catch (e) {

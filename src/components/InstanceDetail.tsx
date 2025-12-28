@@ -90,7 +90,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     setInstancesState((prevGlobal) => {
       const currentState = prevGlobal[selectedName] || DEFAULT_UI_STATE;
       const changes = typeof update === 'function' ? update(currentState) : update;
-      
+
       return {
         ...prevGlobal,
         [selectedName]: {
@@ -109,39 +109,39 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   // Helper to update both config object and its yaml string representation
   const setConfig = (newConfig: LimaConfig) => {
-      updateUiState(prev => ({
-          config: {
-              ...prev.config,
-              draftConfig: newConfig,
-              draftYaml: stringify(newConfig)
-          }
-      }));
+    updateUiState(prev => ({
+      config: {
+        ...prev.config,
+        draftConfig: newConfig,
+        draftYaml: stringify(newConfig)
+      }
+    }));
   };
-  
+
   // Helper to update only yaml string (when typing in editor) and try to parse
   const setYamlAndParse = (newYaml: string) => {
-      // Always update string
-      updateUiState(prev => ({
-          config: { ...prev.config, draftYaml: newYaml }
-      }));
+    // Always update string
+    updateUiState(prev => ({
+      config: { ...prev.config, draftYaml: newYaml }
+    }));
 
-      // Try to parse to update object
-      try {
-          const parsed = parse(newYaml);
-          if (parsed && typeof parsed === 'object') {
-             updateUiState(prev => ({
-                 config: { ...prev.config, draftConfig: parsed as LimaConfig }
-             }));
-          }
-      } catch (e) {
-          // ignore invalid yaml while typing
+    // Try to parse to update object
+    try {
+      const parsed = parse(newYaml);
+      if (parsed && typeof parsed === 'object') {
+        updateUiState(prev => ({
+          config: { ...prev.config, draftConfig: parsed as LimaConfig }
+        }));
       }
+    } catch {
+      // ignore invalid yaml while typing
+    }
   };
 
 
   const [isSaving, setIsSaving] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // Delete Modal State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -191,22 +191,22 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   const handleSaveConfig = async () => {
     if (!configObject) return; // Guard against undefined config
-    
+
     setIsSaving(true);
     try {
-        // Save using the current object state
-        writeLimaYaml(configObject);
-        
-        // Clear drafts
-        updateUiState(prev => ({
-            config: { 
-                ...prev.config, 
-                draftConfig: undefined, 
-                draftYaml: undefined 
-            }
-        }));
+      // Save using the current object state
+      writeLimaYaml(configObject);
+
+      // Clear drafts
+      updateUiState(prev => ({
+        config: {
+          ...prev.config,
+          draftConfig: undefined,
+          draftYaml: undefined
+        }
+      }));
     } catch (e) {
-        console.error("Failed to save config", e);
+      console.error("Failed to save config", e);
     }
     setIsSaving(false);
   };
@@ -234,7 +234,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     const newProvision = [...(configObject.provision || []), newScript];
     const newConfig = { ...configObject, provision: newProvision };
     setConfig(newConfig);
-    
+
     // Auto expand
     updateUiState((prev) => ({
       config: { ...prev.config, showScripts: true }
@@ -257,8 +257,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     if (!configObject) return;
     const newProbes = [...(configObject.probes || [])];
     if (!newProbes[index]) return;
-    // @ts-ignore - dynamic access
-    newProbes[index] = { ...newProbes[index], [key]: value };
+    (newProbes[index] as any)[key] = value;
     const newConfig = { ...configObject, probes: newProbes };
     setConfig(newConfig);
   };
@@ -273,7 +272,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     const newProbes = [...(configObject.probes || []), newProbe];
     const newConfig = { ...configObject, probes: newProbes };
     setConfig(newConfig);
-    
+
     // Auto expand
     updateUiState((prev) => ({
       config: { ...prev.config, showProbes: true }
@@ -293,31 +292,31 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   const addSession = (type: SessionType, target: string) => {
     const id = `${type}-${target}`;
     if (uiState.activeTab === 'k8s') {
-        const exists = uiState.k8s.sessions.find(s => s.id === id);
-        if (!exists) {
-            updateUiState(prev => ({
-                k8s: { ...prev.k8s, sessions: [...prev.k8s.sessions, { id, type, target }] }
-            }));
-        }
+      const exists = uiState.k8s.sessions.find(s => s.id === id);
+      if (!exists) {
+        updateUiState(prev => ({
+          k8s: { ...prev.k8s, sessions: [...prev.k8s.sessions, { id, type, target }] }
+        }));
+      }
     } else {
-        const exists = uiState.lima.sessions.find(s => s.id === id);
-        if (!exists) {
-            updateUiState(prev => ({
-                lima: { ...prev.lima, sessions: [...prev.lima.sessions, { id, type, target }] }
-            }));
-        }
+      const exists = uiState.lima.sessions.find(s => s.id === id);
+      if (!exists) {
+        updateUiState(prev => ({
+          lima: { ...prev.lima, sessions: [...prev.lima.sessions, { id, type, target }] }
+        }));
+      }
     }
   };
 
   const handleCloseSession = (id: string) => {
     if (uiState.activeTab === 'k8s') {
-        updateUiState(prev => ({
-            k8s: { ...prev.k8s, sessions: prev.k8s.sessions.filter(s => s.id !== id) }
-        }));
+      updateUiState(prev => ({
+        k8s: { ...prev.k8s, sessions: prev.k8s.sessions.filter(s => s.id !== id) }
+      }));
     } else {
-         updateUiState(prev => ({
-            lima: { ...prev.lima, sessions: prev.lima.sessions.filter(s => s.id !== id) }
-        }));
+      updateUiState(prev => ({
+        lima: { ...prev.lima, sessions: prev.lima.sessions.filter(s => s.id !== id) }
+      }));
     }
   };
 
@@ -327,27 +326,27 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
 
   const toggleNodePanel = () => {
     updateUiState(prev => ({
-        k8s: { ...prev.k8s, showNodePanel: !prev.k8s.showNodePanel, showPodsPanel: false, showServicesPanel: false }
+      k8s: { ...prev.k8s, showNodePanel: !prev.k8s.showNodePanel, showPodsPanel: false, showServicesPanel: false }
     }));
   };
   const togglePodsPanel = () => {
     updateUiState(prev => ({
-        k8s: { ...prev.k8s, showPodsPanel: !prev.k8s.showPodsPanel, showNodePanel: false, showServicesPanel: false }
+      k8s: { ...prev.k8s, showPodsPanel: !prev.k8s.showPodsPanel, showNodePanel: false, showServicesPanel: false }
     }));
   };
   const toggleServicesPanel = () => {
     updateUiState(prev => ({
-        k8s: { ...prev.k8s, showServicesPanel: !prev.k8s.showServicesPanel, showNodePanel: false, showPodsPanel: false }
+      k8s: { ...prev.k8s, showServicesPanel: !prev.k8s.showServicesPanel, showNodePanel: false, showPodsPanel: false }
     }));
   };
   const toggleLimaPanel = () => {
     updateUiState(prev => ({
-        lima: { ...prev.lima, showPanel: !prev.lima.showPanel }
+      lima: { ...prev.lima, showPanel: !prev.lima.showPanel }
     }));
   };
   const toggleConfigPanel = () => {
-     updateUiState(prev => ({
-        config: { ...prev.config, showPanel: !prev.config.showPanel }
+    updateUiState(prev => ({
+      config: { ...prev.config, showPanel: !prev.config.showPanel }
     }));
   };
 
@@ -358,7 +357,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
     const maxHeight = containerHeight * 0.95;
     const delta = e.clientY - dragStartRef.current.y;
     const newHeight = Math.max(150, Math.min(dragStartRef.current.h + delta, maxHeight));
-    
+
     updateUiState({ panelHeight: newHeight });
   }, [updateUiState]);
 
@@ -569,8 +568,8 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
                           ⚡ INSTANCE STARTING
                         </div>
                         <div className="text-zinc-500 text-xs font-mono mt-1">
-                          {isEssentiallyReady 
-                            ? 'Instance ready - initializing optional components...' 
+                          {isEssentiallyReady
+                            ? 'Instance ready - initializing optional components...'
                             : 'Booting system and running provision scripts...'}
                         </div>
                       </div>
