@@ -41,10 +41,10 @@ pub async fn get_instance_uptime_cmd(instance_name: String) -> Result<String, St
     crate::instance_registry_service::get_uptime(&instance_name).await
 }
 
-/// Get guest-specific info (like container engine)
+/// Get rich guest diagnostics (OS, Kernel)
 #[tauri::command]
-pub async fn get_instance_guest_info_cmd(
+pub async fn get_instance_guest_diagnostics_cmd(
     instance_name: String,
-) -> Result<crate::instance_registry_service::GuestInfo, String> {
-    crate::instance_registry_service::get_guest_info(&instance_name).await
+) -> Result<crate::instance_registry_service::GuestDiagnostics, String> {
+    crate::instance_registry_service::get_guest_diagnostics(&instance_name).await
 }

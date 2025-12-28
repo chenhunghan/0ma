@@ -25,6 +25,12 @@ pub struct LimaInstance {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub ssh_address: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ssh_local_port: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dir: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub k8s: Option<K8sInfo>,
 }
 
@@ -41,6 +47,10 @@ struct LimaListOutput {
     arch: Option<String>,
     #[serde(rename = "limaVersion", skip_serializing_if = "Option::is_none")]
     lima_version: Option<String>,
+    #[serde(rename = "sshAddress", skip_serializing_if = "Option::is_none")]
+    ssh_address: Option<String>,
+    #[serde(rename = "sshLocalPort", skip_serializing_if = "Option::is_none")]
+    ssh_local_port: Option<u16>,
 }
 
 /// Disk usage information
@@ -52,10 +62,11 @@ pub struct DiskUsage {
     pub use_percent: String,
 }
 
-/// Guest information (engine, etc)
+/// Detailed guest diagnostics
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GuestInfo {
-    pub engine: String,
+pub struct GuestDiagnostics {
+    pub os_pretty_name: String,
+    pub kernel_version: String,
 }
 
 /// Get all Lima instances from limactl list --json (async)
@@ -95,7 +106,7 @@ async fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                 let config = raw.config.as_ref();
 
                 // Extract architecture
-                let arch = raw.arch.unwrap_or_else(|| {
+                let arch = raw.arch.clone().unwrap_or_else(|| {
                     // Default to current system architecture
                     #[cfg(target_arch = "aarch64")]
                     {
@@ -128,6 +139,9 @@ async fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                     disk,
                     arch,
                     version: raw.lima_version,
+                    ssh_address: raw.ssh_address,
+                    ssh_local_port: raw.ssh_local_port,
+                    dir: raw.dir,
                     k8s: None, // K8s info would need to be fetched separately
                 };
                 instances.push(instance);
@@ -247,30 +261,51 @@ pub async fn get_uptime(instance_name: &str) -> Result<String, String> {
     Ok(stdout.trim().replace("up ", "").to_string())
 }
 
-/// Get guest information like container engine
-pub async fn get_guest_info(instance_name: &str) -> Result<GuestInfo, String> {
+/// Get guest diagnostics like OS and Kernel (async)
+pub async fn get_guest_diagnostics(instance_name: &str) -> Result<GuestDiagnostics, String> {
     let lima_cmd = find_lima_executable()
         .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
 
-    // Check for common engines/orchestrators in order
-    let engines = ["k0s", "nerdctl", "docker", "podman"];
-    let mut detected_engine = "none".to_string();
+    // Get OS info
+    let os_output = Command::new(&lima_cmd)
+        .args([
+            "shell",
+            instance_name,
+            "grep",
+            "^PRETTY_NAME=",
+            "/etc/os-release",
+        ])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to run os-release command: {}", e))?;
 
-    for engine in engines {
-        let output = Command::new(&lima_cmd)
-            .args(["shell", instance_name, "command", "-v", engine])
-            .output()
-            .await;
+    let os_pretty_name = if os_output.status.success() {
+        let stdout = String::from_utf8_lossy(&os_output.stdout);
+        stdout
+            .trim()
+            .replace("PRETTY_NAME=", "")
+            .replace("\"", "")
+            .to_string()
+    } else {
+        "Unknown Linux".to_string()
+    };
 
-        if let Ok(out) = output {
-            if out.status.success() {
-                detected_engine = engine.to_string();
-                break;
-            }
-        }
-    }
+    // Get Kernel info
+    let kernel_output = Command::new(&lima_cmd)
+        .args(["shell", instance_name, "uname", "-r"])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to run uname command: {}", e))?;
 
-    Ok(GuestInfo {
-        engine: detected_engine,
+    let kernel_version = if kernel_output.status.success() {
+        let stdout = String::from_utf8_lossy(&kernel_output.stdout);
+        stdout.trim().to_string()
+    } else {
+        "Unknown Kernel".to_string()
+    };
+
+    Ok(GuestDiagnostics {
+        os_pretty_name,
+        kernel_version,
     })
 }

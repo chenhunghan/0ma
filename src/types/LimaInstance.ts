@@ -11,5 +11,8 @@ export interface LimaInstance {
   disk: string;
   arch: Arch;
   version?: string;
+  ssh_address?: string;
+  ssh_local_port?: number;
+  dir?: string;
   k8s?: K8sInfo;
 }
