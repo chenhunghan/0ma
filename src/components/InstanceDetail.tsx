@@ -292,23 +292,40 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   // --- End Configuration Helpers ---
 
   const addSession = (type: SessionType, target: string) => {
-    const id = `${type}-${target}`;
+    const id = type === 'lima-shell' ? `lima-shell-${Date.now()}` : `${type}-${target}`;
     if (uiState.activeTab === 'k8s') {
       const exists = uiState.k8s.sessions.find(s => s.id === id);
       if (!exists) {
         updateUiState(prev => ({
-          k8s: { ...prev.k8s, sessions: [...prev.k8s.sessions, { id, type, target }] }
+          k8s: {
+            ...prev.k8s,
+            sessions: [...prev.k8s.sessions, { id, type, target }],
+            activeSessionId: id
+          }
+        }));
+      } else {
+        updateUiState(prev => ({
+          k8s: { ...prev.k8s, activeSessionId: id }
         }));
       }
     } else {
       const exists = uiState.lima.sessions.find(s => s.id === id);
       if (!exists) {
         updateUiState(prev => ({
-          lima: { ...prev.lima, sessions: [...prev.lima.sessions, { id, type, target }] }
+          lima: {
+            ...prev.lima,
+            sessions: [...prev.lima.sessions, { id, type, target }],
+            activeSessionId: id
+          }
+        }));
+      } else {
+        updateUiState(prev => ({
+          lima: { ...prev.lima, activeSessionId: id }
         }));
       }
     }
   };
+
 
   const handleCloseSession = (id: string) => {
     if (uiState.activeTab === 'k8s') {
@@ -325,6 +342,7 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   const handleOpenNodeShell = () => addSession('node-shell', 'node-01');
   const handleOpenPodShell = (podName: string) => addSession('pod-shell', podName);
   const handleOpenPodLogs = (podName: string) => addSession('pod-logs', podName);
+  const handleAddLimaShell = () => addSession('lima-shell', 'shell');
 
   const toggleNodePanel = () => {
     updateUiState(prev => ({
@@ -389,7 +407,6 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
   // Track starting state from event stream, not from Lima status (Lima only reports Running/Stopped)
   const isStarting = startLogs.length > 0 && !isRunning;
   const activeTab = uiState.activeTab;
-  const currentSessions = activeTab === 'k8s' ? uiState.k8s.sessions : uiState.lima.sessions;
 
   // Check if config has changed
   // Simple check via stringify comparison
@@ -450,157 +467,197 @@ const InstanceDetail: React.FC<InstanceDetailProps> = ({
       </div>
 
       <div className="flex-1 relative overflow-hidden bg-black flex flex-col" ref={containerRef}>
-        {activeTab === 'config' ? (
-          <div className="h-full flex flex-col relative overflow-hidden">
-            {uiState.config.showPanel && (
-              <LimaConfigPanel
-                parsedConfig={configObject}
-                updateConfigField={updateConfigField}
-                updateProvisionScript={updateProvisionScript}
-                addProvisionScript={addProvisionScript}
-                removeProvisionScript={removeProvisionScript}
-                updateProbeScript={updateProbeScript}
-                addProbeScript={addProbeScript}
-                removeProbeScript={removeProbeScript}
-                showScripts={uiState.config.showScripts}
-                setShowScripts={(show) => updateUiState(prev => ({ config: { ...prev.config, showScripts: show } }))}
-                showProbes={uiState.config.showProbes}
-                setShowProbes={(show) => updateUiState(prev => ({ config: { ...prev.config, showProbes: show } }))}
-                onClose={() => updateUiState(prev => ({ config: { ...prev.config, showPanel: false } }))}
-                panelHeight={uiState.panelHeight}
-                handlePanelResizeStart={handlePanelResizeStart}
-              />
+        {/* CONFIG VIEW */}
+        <div
+          className="h-full flex flex-col relative overflow-hidden"
+          style={{ display: activeTab === 'config' ? 'flex' : 'none' }}
+        >
+          {uiState.config.showPanel && (
+            <LimaConfigPanel
+              parsedConfig={configObject}
+              updateConfigField={updateConfigField}
+              updateProvisionScript={updateProvisionScript}
+              addProvisionScript={addProvisionScript}
+              removeProvisionScript={removeProvisionScript}
+              updateProbeScript={updateProbeScript}
+              addProbeScript={addProbeScript}
+              removeProbeScript={removeProbeScript}
+              showScripts={uiState.config.showScripts}
+              setShowScripts={(show) => updateUiState(prev => ({ config: { ...prev.config, showScripts: show } }))}
+              showProbes={uiState.config.showProbes}
+              setShowProbes={(show) => updateUiState(prev => ({ config: { ...prev.config, showProbes: show } }))}
+              onClose={() => updateUiState(prev => ({ config: { ...prev.config, showPanel: false } }))}
+              panelHeight={uiState.panelHeight}
+              handlePanelResizeStart={handlePanelResizeStart}
+            />
+          )}
+
+          <div className="flex-1 relative bg-[#2d2d2d] overflow-y-auto">
+            <Editor
+              value={yamlString}
+              onValueChange={setYamlAndParse}
+              highlight={(code) =>
+                Prism.highlight(code, Prism.languages.yaml, 'yaml')
+              }
+              padding={20}
+              className="prism-editor min-h-full font-mono"
+              style={{
+                fontSize: 11,
+                backgroundColor: '#000000',
+                color: '#e0e0e0',
+              }}
+              textareaClassName="focus:outline-none"
+            />
+
+            {hasChanges && (
+              <div className="absolute bottom-6 right-6 z-50">
+                <button
+                  onClick={handleSaveConfig}
+                  disabled={isSaving || isWritingLima}
+                  className="flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-zinc-100 hover:bg-white text-black border border-zinc-100 shadow-xl transition-all hover:scale-105"
+                >
+                  <Save className="w-4 h-4" />
+                  {(isSaving || isWritingLima) ? 'WRITING...' : 'SAVE CHANGES'}
+                </button>
+              </div>
             )}
-
-            <div className="flex-1 relative bg-[#2d2d2d] overflow-y-auto">
-              <Editor
-                value={yamlString}
-                onValueChange={setYamlAndParse}
-                highlight={(code) =>
-                  Prism.highlight(code, Prism.languages.yaml, 'yaml')
-                }
-                padding={20}
-                className="prism-editor min-h-full font-mono"
-                style={{
-                  fontSize: 11,
-                  backgroundColor: '#000000',
-                  color: '#e0e0e0',
-                }}
-                textareaClassName="focus:outline-none"
-              />
-
-              {hasChanges && (
-                <div className="absolute bottom-6 right-6 z-50">
-                  <button
-                    onClick={handleSaveConfig}
-                    disabled={isSaving || isWritingLima}
-                    className="flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-zinc-100 hover:bg-white text-black border border-zinc-100 shadow-xl transition-all hover:scale-105"
-                  >
-                    <Save className="w-4 h-4" />
-                    {(isSaving || isWritingLima) ? 'WRITING...' : 'SAVE CHANGES'}
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
-        ) : (
-          <div className="h-full w-full flex flex-col relative">
-            {uiState.lima.showPanel && activeTab === 'lima' && (
-              <LimaPanel
-                instance={instance}
-                parsedConfig={limaConfig}
-                panelHeight={uiState.panelHeight}
-                handlePanelResizeStart={handlePanelResizeStart}
-                onClose={() => updateUiState(prev => ({ lima: { ...prev.lima, showPanel: false } }))}
-              />
-            )}
+        </div>
 
-            {uiState.k8s.showNodePanel && activeTab === 'k8s' && (
-              <K8sNodePanel
-                instance={instance}
-                panelHeight={uiState.panelHeight}
-                onClose={() => updateUiState(prev => ({ k8s: { ...prev.k8s, showNodePanel: false } }))}
-                handleOpenNodeShell={handleOpenNodeShell}
-                handlePanelResizeStart={handlePanelResizeStart}
-              />
-            )}
+        {/* TERMINAL / MAIN VIEW */}
+        <div
+          className="h-full w-full flex flex-col relative"
+          style={{ display: activeTab !== 'config' ? 'flex' : 'none' }}
+        >
+          {uiState.lima.showPanel && activeTab === 'lima' && (
+            <LimaPanel
+              instance={instance}
+              parsedConfig={limaConfig}
+              panelHeight={uiState.panelHeight}
+              handlePanelResizeStart={handlePanelResizeStart}
+              onClose={() => updateUiState(prev => ({ lima: { ...prev.lima, showPanel: false } }))}
+            />
+          )}
 
-            {uiState.k8s.showPodsPanel && activeTab === 'k8s' && (
-              <K8sPodPanel
-                mockPods={MOCK_PODS}
-                selectedPodId={selectedPodId}
-                setSelectedPodId={setSelectedPodId}
-                panelHeight={uiState.panelHeight}
-                handlePanelResizeStart={handlePanelResizeStart}
-                onClose={() => updateUiState(prev => ({ k8s: { ...prev.k8s, showPodsPanel: false } }))}
-                handleOpenPodLogs={handleOpenPodLogs}
-                handleOpenPodShell={handleOpenPodShell}
-              />
-            )}
+          {uiState.k8s.showNodePanel && activeTab === 'k8s' && (
+            <K8sNodePanel
+              instance={instance}
+              panelHeight={uiState.panelHeight}
+              onClose={() => updateUiState(prev => ({ k8s: { ...prev.k8s, showNodePanel: false } }))}
+              handleOpenNodeShell={handleOpenNodeShell}
+              handlePanelResizeStart={handlePanelResizeStart}
+            />
+          )}
 
-            {uiState.k8s.showServicesPanel && activeTab === 'k8s' && (
-              <K8sSvcPanel
-                mockServices={MOCK_SERVICES}
-                selectedServiceId={selectedServiceId}
-                setSelectedServiceId={setSelectedServiceId}
-                panelHeight={uiState.panelHeight}
-                handlePanelResizeStart={handlePanelResizeStart}
-                onClose={() => updateUiState(prev => ({ k8s: { ...prev.k8s, showServicesPanel: false } }))}
-              />
-            )}
+          {uiState.k8s.showPodsPanel && activeTab === 'k8s' && (
+            <K8sPodPanel
+              mockPods={MOCK_PODS}
+              selectedPodId={selectedPodId}
+              setSelectedPodId={setSelectedPodId}
+              panelHeight={uiState.panelHeight}
+              handlePanelResizeStart={handlePanelResizeStart}
+              onClose={() => updateUiState(prev => ({ k8s: { ...prev.k8s, showPodsPanel: false } }))}
+              handleOpenPodLogs={handleOpenPodLogs}
+              handleOpenPodShell={handleOpenPodShell}
+            />
+          )}
 
-            <div className="flex-1 relative w-full overflow-hidden min-h-0">
+          {uiState.k8s.showServicesPanel && activeTab === 'k8s' && (
+            <K8sSvcPanel
+              mockServices={MOCK_SERVICES}
+              selectedServiceId={selectedServiceId}
+              setSelectedServiceId={setSelectedServiceId}
+              panelHeight={uiState.panelHeight}
+              handlePanelResizeStart={handlePanelResizeStart}
+              onClose={() => updateUiState(prev => ({ k8s: { ...prev.k8s, showServicesPanel: false } }))}
+            />
+          )}
+
+          <div className="flex-1 relative w-full overflow-hidden min-h-0">
+            {/* Lima Terminal View - Always mounted, hidden when inactive */}
+            <div
+              className="absolute inset-0 w-full h-full"
+              style={{
+                visibility: activeTab !== 'k8s' ? 'visible' : 'hidden',
+                zIndex: activeTab !== 'k8s' ? 10 : 0
+              }}
+            >
               <TerminalView
-                key={`${instance.name}-${activeTab}`}
+                key={`${instance.name}-lima`}
                 instanceId={instance.name}
                 instanceName={instance.name}
                 status={instance.status}
-                mode={activeTab === 'k8s' ? 'k8s' : 'lima'}
-                sessions={currentSessions}
+                mode="lima"
+                sessions={uiState.lima.sessions}
+                activeSessionId={uiState.lima.activeSessionId}
+                onSetActiveSession={(id) => updateUiState(prev => ({ lima: { ...prev.lima, activeSessionId: id } }))}
+                onAddSession={handleAddLimaShell}
                 onCloseSession={handleCloseSession}
               />
-
-              {!isRunning && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
-                  {isStarting ? (
-                    // Show logs during startup
-                    <div className="border border-zinc-700 bg-zinc-950 w-full max-w-2xl h-96 flex flex-col shadow-2xl">
-                      <div className="px-4 py-3 border-b border-zinc-700 bg-zinc-900">
-                        <div className="text-emerald-500 font-bold uppercase tracking-widest text-sm">
-                          ⚡ INSTANCE STARTING
-                        </div>
-                        <div className="text-zinc-500 text-xs font-mono mt-1">
-                          {isEssentiallyReady
-                            ? 'Instance ready - initializing optional components...'
-                            : 'Booting system and running provision scripts...'}
-                        </div>
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <InstanceModalLogViewer logs={startLogs} />
-                      </div>
-                    </div>
-                  ) : (
-                    // Show halted state when stopped
-                    <div className="border border-zinc-700 bg-zinc-950 p-6 min-w-75 text-center shadow-2xl">
-                      <div className="text-red-500 font-bold mb-2 uppercase tracking-widest text-lg animate-pulse">
-                        SYSTEM HALTED
-                      </div>
-                      <div className="text-zinc-500 text-xs mb-6 font-mono">
-                        Instance {instance.name} is currently stopped.
-                      </div>
-                      <button
-                        onClick={handleStart}
-                        className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-mono text-sm uppercase border border-zinc-600 hover:border-zinc-500 transition-colors"
-                      >
-                        [ INITIALIZE BOOT ]
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
+
+            {/* K8s Terminal View - Always mounted, hidden when inactive */}
+            <div
+              className="absolute inset-0 w-full h-full"
+              style={{
+                visibility: activeTab === 'k8s' ? 'visible' : 'hidden',
+                zIndex: activeTab === 'k8s' ? 10 : 0
+              }}
+            >
+              <TerminalView
+                key={`${instance.name}-k8s`}
+                instanceId={instance.name}
+                instanceName={instance.name}
+                status={instance.status}
+                mode="k8s"
+                sessions={uiState.k8s.sessions}
+                activeSessionId={uiState.k8s.activeSessionId}
+                onSetActiveSession={(id) => updateUiState(prev => ({ k8s: { ...prev.k8s, activeSessionId: id } }))}
+                onAddSession={() => { }} // K8s view currently has no add session button
+                onCloseSession={handleCloseSession}
+              />
+            </div>
+
+            {!isRunning && (
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
+                {isStarting ? (
+                  // Show logs during startup
+                  <div className="border border-zinc-700 bg-zinc-950 w-full max-w-2xl h-96 flex flex-col shadow-2xl">
+                    <div className="px-4 py-3 border-b border-zinc-700 bg-zinc-900">
+                      <div className="text-emerald-500 font-bold uppercase tracking-widest text-sm">
+                        ⚡ INSTANCE STARTING
+                      </div>
+                      <div className="text-zinc-500 text-xs font-mono mt-1">
+                        {isEssentiallyReady
+                          ? 'Instance ready - initializing optional components...'
+                          : 'Booting system and running provision scripts...'}
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <InstanceModalLogViewer logs={startLogs} />
+                    </div>
+                  </div>
+                ) : (
+                  // Show halted state when stopped
+                  <div className="border border-zinc-700 bg-zinc-950 p-6 min-w-75 text-center shadow-2xl">
+                    <div className="text-red-500 font-bold mb-2 uppercase tracking-widest text-lg animate-pulse">
+                      SYSTEM HALTED
+                    </div>
+                    <div className="text-zinc-500 text-xs mb-6 font-mono">
+                      Instance {instance.name} is currently stopped.
+                    </div>
+                    <button
+                      onClick={handleStart}
+                      className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-mono text-sm uppercase border border-zinc-600 hover:border-zinc-500 transition-colors"
+                    >
+                      [ INITIALIZE BOOT ]
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

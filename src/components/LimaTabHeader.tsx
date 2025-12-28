@@ -17,9 +17,8 @@ export const LimaTabHeader: React.FC<LimaTabHeaderProps> = ({
     <>
       <button
         onClick={toggleLimaPanel}
-        className={`flex items-center gap-2 transition-colors hover:text-white px-1.5 py-0.5 rounded hover:bg-zinc-900 border border-transparent hover:border-zinc-700 ${
-          showLimaPanel ? 'bg-zinc-800 text-white border-zinc-700' : 'text-zinc-300'
-        }`}
+        className={`flex items-center gap-2 transition-colors hover:text-white px-1.5 py-0.5 rounded hover:bg-zinc-900 border border-transparent hover:border-zinc-700 ${showLimaPanel ? 'bg-zinc-800 text-white border-zinc-700' : 'text-zinc-300'
+          }`}
       >
         <Info className="w-3 h-3 text-zinc-500" />
         <span className="underline decoration-dotted underline-offset-4">

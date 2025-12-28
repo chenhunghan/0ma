@@ -60,18 +60,16 @@ export const K8sSvcPanel: React.FC<K8sSvcPanelProps> = ({
               <div
                 key={svc.id}
                 onClick={() => setSelectedServiceId(svc.id)}
-                className={`group relative w-full text-left p-2 rounded flex flex-col gap-0.5 border transition-all cursor-pointer ${
-                  selectedServiceId === svc.id
+                className={`group relative w-full text-left p-2 rounded flex flex-col gap-0.5 border transition-all cursor-pointer ${selectedServiceId === svc.id
                     ? 'bg-zinc-800 border-zinc-700 text-white'
                     : 'border-transparent text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 <div className="text-xs font-bold truncate w-full">{svc.name}</div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      svc.status === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'
-                    }`}
+                    className={`w-1.5 h-1.5 rounded-full ${svc.status === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`}
                   ></span>
                   <span className="text-[10px] uppercase text-zinc-500 tracking-wider">{svc.namespace}</span>
                 </div>
@@ -151,13 +149,12 @@ export const K8sSvcPanel: React.FC<K8sSvcPanelProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-zinc-600 font-bold uppercase">Service Type</span>
               <span
-                className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${
-                  selectedService.type === 'LoadBalancer'
+                className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${selectedService.type === 'LoadBalancer'
                     ? 'bg-indigo-950 text-indigo-400 border-indigo-900'
                     : selectedService.type === 'NodePort'
-                    ? 'bg-amber-950 text-amber-400 border-amber-900'
-                    : 'bg-zinc-950 text-zinc-400 border-zinc-800'
-                }`}
+                      ? 'bg-amber-950 text-amber-400 border-amber-900'
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-800'
+                  }`}
               >
                 {selectedService.type}
               </span>

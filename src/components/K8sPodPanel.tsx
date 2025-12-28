@@ -68,18 +68,16 @@ export const K8sPodPanel: React.FC<K8sPodPanelProps> = ({
               <div
                 key={pod.id}
                 onClick={() => setSelectedPodId(pod.id)}
-                className={`group relative w-full text-left p-2 rounded flex flex-col gap-0.5 border transition-all cursor-pointer ${
-                  selectedPodId === pod.id
+                className={`group relative w-full text-left p-2 rounded flex flex-col gap-0.5 border transition-all cursor-pointer ${selectedPodId === pod.id
                     ? 'bg-zinc-800 border-zinc-700 text-white'
                     : 'border-transparent text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 <div className="text-xs truncate w-full pr-12 font-bold">{pod.name}</div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      pod.status === 'Running' ? 'bg-emerald-500' : 'bg-amber-500'
-                    }`}
+                    className={`w-1.5 h-1.5 rounded-full ${pod.status === 'Running' ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`}
                   ></span>
                   <span className="text-[10px] uppercase text-zinc-500 tracking-wider">
                     {pod.namespace}
@@ -124,11 +122,10 @@ export const K8sPodPanel: React.FC<K8sPodPanelProps> = ({
             <div className="flex items-center justify-between text-xs">
               <span className="text-[10px] text-zinc-600 font-bold uppercase">Status</span>
               <span
-                className={`px-1.5 py-0.5 rounded font-bold uppercase text-[9px] border ${
-                  selectedPod.status === 'Running'
+                className={`px-1.5 py-0.5 rounded font-bold uppercase text-[9px] border ${selectedPod.status === 'Running'
                     ? 'bg-emerald-950 text-emerald-400 border-emerald-900'
                     : 'bg-amber-950 text-amber-400 border-amber-900'
-                }`}
+                  }`}
               >
                 {selectedPod.status}
               </span>

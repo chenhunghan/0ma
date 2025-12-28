@@ -83,17 +83,17 @@ export const K8sNodePanel: React.FC<K8sNodePanelProps> = ({
           </div>
           <div className="p-4 overflow-y-auto space-y-3 flex-1 min-h-0 [scrollbar-gutter:stable]">
             <div>
-                <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">Kubernetes</span>
-                <span className="text-blue-400 text-xs">{instance.k8s?.version}</span>
+              <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">Kubernetes</span>
+              <span className="text-blue-400 text-xs">{instance.k8s?.version}</span>
             </div>
             <div>
-                <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">Runtime</span>
-                <span className="text-zinc-300 text-xs">containerd 1.7.11</span>
+              <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">Runtime</span>
+              <span className="text-zinc-300 text-xs">containerd 1.7.11</span>
             </div>
             <div>
-                <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">OS / Kernel</span>
-                <span className="text-zinc-300 text-xs block">Alpine Linux v3.19</span>
-                <span className="text-zinc-500 text-[10px]">6.6.0-23-generic</span>
+              <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">OS / Kernel</span>
+              <span className="text-zinc-300 text-xs block">Alpine Linux v3.19</span>
+              <span className="text-zinc-500 text-[10px]">6.6.0-23-generic</span>
             </div>
           </div>
         </div>
@@ -101,26 +101,25 @@ export const K8sNodePanel: React.FC<K8sNodePanelProps> = ({
         {/* Block 3: Actions & Status */}
         <div className="flex flex-col h-full overflow-hidden">
           <div className="h-10 flex items-center gap-2 px-4 border-b border-zinc-800/50 shrink-0 bg-zinc-900/50">
-             <Info className="w-3.5 h-3.5 text-zinc-500" />
-             <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-                Actions
-              </span>
+            <Info className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+              Actions
+            </span>
           </div>
           <div className="p-4 flex flex-col justify-between h-full flex-1 min-h-0 [scrollbar-gutter:stable]">
             <div>
               <div className="flex items-center gap-2 mb-3 bg-zinc-950/30 p-2 rounded border border-zinc-800/50">
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    instance.k8s?.status === 'Ready'
+                  className={`w-2 h-2 rounded-full ${instance.k8s?.status === 'Ready'
                       ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
                       : 'bg-amber-500'
-                  }`}
+                    }`}
                 ></div>
                 <span className="text-[10px] text-zinc-300 font-bold uppercase">Node Ready</span>
                 <span className="text-[10px] text-zinc-600 ml-auto">Up: 4d 2h</span>
               </div>
             </div>
-            
+
             <button
               onClick={handleOpenNodeShell}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-900/10 hover:bg-blue-900/30 text-blue-400 hover:text-blue-300 text-[10px] font-bold border border-blue-900/30 hover:border-blue-500/50 transition-colors uppercase tracking-wider"
@@ -131,12 +130,12 @@ export const K8sNodePanel: React.FC<K8sNodePanelProps> = ({
           </div>
         </div>
       </div>
-      
-       {/* Real Resizer Handle */}
-       <div 
+
+      {/* Real Resizer Handle */}
+      <div
         className="h-1 bg-zinc-800 hover:bg-blue-600 cursor-row-resize w-full absolute bottom-0 z-50 flex items-center justify-center transition-colors"
         onMouseDown={handlePanelResizeStart}
-       >
+      >
         <GripHorizontal className="w-6 h-3 text-zinc-600 opacity-50" />
       </div>
     </div>

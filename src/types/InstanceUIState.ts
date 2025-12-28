@@ -9,10 +9,12 @@ export interface InstanceUIState {
         showPodsPanel: boolean;
         showServicesPanel: boolean;
         sessions: TerminalSession[];
+        activeSessionId?: string;
     };
     lima: {
         showPanel: boolean;
         sessions: TerminalSession[];
+        activeSessionId?: string;
     };
     config: {
         showPanel: boolean;
