@@ -1,22 +1,25 @@
-use std::process::Command;
 use std::path::Path;
+use std::process::Command;
+use tauri::Manager;
 
-mod yaml_handler;
-mod lima_config;
-mod lima_config_service;
-mod lima_config_handler;
-mod instance_registry_service;
 mod instance_registry_handler;
+mod instance_registry_service;
+mod lima_config;
+mod lima_config_handler;
+mod lima_config_service;
 mod lima_instance_handler;
+mod terminal_handler;
+mod terminal_service;
+mod yaml_handler;
 
 // Common paths where limactl might be installed
 // Note: We use limactl directly instead of lima wrapper script
 const COMMON_LIMA_EXEC_PATHS: &[&str] = &[
-      "/opt/homebrew/bin/limactl",
-      "/usr/local/bin/limactl",
-      "/opt/local/bin/limactl",
-      "/usr/bin/limactl",
-      "limactl",
+    "/opt/homebrew/bin/limactl",
+    "/usr/local/bin/limactl",
+    "/opt/local/bin/limactl",
+    "/usr/bin/limactl",
+    "limactl",
 ];
 
 /// Find the lima executable in common installation paths
@@ -76,8 +79,25 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                match terminal_service::TerminalService::start().await {
+                    Ok((port, _join_handle)) => {
+                        handle.manage(terminal_handler::TerminalState {
+                            port: std::sync::Mutex::new(Some(port)),
+                        });
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to start terminal service: {}", e);
+                    }
+                }
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             lima_version_cmd,
+            terminal_handler::get_terminal_port,
             lima_config_handler::read_lima_yaml_cmd,
             lima_config_handler::write_lima_yaml_cmd,
             lima_config_handler::get_lima_yaml_path_cmd,

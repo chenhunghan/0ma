@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { TerminalSession } from '../types/TerminalSession';
 import { X, GripVertical } from 'lucide-react';
 import { terminalManager } from '../services/TerminalManager';
@@ -30,18 +30,8 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
         containerWidth: number;
     } | null>(null);
 
-    // Props for Main Terminal
-    const mainPrompt = mode === 'lima'
-        ? `\x1b[32m${instanceName}\x1b[0m:\x1b[34m~\x1b[0m$ `
-        : `\x1b[34m${instanceName}-k8s\x1b[0m:\x1b[32m/namespaces/default\x1b[0m$ `;
-
     // Stable ID for Main Terminal
     const mainTerminalId = `${instanceId}-${mode}-main`;
-
-    // Memoize welcome message
-    const mainWelcome = useMemo(() => mode === 'lima'
-        ? [`\x1b[32m[LIMA]\x1b[0m Connecting to ${instanceName}...`]
-        : [`\x1b[34m[K8S]\x1b[0m Initializing kubectl context...`], [mode, instanceName]);
 
     const hasSessions = sessions.length > 0;
 
@@ -181,8 +171,6 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
                     key={mainTerminalId}
                     instanceName={instanceName}
                     status={status}
-                    prompt={mainPrompt}
-                    welcomeMessage={mainWelcome}
                 />
                 {hasSessions && <div className="absolute top-0 right-0 bg-zinc-900 text-[10px] px-2 py-0.5 text-zinc-500 font-mono z-10 border-b border-l border-zinc-800">KUBECTL</div>}
             </div>
@@ -202,7 +190,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
                         ref={secondaryContainerRef}
                     >
                         {sessions.map((session, index) => {
-                            const { prompt, welcome, title, isLogs } = getSessionProps(session);
+                            const { title, isLogs } = getSessionProps(session);
                             const widthPercent = renderSizes[index];
                             const sessionId = `${instanceId}-${session.id}`;
 
@@ -222,8 +210,6 @@ const TerminalView: React.FC<TerminalViewProps> = ({ instanceId, instanceName, s
                                             key={sessionId}
                                             instanceName={instanceName}
                                             status={status}
-                                            prompt={prompt}
-                                            welcomeMessage={welcome}
                                             isLogs={isLogs}
                                         />
                                         <div className="absolute top-0 right-0 flex items-center bg-zinc-900 border-b border-l border-zinc-800 z-10 max-w-full">

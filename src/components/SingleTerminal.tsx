@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { InstanceStatus } from '../types/InstanceStatus';
 import { terminalManager } from '../services/TerminalManager';
 import { Terminal, ITerminalOptions } from '@xterm/xterm';
+import { AttachAddon } from '@xterm/addon-attach';
+import { invoke } from '@tauri-apps/api/core';
 
 interface TerminalWithCore extends Terminal {
     _core: {
@@ -18,21 +20,18 @@ export interface SingleTerminalProps {
     id: string; // Unique ID for persistence
     instanceName: string;
     status: InstanceStatus;
-    prompt: string;
-    welcomeMessage?: string[];
     isLogs?: boolean;
 }
 
-// Consistent font settings matching Tailwind's font-mono stack
 const TERM_CONFIG = {
     fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
     fontSize: 12,
     lineHeight: 1.2,
     theme: {
         background: '#000000',
-        foreground: '#d4d4d8', // zinc-300
-        cursor: '#10b981',     // emerald-500
-        selectionBackground: '#27272a', // zinc-800
+        foreground: '#d4d4d8',
+        cursor: '#10b981',
+        selectionBackground: '#27272a',
         black: '#000000',
         red: '#ef4444',
         green: '#10b981',
@@ -56,21 +55,14 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
     id,
     instanceName,
     status,
-    prompt,
-    welcomeMessage,
     isLogs = false
 }) => {
     const terminalContainerRef = useRef<HTMLDivElement>(null);
-
-    // Stable welcome message to prevent unnecessary updates in useEffect
-    const welcomeMessageStr = JSON.stringify(welcomeMessage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const stableWelcomeMessage = useMemo(() => welcomeMessage, [welcomeMessageStr]);
+    const socketRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
         if (!terminalContainerRef.current) return;
 
-        // 1. Get or Create Persistent Terminal
         const termInstance = terminalManager.getOrCreate(id, {
             cursorBlink: !isLogs,
             fontSize: isLogs ? 11 : TERM_CONFIG.fontSize,
@@ -83,13 +75,8 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
         } as ITerminalOptions);
 
         const { term, fitAddon } = termInstance;
-
-        // 2. Attach to DOM
-        // xterm.open() will append the canvas to the container.
-        // If it was already opened elsewhere, it moves it here.
         term.open(terminalContainerRef.current);
 
-        // Safe Fit Function
         const safeFit = () => {
             if (!terminalContainerRef.current) return;
             if (terminalContainerRef.current.clientWidth === 0 ||
@@ -104,91 +91,83 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
                     return;
                 }
                 fitAddon.fit();
+
+                // If interactive, send resize command to backend
+                if (!isLogs && socketRef.current?.readyState === WebSocket.OPEN) {
+                    socketRef.current.send(JSON.stringify({
+                        type: 'resize',
+                        cols: term.cols,
+                        rows: term.rows
+                    }));
+                }
             } catch (e) {
-                // Ignore specific dimension errors that occur during layout transitions
                 console.debug("Terminal fit skipped:", e);
             }
         };
 
-        // Initial Fit
         requestAnimationFrame(() => {
             safeFit();
-            // Focus if not logs (interactive)
             if (!isLogs) term.focus();
         });
 
-        // 3. Initialize Simulation Logic (Only Once)
-        if (!termInstance.initialized && status === InstanceStatus.Running) {
+        // Backend Connection Logic
+        if (!termInstance.initialized && status === InstanceStatus.Running && !isLogs) {
             termInstance.initialized = true;
 
-            if (stableWelcomeMessage) {
-                stableWelcomeMessage.forEach(line => {
-                    try { term.writeln(line); } catch { /* ignore */ }
-                });
-            }
+            const setupConnection = async () => {
+                try {
+                    const port = await invoke<number>('get_terminal_port');
+                    const socket = new WebSocket(`ws://127.0.0.1:${port}`);
+                    socketRef.current = socket;
 
-            if (isLogs) {
-                // Simulate Log Streaming
-                const logLines = [
-                    `[${new Date().toISOString()}] INFO: Starting application v1.2.0...`,
-                    `[${new Date().toISOString()}] DEBUG: Loading configuration from /etc/config/app.yaml`,
-                    `[${new Date().toISOString()}] INFO: Connecting to database at 10.42.0.12:5432`,
-                    `[${new Date().toISOString()}] INFO: Database connection established successfully`,
-                ];
+                    socket.onopen = () => {
+                        // First message is the instance name
+                        socket.send(instanceName);
 
-                logLines.forEach(l => {
-                    try { term.writeln(l); } catch { /* ignore */ }
-                });
+                        // Attach addon
+                        const attachAddon = new AttachAddon(socket);
+                        term.loadAddon(attachAddon);
 
-                // Store interval in manager so it survives unmounts
-                termInstance.intervalId = setInterval(() => {
-                    const now = new Date().toISOString();
-                    const ms = Math.floor(Math.random() * 200);
-                    const methods = ['GET', 'POST', 'PUT'];
-                    const method = methods[Math.floor(Math.random() * methods.length)];
-                    const paths = ['/api/v1/users', '/api/v1/data', '/healthz', '/metrics'];
-                    const path = paths[Math.floor(Math.random() * paths.length)];
-                    const statusCodes = [200, 201, 200, 200, 404, 500];
-                    const statusCode = statusCodes[Math.floor(Math.random() * statusCodes.length)];
+                        // Initial resize
+                        socket.send(JSON.stringify({
+                            type: 'resize',
+                            cols: term.cols,
+                            rows: term.rows
+                        }));
+                    };
 
-                    try {
-                        term.writeln(`[${now}] INFO: Incoming request ${method} ${path} - ${statusCode} (${ms}ms)`);
-                        // Optional: Auto scroll
-                        term.scrollToBottom();
-                    } catch {
-                        // Silent catch
-                    }
-                }, 2000);
-            } else {
-                // Interactive Shell Simulation
-                setTimeout(() => {
-                    try {
-                        // Don't clear if we re-attached and it has content, but here we are in the !initialized block
-                        if (stableWelcomeMessage && stableWelcomeMessage.length > 0) term.clear();
-                        term.write(prompt);
-                    } catch { /* ignore */ }
-                }, 300);
-            }
+                    socket.onerror = (err) => {
+                        console.error("Terminal WebSocket error:", err);
+                        term.writeln("\r\n\x1b[31m[CONNECTION ERROR: FAILED TO CONNECT TO BACKEND TERMINAL SERVICE]\x1b[0m");
+                    };
+
+                    socket.onclose = () => {
+                        term.writeln("\r\n\x1b[33m[SESSION ENDED]\x1b[0m");
+                        termInstance.initialized = false;
+                    };
+
+                } catch (err) {
+                    console.error("Failed to get terminal port:", err);
+                    term.writeln("\r\n\x1b[31m[ERROR: TERMINAL SERVICE NOT AVAILABLE]\x1b[0m");
+                }
+            };
+
+            setupConnection();
         }
 
-        // 4. Setup Event Listeners (Re-attach every mount)
-        // xterm.onData adds a listener that returns a disposable.
-        // We need to dispose this specific listener on unmount to prevent duplicates.
-        const dataDisposable = term.onData(data => {
-            if (status !== InstanceStatus.Running || isLogs) return;
-            try {
-                const code = data.charCodeAt(0);
-                if (code === 13) {
-                    term.write('\r\n' + prompt);
-                } else if (code === 127) {
-                    term.write('\b \b');
-                } else {
-                    term.write(data);
-                }
-            } catch {
-                // Ignore errors
-            }
-        });
+        // Mock Logs simulation if isLogs
+        if (isLogs && !termInstance.initialized && status === InstanceStatus.Running) {
+            termInstance.initialized = true;
+            term.writeln("\x1b[34m[STREAMING SYSTEM LOGS...]\x1b[0m");
+
+            termInstance.intervalId = setInterval(() => {
+                const now = new Date().toISOString();
+                const ms = Math.floor(Math.random() * 200);
+                const methods = ['GET', 'POST', 'PUT'];
+                const method = methods[Math.floor(Math.random() * methods.length)];
+                term.writeln(`[${now}] INFO: Incoming request ${method} /api/v1/data - 200 (${ms}ms)`);
+            }, 2000);
+        }
 
         const resizeObserver = new ResizeObserver(() => {
             requestAnimationFrame(safeFit);
@@ -199,14 +178,9 @@ export const SingleTerminal: React.FC<SingleTerminalProps> = ({
         }
 
         return () => {
-            // Cleanup on Unmount
             resizeObserver.disconnect();
-            dataDisposable.dispose();
-
-            // IMPORTANT: We do NOT dispose the terminal itself here.
-            // We just let it detach from the DOM naturally.
         };
-    }, [id, instanceName, status, prompt, isLogs, stableWelcomeMessage]);
+    }, [id, instanceName, status, isLogs]);
 
     return <div className="h-full w-full pl-1 pt-1 overflow-hidden" ref={terminalContainerRef} />;
 };
