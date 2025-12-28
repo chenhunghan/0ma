@@ -1,7 +1,7 @@
-use std::process::Command;
-use serde::{Deserialize, Serialize};
 use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
+use serde::{Deserialize, Serialize};
+use tokio::process::Command;
 
 /// Kubernetes information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,14 +48,15 @@ pub struct DiskUsage {
     pub use_percent: String,
 }
 
-/// Get all Lima instances from limactl list --json
-fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
+/// Get all Lima instances from limactl list --json (async)
+async fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
     let lima_cmd = find_lima_executable()
         .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
-    
+
     let output = Command::new(&lima_cmd)
         .args(["list", "--format", "json"])
         .output()
+        .await
         .map_err(|e| format!("Failed to run limactl list: {}", e))?;
 
     if !output.status.success() {
@@ -65,7 +66,7 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stdout = stdout.trim();
-    
+
     if stdout.is_empty() {
         return Ok(vec![]);
     }
@@ -82,30 +83,33 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
             Ok(raw) => {
                 // Extract config only for metadata extraction
                 let config = raw.config.as_ref();
-                
+
                 // Extract architecture
-                let arch = raw.arch
-                    .unwrap_or_else(|| {
-                        // Default to current system architecture
-                        #[cfg(target_arch = "aarch64")]
-                        { "aarch64".to_string() }
-                        #[cfg(target_arch = "x86_64")]
-                        { "x86_64".to_string() }
-                    });
-                
+                let arch = raw.arch.unwrap_or_else(|| {
+                    // Default to current system architecture
+                    #[cfg(target_arch = "aarch64")]
+                    {
+                        "aarch64".to_string()
+                    }
+                    #[cfg(target_arch = "x86_64")]
+                    {
+                        "x86_64".to_string()
+                    }
+                });
+
                 // Extract CPUs from config if available
                 let cpus = config.and_then(|c| c.cpus).unwrap_or(0);
-                
+
                 // Extract memory from config (already has unit)
                 let memory = config
                     .and_then(|c| c.memory.clone())
                     .unwrap_or_else(|| "-".to_string());
-                
+
                 // Extract disk from config (already has unit)
                 let disk = config
                     .and_then(|c| c.disk.clone())
                     .unwrap_or_else(|| "-".to_string());
-                
+
                 let instance = LimaInstance {
                     name: raw.name,
                     status: raw.status,
@@ -123,25 +127,25 @@ fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
             }
         }
     }
-    
+
     Ok(instances)
 }
 
 /// Get all Lima instances from limactl list --json (the source of truth)
-pub fn get_all_lima_instances() -> Result<Vec<LimaInstance>, String> {
-    let mut instances = get_lima_instances()?;
-    
+pub async fn get_all_lima_instances() -> Result<Vec<LimaInstance>, String> {
+    let mut instances = get_lima_instances().await?;
+
     // Sort instances by name
     instances.sort_by(|a, b| a.name.cmp(&b.name));
-    
+
     Ok(instances)
 }
 
-/// Get disk usage for a Lima instance by running df inside the instance
-pub fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
+/// Get disk usage for a Lima instance by running df inside the instance (async)
+pub async fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
     let lima_cmd = find_lima_executable()
         .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
-    
+
     // Use --output for reliable parsing, avoiding locale and formatting issues
     // -BG ensures sizes are in gigabytes for consistency
     let output = Command::new(&lima_cmd)
@@ -151,9 +155,10 @@ pub fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
             "df",
             "-BG",
             "--output=size,used,avail,pcent",
-            "/"
+            "/",
         ])
         .output()
+        .await
         .map_err(|e| format!("Failed to run df command: {}", e))?;
 
     if !output.status.success() {
@@ -167,7 +172,7 @@ pub fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
     //   Size  Used Avail Use%
     //    38G    3G   36G   6%
     let lines: Vec<&str> = stdout.lines().collect();
-    
+
     if lines.len() < 2 {
         return Err(format!("Unexpected df output format: {}", stdout));
     }
@@ -175,9 +180,12 @@ pub fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
     // Get the data line (skip header)
     let data_line = lines[1];
     let parts: Vec<&str> = data_line.split_whitespace().collect();
-    
+
     if parts.len() < 4 {
-        return Err(format!("Failed to parse disk usage: expected 4 columns, got {}", parts.len()));
+        return Err(format!(
+            "Failed to parse disk usage: expected 4 columns, got {}",
+            parts.len()
+        ));
     }
 
     Ok(DiskUsage {
