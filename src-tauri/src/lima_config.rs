@@ -249,7 +249,7 @@ pub fn get_default_k0s_lima_config(
         }),
         provision: Some(vec![
             Provision {
-                mode: "dependency".to_string(),
+                mode: "system".to_string(),
                 script: r#"#!/bin/bash
 set -eux -o pipefail
 if ! command -v btop >/dev/null 2>&1; then
@@ -258,7 +258,7 @@ fi
 "#.to_string(),
             },
             Provision {
-                mode: "dependency".to_string(),
+                mode: "system".to_string(),
                 script: r#"#!/bin/bash
 set -eux -o pipefail
 if ! command -v k0s >/dev/null 2>&1; then
@@ -277,34 +277,6 @@ if ! systemctl status k0scontroller >/dev/null 2>&1; then
 fi
 
 systemctl start k0scontroller
-"#.to_string(),
-            },
-            Provision {
-                mode: "dependency".to_string(),
-                script: r#"#!/bin/bash
-set -eux -o pipefail
-if command -v kubectl >/dev/null 2>&1; then
-  exit 0
-fi
-
-# Detect architecture
-ARCH=$(uname -m)
-case $ARCH in
-  x86_64) ARCH="amd64" ;;
-  aarch64) ARCH="arm64" ;;
-esac
-
-# Install kubectl
-KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-curl -SLO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl"
-chmod +x kubectl
-mv kubectl /usr/local/bin/
-
-# Configure kubectl for the k0s control plane
-# Note: k0s stores the kubeconfig at /var/lib/k0s/pki/admin.conf
-mkdir -p "/home/{{.User}}/.kube"
-ln -sf /var/lib/k0s/pki/admin.conf "/home/{{.User}}/.kube/config"
-chown -R "{{.User}}" "/home/{{.User}}/.kube"
 "#.to_string(),
             },
         ]),
