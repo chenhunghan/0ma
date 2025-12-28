@@ -4,6 +4,8 @@ use tauri::Manager;
 
 mod instance_registry_handler;
 mod instance_registry_service;
+mod k8s_handler;
+mod k8s_service;
 mod lima_config;
 mod lima_config_handler;
 mod lima_config_service;
@@ -114,7 +116,9 @@ pub fn run() {
             lima_instance_handler::create_lima_instance_cmd,
             lima_instance_handler::start_lima_instance_cmd,
             lima_instance_handler::stop_lima_instance_cmd,
-            lima_instance_handler::delete_lima_instance_cmd
+            lima_instance_handler::stop_lima_instance_cmd,
+            lima_instance_handler::delete_lima_instance_cmd,
+            k8s_handler::get_k8s_pods_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

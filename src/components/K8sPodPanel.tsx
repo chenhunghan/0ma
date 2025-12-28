@@ -15,10 +15,10 @@ import {
   Hash,
   GripHorizontal,
 } from 'lucide-react';
-import { MockPod } from '../services/mockK8sData';
+import { UIPod } from '../hooks/useK8sPods';
 
 interface K8sPodPanelProps {
-  mockPods: MockPod[];
+  mockPods: UIPod[];
   selectedPodId: string;
   setSelectedPodId: (id: string) => void;
   panelHeight: number | 'auto';
@@ -69,8 +69,8 @@ export const K8sPodPanel: React.FC<K8sPodPanelProps> = ({
                 key={pod.id}
                 onClick={() => setSelectedPodId(pod.id)}
                 className={`group relative w-full text-left p-2 rounded flex flex-col gap-0.5 border transition-all cursor-pointer ${selectedPodId === pod.id
-                    ? 'bg-zinc-800 border-zinc-700 text-white'
-                    : 'border-transparent text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
+                  ? 'bg-zinc-800 border-zinc-700 text-white'
+                  : 'border-transparent text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
                   }`}
               >
                 <div className="text-xs truncate w-full pr-12 font-bold">{pod.name}</div>
@@ -123,8 +123,8 @@ export const K8sPodPanel: React.FC<K8sPodPanelProps> = ({
               <span className="text-[10px] text-zinc-600 font-bold uppercase">Status</span>
               <span
                 className={`px-1.5 py-0.5 rounded font-bold uppercase text-[9px] border ${selectedPod.status === 'Running'
-                    ? 'bg-emerald-950 text-emerald-400 border-emerald-900'
-                    : 'bg-amber-950 text-amber-400 border-amber-900'
+                  ? 'bg-emerald-950 text-emerald-400 border-emerald-900'
+                  : 'bg-amber-950 text-amber-400 border-amber-900'
                   }`}
               >
                 {selectedPod.status}
@@ -160,7 +160,7 @@ export const K8sPodPanel: React.FC<K8sPodPanelProps> = ({
                     <Tag className="w-2.5 h-2.5 opacity-40" />
                     <span className="font-semibold text-zinc-300">{k}</span>
                     <span className="text-zinc-600">=</span>
-                    <span>{v}</span>
+                    <span>{String(v)}</span>
                   </span>
                 ))}
               </div>
