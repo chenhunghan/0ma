@@ -17,6 +17,12 @@ export function useLimaStopLogs(
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  const reset = () => {
+    setLogs([]);
+    setIsStopping(false);
+    setError(null);
+  };
+
   useEffect(() => {
     const setupListeners = async () => {
       // Listen for stop initialization
@@ -86,5 +92,6 @@ export function useLimaStopLogs(
     logs,
     isStopping,
     error,
+    reset,
   };
 }

@@ -18,7 +18,14 @@ export const StopInstanceModal: React.FC<StopInstanceModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const { logs, isStopping, error: stopError } = useLimaStopLogs(onSuccess, onError);
+  const { logs, isStopping, error: stopError, reset } = useLimaStopLogs(onSuccess, onError);
+
+  // Reset logs when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      reset();
+    }
+  }, [isOpen, reset]);
 
   // Close modal when stop completes successfully
   useEffect(() => {

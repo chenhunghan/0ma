@@ -13,6 +13,7 @@ interface UseLimaStartLogsReturn {
   isStarting: boolean;
   isEssentiallyReady: boolean; // VM is ready, but optional probes still running
   error: string | null;
+  reset: () => void;
 }
 
 export function useLimaStartLogs(
@@ -24,6 +25,13 @@ export function useLimaStartLogs(
   const [isEssentiallyReady, setIsEssentiallyReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const reset = () => {
+    setLogs([]);
+    setIsStarting(false);
+    setIsEssentiallyReady(false);
+    setError(null);
+  };
 
   useEffect(() => {
     const unlistenPromises: Promise<() => void>[] = [];
@@ -103,5 +111,5 @@ export function useLimaStartLogs(
     };
   }, [onSuccess, onError, queryClient]);
 
-  return { logs, isStarting, isEssentiallyReady, error };
+  return { logs, isStarting, isEssentiallyReady, error, reset };
 }

@@ -17,6 +17,12 @@ export function useLimaDeleteLogs(
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  const reset = () => {
+    setLogs([]);
+    setIsDeleting(false);
+    setError(null);
+  };
+
   useEffect(() => {
     const setupListeners = async () => {
       // Listen for delete initialization
@@ -86,5 +92,6 @@ export function useLimaDeleteLogs(
     logs,
     isDeleting,
     error,
+    reset,
   };
 }

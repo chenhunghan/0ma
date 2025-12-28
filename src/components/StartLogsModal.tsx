@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Loader2, Play, X, CheckCircle2, XCircle } from 'lucide-react';
 import { InstanceModalLogViewer } from './InstanceModalLogViewer';
 import { useLimaStartLogs } from '../hooks/useLimaStartLogs';
@@ -18,7 +18,14 @@ export const StartLogsModal: React.FC<StartLogsModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const { logs, isStarting, isEssentiallyReady, error } = useLimaStartLogs(onSuccess, onError);
+  const { logs, isStarting, isEssentiallyReady, error, reset } = useLimaStartLogs(onSuccess, onError);
+
+  // Reset logs when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      reset();
+    }
+  }, [isOpen, reset]);
 
   if (!isOpen) return null;
 

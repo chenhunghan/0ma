@@ -18,7 +18,14 @@ export const DeleteInstanceModal: React.FC<DeleteInstanceModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const { logs, isDeleting, error: deleteError } = useLimaDeleteLogs(onSuccess, onError);
+  const { logs, isDeleting, error: deleteError, reset } = useLimaDeleteLogs(onSuccess, onError);
+
+  // Reset logs when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      reset();
+    }
+  }, [isOpen, reset]);
 
   // Close modal when delete completes successfully
   useEffect(() => {
