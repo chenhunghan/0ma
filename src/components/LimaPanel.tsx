@@ -12,6 +12,8 @@ import {
 import { LimaInstance } from '../types/LimaInstance';
 import { LimaConfig } from '../types/LimaConfig';
 
+import { useInstanceDiskUsage } from '../hooks/useInstanceDiskUsage';
+
 interface LimaPanelProps {
   instance: LimaInstance;
   parsedConfig?: LimaConfig;
@@ -27,6 +29,9 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
   handlePanelResizeStart,
   onClose,
 }) => {
+  const isRunning = instance.status === 'Running';
+  const { data: diskUsage } = useInstanceDiskUsage(instance.name, isRunning);
+
   return (
     <div
       className="bg-zinc-900 border-b border-zinc-800 shadow-xl relative z-10 flex-none animate-in slide-in-from-top-2 fade-in duration-200 group font-mono"
@@ -57,9 +62,8 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
               <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-1">Instance Status</span>
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    instance.status === 'Running' ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-600'
-                  }`}
+                  className={`w-2 h-2 rounded-full ${isRunning ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-600'
+                    }`}
                 ></div>
                 <span className="text-sm font-bold text-zinc-200 uppercase tracking-wide">
                   {instance.status}
@@ -74,7 +78,7 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
               </div>
               <div>
                 <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">Version</span>
-                <span className="text-zinc-300 text-xs">v0.19.0</span>
+                <span className="text-zinc-300 text-xs text-zinc-500">?</span>
               </div>
               <div>
                 <span className="text-[10px] text-zinc-600 font-bold uppercase block mb-0.5">VM Type</span>
@@ -100,7 +104,7 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
           </div>
           <div className="p-4 overflow-y-auto space-y-4 flex-1 min-h-0 [scrollbar-gutter:stable]">
             <div>
-               <div className="flex items-center gap-4 p-2 rounded bg-zinc-950/50 border border-zinc-800">
+              <div className="flex items-center gap-4 p-2 rounded bg-zinc-950/50 border border-zinc-800">
                 <div className="flex items-center gap-2 shrink-0">
                   <Wifi className="w-3.5 h-3.5 text-zinc-600" />
                   <span className="text-[10px] font-bold uppercase text-zinc-500">Host IP</span>
@@ -120,19 +124,19 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
                     .slice(0, 5)
                     .map((pf, idx) => {
                       // Format host part
-                      const hostPart = pf.hostSocket 
+                      const hostPart = pf.hostSocket
                         ? pf.hostSocket.split('/').pop() || pf.hostSocket
                         : pf.hostPortRange && pf.hostPortRange[0] !== pf.hostPortRange[1]
-                        ? `${pf.hostIP || '127.0.0.1'}:${pf.hostPortRange[0]}-${pf.hostPortRange[1]}`
-                        : `${pf.hostIP || '127.0.0.1'}:${pf.hostPort || pf.hostPortRange?.[0] || '?'}`;
-                      
+                          ? `${pf.hostIP || '127.0.0.1'}:${pf.hostPortRange[0]}-${pf.hostPortRange[1]}`
+                          : `${pf.hostIP || '127.0.0.1'}:${pf.hostPort || pf.hostPortRange?.[0] || '?'}`;
+
                       // Format guest part
                       const guestPart = pf.guestSocket
                         ? pf.guestSocket.split('/').pop() || pf.guestSocket
                         : pf.guestPortRange && pf.guestPortRange[0] !== pf.guestPortRange[1]
-                        ? `${pf.guestPortRange[0]}-${pf.guestPortRange[1]}`
-                        : String(pf.guestPort || pf.guestPortRange?.[0] || '?');
-                      
+                          ? `${pf.guestPortRange[0]}-${pf.guestPortRange[1]}`
+                          : String(pf.guestPort || pf.guestPortRange?.[0] || '?');
+
                       return (
                         <div key={idx} className="flex items-center gap-2 text-xs text-zinc-400">
                           <ArrowRight className="w-3 h-3 text-zinc-600" />
@@ -170,11 +174,18 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
                   Disk Allocation
                 </span>
                 <div className="h-1.5 w-full bg-zinc-800 rounded-sm overflow-hidden">
-                  <div className="h-full bg-indigo-500 w-[45%]"></div>
+                  <div
+                    className="h-full bg-indigo-500 transition-all duration-500"
+                    style={{ width: diskUsage ? diskUsage.use_percent : '0%' }}
+                  ></div>
                 </div>
                 <div className="flex justify-between mt-1.5">
-                  <span className="text-[10px] text-zinc-400">45GB Used</span>
-                  <span className="text-[10px] text-zinc-500">{instance.disk} Total</span>
+                  <span className="text-[10px] text-zinc-400">
+                    {diskUsage ? `${diskUsage.used} Used` : 'Calculating...'}
+                  </span>
+                  <span className="text-[10px] text-zinc-500">
+                    {diskUsage ? `${diskUsage.total} Total` : `${instance.disk} Total`}
+                  </span>
                 </div>
               </div>
             </div>
