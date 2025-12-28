@@ -19,7 +19,7 @@ export const StartLogsModal: React.FC<StartLogsModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const { logs, isStarting, isEssentiallyReady, error, reset } = useLimaStartLogs(onSuccess, onError);
+  const { logs, isStarting, isEssentiallyReady, error, reset } = useLimaStartLogs(onSuccess, onError, isOpen);
 
   // Store reset in ref to avoid triggering useEffect re-runs
   const resetRef = React.useRef(reset);

@@ -43,7 +43,8 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
 
   const { logs, isCreating, error: creationError, reset } = useLimaCreateLogs(
     onSuccess,
-    onError
+    onError,
+    isOpen
   );
 
   const showLogs = isCreating || logs.length > 0;

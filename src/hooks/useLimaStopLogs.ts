@@ -10,7 +10,8 @@ export interface LogEntry {
 
 export function useLimaStopLogs(
   onSuccess?: (instanceName: string) => void,
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
+  enabled: boolean = true
 ) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isStopping, setIsStopping] = useState(false);
@@ -30,6 +31,8 @@ export function useLimaStopLogs(
   };
 
   useEffect(() => {
+    if (!enabled) return;
+
     let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
@@ -98,7 +101,7 @@ export function useLimaStopLogs(
         p.then(unlisten => unlisten()).catch(e => console.error('Failed to unlisten:', e));
       });
     };
-  }, [queryClient]);
+  }, [queryClient, enabled]);
 
   return {
     logs,

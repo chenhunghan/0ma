@@ -10,7 +10,8 @@ export interface LogEntry {
 
 export function useLimaDeleteLogs(
   onSuccess?: (instanceName: string) => void,
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
+  enabled: boolean = true
 ) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -30,6 +31,8 @@ export function useLimaDeleteLogs(
   };
 
   useEffect(() => {
+    if (!enabled) return;
+
     let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
@@ -98,7 +101,7 @@ export function useLimaDeleteLogs(
         p.then(unlisten => unlisten()).catch(e => console.error('Failed to unlisten:', e));
       });
     };
-  }, [queryClient]);
+  }, [queryClient, enabled]);
 
   return {
     logs,

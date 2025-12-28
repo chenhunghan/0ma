@@ -18,7 +18,8 @@ interface UseLimaStartLogsReturn {
 
 export function useLimaStartLogs(
   onSuccess?: (instanceName: string) => void,
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
+  enabled: boolean = true
 ): UseLimaStartLogsReturn {
   const [logs, setLogs] = useState<StartLog[]>([]);
   const [isStarting, setIsStarting] = useState(false);
@@ -40,6 +41,8 @@ export function useLimaStartLogs(
   onErrorRef.current = onError;
 
   useEffect(() => {
+    if (!enabled) return;
+
     let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
@@ -102,7 +105,7 @@ export function useLimaStartLogs(
         p.then(unlisten => unlisten()).catch(e => console.error('Failed to unlisten:', e));
       });
     };
-  }, [queryClient]); // Stable dependencies
+  }, [queryClient, enabled]); // Added enabled to dependencies
 
   return { logs, isStarting, isEssentiallyReady, error, reset };
 }

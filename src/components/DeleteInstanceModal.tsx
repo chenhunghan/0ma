@@ -19,7 +19,7 @@ export const DeleteInstanceModal: React.FC<DeleteInstanceModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const { logs, isDeleting, error: deleteError, reset } = useLimaDeleteLogs(onSuccess, onError);
+  const { logs, isDeleting, error: deleteError, reset } = useLimaDeleteLogs(onSuccess, onError, isOpen);
 
   // Store reset in ref to avoid triggering useEffect re-runs
   const resetRef = React.useRef(reset);

@@ -19,7 +19,7 @@ export const StopInstanceModal: React.FC<StopInstanceModalProps> = ({
   onSuccess,
   onError,
 }) => {
-  const { logs, isStopping, error: stopError, reset } = useLimaStopLogs(onSuccess, onError);
+  const { logs, isStopping, error: stopError, reset } = useLimaStopLogs(onSuccess, onError, isOpen);
 
   // Store reset in ref to avoid triggering useEffect re-runs
   const resetRef = React.useRef(reset);
