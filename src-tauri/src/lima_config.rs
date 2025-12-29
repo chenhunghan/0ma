@@ -209,11 +209,55 @@ impl LimaConfig {
     pub fn to_yaml_pretty(&self) -> Result<String, serde_yml::Error> {
         serde_yml::to_string(self)
     }
+
+    /// Merge another LimaConfig into this one, concatenating vectors and overwriting scalar values
+    pub fn merge(mut self, other: LimaConfig) -> Self {
+        if other.minimum_lima_version.is_some() {
+            self.minimum_lima_version = other.minimum_lima_version;
+        }
+        if other.vm_type.is_some() {
+            self.vm_type = other.vm_type;
+        }
+        if other.cpus.is_some() {
+            self.cpus = other.cpus;
+        }
+        if other.memory.is_some() {
+            self.memory = other.memory;
+        }
+        if other.disk.is_some() {
+            self.disk = other.disk;
+        }
+        if other.containerd.is_some() {
+            self.containerd = other.containerd;
+        }
+
+        // Merge vectors
+        self.images = Self::merge_vecs(self.images, other.images);
+        self.mounts = Self::merge_vecs(self.mounts, other.mounts);
+        self.provision = Self::merge_vecs(self.provision, other.provision);
+        self.probes = Self::merge_vecs(self.probes, other.probes);
+        self.copy_to_host = Self::merge_vecs(self.copy_to_host, other.copy_to_host);
+        self.port_forwards = Self::merge_vecs(self.port_forwards, other.port_forwards);
+
+        self
+    }
+
+    fn merge_vecs<T>(v1: Option<Vec<T>>, v2: Option<Vec<T>>) -> Option<Vec<T>> {
+        match (v1, v2) {
+            (Some(mut a), Some(b)) => {
+                a.extend(b);
+                Some(a)
+            }
+            (Some(a), None) => Some(a),
+            (None, Some(b)) => Some(b),
+            (None, None) => None,
+        }
+    }
 }
 
 /// Get the default k0s Lima configuration
-pub fn get_default_k0s_lima_config(
-    app: &tauri::AppHandle,
+pub fn get_default_k0s_lima_config<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
     instance_name: &str,
 ) -> Result<LimaConfig, String> {
     let kubeconfig_path = get_kubeconfig_path(app, instance_name)?;
@@ -231,7 +275,8 @@ pub fn get_default_k0s_lima_config(
     let vm_memory_gib = std::cmp::max(1, (host_memory_bytes / 2) / (1024 * 1024 * 1024));
     let vm_memory = format!("{}GiB", vm_memory_gib);
 
-    Ok(LimaConfig {
+    // 1. Base Configuration (VM specs and Core k0s installation)
+    let base_config = LimaConfig {
         minimum_lima_version: Some("2.0.0".to_string()),
         vm_type: Some("vz".to_string()),
         cpus: Some(vm_cpus),
@@ -287,7 +332,7 @@ set -eux -o pipefail
 # Wait for k0s to create the kubeconfig
 timeout 120s bash -c "until test -f /var/lib/k0s/pki/admin.conf; do sleep 3; done"
 
-# Allow the default user to access the k0s generated kubeconfig
+# Allow the default user to access the k0s generated kubeconfig from limactl shell
 chmod 644 /var/lib/k0s/pki/admin.conf
 "#.to_string(),
             },
@@ -303,13 +348,43 @@ fi
 "#.to_string(),
             hint: Some("The k0s control plane is not ready yet.".to_string()),
         }]),
+        ..Default::default()
+    };
+
+    // 2. Host Access Configuration (Exposing the K8s API to the host terminal)
+    let host_access_config = LimaConfig {
+        provision: Some(vec![Provision {
+            mode: "system".to_string(),
+                script: r#"#!/bin/bash
+set -eux -o pipefail
+# Generate a kubeconfig for host access pointing to localhost:6443 (via Lima port forward)
+k0s kubeconfig admin > /var/lib/k0s/pki/external-admin.conf
+sed -i 's|server: https://.*:6443|server: https://127.0.0.1:6443|' /var/lib/k0s/pki/external-admin.conf
+chmod 644 /var/lib/k0s/pki/external-admin.conf
+"#.to_string(),
+        }]),
         copy_to_host: Some(vec![CopyToHost {
-            guest: "/var/lib/k0s/pki/admin.conf".to_string(),
+            guest: "/var/lib/k0s/pki/external-admin.conf".to_string(), // Copying original file as requested
             host: kubeconfig_path.to_string_lossy().to_string(),
             delete_on_stop: Some(true),
         }]),
-        port_forwards: Some(vec![]),
-    })
+        port_forwards: Some(vec![PortForward {
+            guest_ip_must_be_zero: Some(true),
+            guest_ip: None,
+            guest_port: Some(6443),
+            guest_port_range: None,
+            guest_socket: None,
+            host_ip: Some("127.0.0.1".to_string()),
+            host_port: Some(6443),
+            host_port_range: None,
+            host_socket: None,
+            proto: Some("tcp".to_string()),
+            ignore: None,
+        }]),
+        ..Default::default()
+    };
+
+    Ok(base_config.merge(host_access_config))
 }
 
 #[cfg(test)]
@@ -611,5 +686,106 @@ probes:
             "Host Memory: {} GiB, VM Memory: {} GiB",
             host_memory_gib, vm_memory_gib
         );
+    }
+
+    #[test]
+    fn test_default_k0s_config_snapshot() {
+        let app = tauri::test::mock_app();
+        let instance_name = "test-instance";
+
+        // Mock app path for home dir used in kubeconfig_path
+        let config = get_default_k0s_lima_config(app.handle(), instance_name)
+            .expect("Failed to get default config");
+
+        let yaml = config.to_yaml_pretty().expect("Failed to serialize");
+
+        // Capture dynamic host-specific values to insert into the snapshot
+        let cpus = config.cpus.unwrap();
+        let memory = config.memory.clone().unwrap();
+        let kubeconfig_path = get_kubeconfig_path(app.handle(), instance_name)
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+
+        let expected_whole_file = format!(
+            r#"
+minimumLimaVersion: '2.0.0'
+vmType: vz
+cpus: {cpus}
+memory: '{memory}'
+disk: '40GiB'
+images:
+- location: https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img
+  arch: aarch64
+containerd:
+  system: false
+  user: false
+provision:
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    if ! command -v btop >/dev/null 2>&1; then
+      apt-get update && apt-get install -y btop
+    fi
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    if ! command -v k0s >/dev/null 2>&1; then
+      curl -sfL https://get.k0s.sh | sh
+    fi
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+
+    #  start k0s as a single node cluster
+    if ! systemctl status k0scontroller >/dev/null 2>&1; then
+      k0s install controller --single
+    fi
+
+    systemctl start k0scontroller
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+
+    # Wait for k0s to create the kubeconfig
+    timeout 120s bash -c "until test -f /var/lib/k0s/pki/admin.conf; do sleep 3; done"
+
+    # Allow the default user to access the k0s generated kubeconfig from limactl shell
+    chmod 644 /var/lib/k0s/pki/admin.conf
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    # Generate a kubeconfig for host access pointing to localhost:6443 (via Lima port forward)
+    k0s kubeconfig admin > /var/lib/k0s/pki/external-admin.conf
+    sed -i 's|server: https://.*:6443|server: https://127.0.0.1:6443|' /var/lib/k0s/pki/external-admin.conf
+    chmod 644 /var/lib/k0s/pki/external-admin.conf
+probes:
+- description: k0s to be running
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    if ! timeout 30s bash -c "until sudo test -f /var/lib/k0s/pki/admin.conf; do sleep 3; done"; then
+      echo >&2 "k0s kubeconfig file has not yet been created"
+      exit 1
+    fi
+  hint: The k0s control plane is not ready yet.
+copyToHost:
+- guest: /var/lib/k0s/pki/external-admin.conf
+  host: {kubeconfig_path}
+  deleteOnStop: true
+portForwards:
+- guestIPMustBeZero: true
+  guestPort: 6443
+  hostIP: '127.0.0.1'
+  hostPort: 6443
+  proto: tcp"#
+        );
+
+        assert_eq!(yaml.trim(), expected_whole_file.trim());
     }
 }
