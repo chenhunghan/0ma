@@ -154,7 +154,7 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
                     </span>
                   </div>
                   <button
-                    onClick={() => navigator.clipboard.writeText(`ssh -p ${instance.ssh_local_port} -o NoHostAuthenticationForLocalhost=yes 127.0.0.1`)}
+                    onClick={() => navigator.clipboard.writeText(`ssh -F ~/.lima/${instance.name}/ssh.config lima-${instance.name}`)}
                     className="text-[9px] px-2 py-0.5 bg-zinc-800 text-zinc-400 hover:text-white rounded uppercase font-bold"
                   >
                     Copy CMD
@@ -166,9 +166,9 @@ export const LimaPanel: React.FC<LimaPanelProps> = ({
                 <div className="flex items-start gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-zinc-600 mt-0.5" />
                   <div className="overflow-hidden">
-                    <span className="text-[10px] text-zinc-600 font-bold uppercase block">Identity File</span>
-                    <span className="text-zinc-500 text-[10px] truncate block" title={instance.dir + "/ssh.config"}>
-                      {instance.dir ? instance.dir.split('/').pop() + "/ssh.config" : "-"}
+                    <span className="text-[10px] text-zinc-600 font-bold uppercase block">SSH Config</span>
+                    <span className="text-zinc-500 text-[10px] truncate block" title={`~/.lima/${instance.name}/ssh.config`}>
+                      ~/.lima/{instance.name}/ssh.config
                     </span>
                   </div>
                 </div>
