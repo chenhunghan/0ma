@@ -57,21 +57,40 @@ export function useLimaStartLogs(
       })
     );
 
-    // Listen for logs (stdout/stderr combined)
+    // Listen for stdout
     unlistenPromises.push(
-      listen<string>('lima-instance-start-logs', (event) => {
+      listen<string>('lima-instance-start-stdout', (event) => {
         if (!active) return;
         setLogs((prev) => [
           ...prev,
           { type: 'stdout', message: event.payload, timestamp: new Date() },
         ]);
-
-        // Check for a specific message to indicate readiness
-        if (event.payload.includes('LIMA-CHECK: READY')) {
-          setIsEssentiallyReady(true);
-        }
       })
     );
+
+    // Listen for stderr
+    unlistenPromises.push(
+      listen<string>('lima-instance-start-stderr', (event) => {
+        if (!active) return;
+        setLogs((prev) => [
+          ...prev,
+          { type: 'stderr', message: event.payload, timestamp: new Date() },
+        ]);
+      })
+    );
+
+    // Listen for readiness event from backend
+    unlistenPromises.push(
+      listen<string>('lima-instance-start-ready', (event) => {
+        if (!active) return;
+        setIsEssentiallyReady(true);
+        setLogs((prev) => [
+          ...prev,
+          { type: 'stdout', message: event.payload, timestamp: new Date() },
+        ]);
+      })
+    );
+
 
     // Listen for errors
     unlistenPromises.push(
