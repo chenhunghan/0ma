@@ -362,9 +362,9 @@ set -eux -o pipefail
 k0s kubeconfig admin > /var/lib/k0s/pki/external-admin.conf
 sed -i 's|server: https://.*:6443|server: https://127.0.0.1:6443|' /var/lib/k0s/pki/external-admin.conf
 
-# Rename context from 'default' to instance name
-sed -i "s/name: default/name: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
-sed -i "s/current-context: default/current-context: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
+# Rename the context from 'Default' to instance name
+sed -i "s/name: [Dd]efault/name: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
+sed -i "s/current-context: [Dd]efault/current-context: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
 chmod 644 /var/lib/k0s/pki/external-admin.conf
 "#
             ),
@@ -770,9 +770,9 @@ provision:
     k0s kubeconfig admin > /var/lib/k0s/pki/external-admin.conf
     sed -i 's|server: https://.*:6443|server: https://127.0.0.1:6443|' /var/lib/k0s/pki/external-admin.conf
 
-    # Rename context from 'default' to instance name
-    sed -i "s/name: default/name: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
-    sed -i "s/current-context: default/current-context: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
+    # Rename the context from 'Default' to instance name
+    sed -i "s/name: [Dd]efault/name: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
+    sed -i "s/current-context: [Dd]efault/current-context: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
     chmod 644 /var/lib/k0s/pki/external-admin.conf
 probes:
 - description: k0s to be running
