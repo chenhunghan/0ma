@@ -351,17 +351,23 @@ fi
         ..Default::default()
     };
 
-    // 2. Host Access Configuration (Exposing the K8s API to the host terminal)
+    // 2. Host Access Configuration (Exposing the K8s API to the host at https://127.0.0.1:6443)
     let host_access_config = LimaConfig {
         provision: Some(vec![Provision {
             mode: "system".to_string(),
-                script: r#"#!/bin/bash
+            script: format!(
+                r#"#!/bin/bash
 set -eux -o pipefail
 # Generate a kubeconfig for host access pointing to localhost:6443 (via Lima port forward)
 k0s kubeconfig admin > /var/lib/k0s/pki/external-admin.conf
 sed -i 's|server: https://.*:6443|server: https://127.0.0.1:6443|' /var/lib/k0s/pki/external-admin.conf
+
+# Rename context from 'default' to instance name
+sed -i "s/name: default/name: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
+sed -i "s/current-context: default/current-context: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
 chmod 644 /var/lib/k0s/pki/external-admin.conf
-"#.to_string(),
+"#
+            ),
         }]),
         copy_to_host: Some(vec![CopyToHost {
             guest: "/var/lib/k0s/pki/external-admin.conf".to_string(), // Copying original file as requested
@@ -763,6 +769,10 @@ provision:
     # Generate a kubeconfig for host access pointing to localhost:6443 (via Lima port forward)
     k0s kubeconfig admin > /var/lib/k0s/pki/external-admin.conf
     sed -i 's|server: https://.*:6443|server: https://127.0.0.1:6443|' /var/lib/k0s/pki/external-admin.conf
+
+    # Rename context from 'default' to instance name
+    sed -i "s/name: default/name: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
+    sed -i "s/current-context: default/current-context: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
     chmod 644 /var/lib/k0s/pki/external-admin.conf
 probes:
 - description: k0s to be running
