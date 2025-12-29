@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Terminal, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Terminal, CheckCircle2, XCircle, AlertCircle, Check } from 'lucide-react';
 import { useLimaConfig } from '../hooks/useLimaConfig';
 import { LimaConfigForm } from './LimaConfigForm';
 import { InstanceModalLogViewer } from './InstanceModalLogViewer';
@@ -28,7 +28,10 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
   onError,
 }) => {
   const [name, setName] = useState(getRandomInstanceName());
-  const { defaultConfig } = useDefaultK0sLimaConfig(name);
+  const [installHelm, setInstallHelm] = useState(true);
+  const [installLocalPathProvisioner, setInstallLocalPathProvisioner] = useState(true);
+
+  const { defaultConfig } = useDefaultK0sLimaConfig(name, installHelm, installLocalPathProvisioner);
   const {
     config,
     updateConfigField,
@@ -133,6 +136,38 @@ export const CreateInstanceModal: React.FC<CreateInstanceModalProps> = ({
                   <span>An instance with this name already exists</span>
                 </div>
               )}
+            </div>
+
+            {/* Additional Components */}
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Additional Components</label>
+              <div className="flex gap-8 p-3 bg-black border border-zinc-800 rounded">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className={`w-4 h-4 border flex items-center justify-center transition-all ${installHelm ? 'bg-emerald-600 border-emerald-500' : 'bg-transparent border-zinc-700'}`}>
+                    {installHelm && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="hidden"
+                    checked={installHelm}
+                    onChange={(e) => setInstallHelm(e.target.checked)}
+                  />
+                  <span className={`text-[10px] font-bold uppercase transition-colors ${installHelm ? 'text-zinc-200' : 'text-zinc-500 group-hover:text-zinc-400'}`}>Helm CLI</span>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className={`w-4 h-4 border flex items-center justify-center transition-all ${installLocalPathProvisioner ? 'bg-emerald-600 border-emerald-500' : 'bg-transparent border-zinc-700'}`}>
+                    {installLocalPathProvisioner && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="hidden"
+                    checked={installLocalPathProvisioner}
+                    onChange={(e) => setInstallLocalPathProvisioner(e.target.checked)}
+                  />
+                  <span className={`text-[10px] font-bold uppercase transition-colors ${installLocalPathProvisioner ? 'text-zinc-200' : 'text-zinc-500 group-hover:text-zinc-400'}`}>Local Path Provisioner</span>
+                </label>
+              </div>
             </div>
 
             {/* Config Form Wrapper */}

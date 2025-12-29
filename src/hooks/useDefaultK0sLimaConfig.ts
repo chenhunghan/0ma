@@ -18,17 +18,25 @@ export const ClIENT_DEFAULT_CONFIG: LimaConfig = {
   probes: []
 }
 
-export function useDefaultK0sLimaConfig(instanceName: string) {
+export function useDefaultK0sLimaConfig(
+  instanceName: string,
+  installHelm: boolean = true,
+  installLocalPathProvisioner: boolean = true,
+) {
   const {
     data: defaultConfig,
     error,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["default_k0s_lima_config", instanceName],
+    queryKey: ["default_k0s_lima_config", instanceName, installHelm, installLocalPathProvisioner],
     queryFn: async () => {
-      const config = await invoke<LimaConfig>("get_default_k0s_lima_config_yaml_cmd", { instanceName });
-      console.debug("Fetched default k0s Lima config:", config);
+      const config = await invoke<LimaConfig>("get_default_k0s_lima_config_yaml_cmd", {
+        instanceName,
+        installHelm,
+        installLocalPathProvisioner,
+      });
+      console.debug("Fetched default k0s Lima config:", config, { installHelm, installLocalPathProvisioner });
       return config;
     },
     enabled: !!instanceName, // Only fetch if instanceName is provided

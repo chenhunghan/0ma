@@ -259,6 +259,8 @@ impl LimaConfig {
 pub fn get_default_k0s_lima_config<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
     instance_name: &str,
+    install_helm: bool,
+    install_local_path_provisioner: bool,
 ) -> Result<LimaConfig, String> {
     let kubeconfig_path = get_kubeconfig_path(app, instance_name)?;
 
@@ -390,7 +392,41 @@ chmod 644 /var/lib/k0s/pki/external-admin.conf
         ..Default::default()
     };
 
-    Ok(base_config.merge(host_access_config))
+    // 3. Optional: Helm installation
+    let mut helm_config = LimaConfig::default();
+    if install_helm {
+        helm_config.provision = Some(vec![Provision {
+            mode: "system".to_string(),
+            script: r#"#!/bin/bash
+set -eux -o pipefail
+if ! command -v helm >/dev/null 2>&1; then
+  curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
+fi
+"#
+            .to_string(),
+        }]);
+    }
+
+    // 4. Optional: Local Path Provisioner
+    let mut lpp_config = LimaConfig::default();
+    if install_local_path_provisioner {
+        lpp_config.provision = Some(vec![Provision {
+            mode: "system".to_string(),
+            script: r#"#!/bin/bash
+set -eux -o pipefail
+# Wait for k0s to be ready
+timeout 120s bash -c "until k0s kubectl get nodes >/dev/null 2>&1; do sleep 3; done"
+
+k0s kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+k0s kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+"#.to_string(),
+        }]);
+    }
+
+    Ok(base_config
+        .merge(host_access_config)
+        .merge(helm_config)
+        .merge(lpp_config))
 }
 
 #[cfg(test)]
@@ -700,7 +736,7 @@ probes:
         let instance_name = "test-instance";
 
         // Mock app path for home dir used in kubeconfig_path
-        let config = get_default_k0s_lima_config(app.handle(), instance_name)
+        let config = get_default_k0s_lima_config(app.handle(), instance_name, true, true)
             .expect("Failed to get default config");
 
         let yaml = config.to_yaml_pretty().expect("Failed to serialize");
@@ -774,6 +810,22 @@ provision:
     sed -i "s/name: [Dd]efault/name: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
     sed -i "s/current-context: [Dd]efault/current-context: {instance_name}/g" /var/lib/k0s/pki/external-admin.conf
     chmod 644 /var/lib/k0s/pki/external-admin.conf
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    if ! command -v helm >/dev/null 2>&1; then
+      curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
+    fi
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    # Wait for k0s to be ready
+    timeout 120s bash -c "until k0s kubectl get nodes >/dev/null 2>&1; do sleep 3; done"
+
+    k0s kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+    k0s kubectl patch storageclass local-path -p '{{"metadata": {{"annotations":{{"storageclass.kubernetes.io/is-default-class":"true"}}}}}}'
 probes:
 - description: k0s to be running
   script: |
