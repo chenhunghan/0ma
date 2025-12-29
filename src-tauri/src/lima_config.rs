@@ -350,6 +350,14 @@ fi
 "#.to_string(),
             hint: Some("The k0s control plane is not ready yet.".to_string()),
         }]),
+        // Copy the k0s kubeconfig to the host for kubectl access 
+        // export KUBECONFIG=$(limactl list --format 'unix://{{.Dir}}/copied-from-guest/kubeconfig.yaml')
+        // kubectl get nodes
+        copy_to_host: Some(vec![CopyToHost {
+            guest: "/var/lib/k0s/pki/admin.conf".to_string(),
+            host: "{{.Dir}}/copied-from-guest/kubeconfig.yaml".to_string(),
+            delete_on_stop: Some(true),
+        }]),
         ..Default::default()
     };
 
