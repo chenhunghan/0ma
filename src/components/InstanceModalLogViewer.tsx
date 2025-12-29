@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { Terminal, FitAddon } from 'ghostty-web';
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import '@xterm/xterm/css/xterm.css';
 
 interface InstanceModalLog {
   type: 'stdout' | 'stderr' | 'error' | 'info' | 'success';
@@ -16,7 +18,6 @@ const TERM_CONFIG = {
   fontSize: 11,
   lineHeight: 1.15,
   theme: {
-    cusort: '#000000',
     background: '#000000',
     foreground: '#d4d4d8', // zinc-300
     cursor: '#10b981', // emerald-500
@@ -48,7 +49,7 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
   useEffect(() => {
     if (!terminalContainerRef.current) return;
 
-    // Create new terminal instance (init() should already be called globally)
+    // Create new terminal instance
     const term = new Terminal({
       ...TERM_CONFIG,
       cursorBlink: false,
@@ -64,6 +65,8 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
 
     terminalRef.current = term;
     fitAddonRef.current = fitAddon;
+
+    // Initial fit
     requestAnimationFrame(() => {
       try {
         fitAddon.fit();
@@ -76,7 +79,9 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
     const resizeObserver = new ResizeObserver(() => {
       requestAnimationFrame(() => {
         try {
-          fitAddon.fit();
+          if (terminalContainerRef.current && terminalContainerRef.current.clientWidth > 0) {
+            fitAddon.fit();
+          }
         } catch (e) {
           console.debug('Terminal fit error:', e);
         }
@@ -92,24 +97,26 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
     };
   }, []);
 
-  // Write logs to terminal - now always writing to a fresh terminal instance
+  // Write logs to terminal
   useEffect(() => {
     const term = terminalRef.current;
     if (!term) return;
 
-    // Write all logs to the fresh terminal
+    // Clear and rewrite all logs to the terminal
+    term.clear();
     logs.forEach((log) => {
       try {
         term.writeln(log.message);
-        // Auto-scroll to bottom
-        term.scrollToBottom();
       } catch (e) {
         console.error('Error writing to terminal:', e);
       }
     });
+    // Auto-scroll to bottom
+    term.scrollToBottom();
   }, [logs]);
 
   return (
-    <div className="h-full w-full overflow-hidden bg-black" ref={terminalContainerRef} />
+    <div className="h-full w-full overflow-hidden bg-black p-2" ref={terminalContainerRef} />
   );
 };
+

@@ -6,7 +6,6 @@ import { InstanceStatus } from './types/InstanceStatus';
 import { useLimaInstances } from './hooks/useLimaInstances';
 import { useLimaInstance } from './hooks/useLimaInstance';
 import { useSelectedInstance } from './hooks/useSelectedInstance';
-import { useGhosttyInit } from './hooks/useGhosttyInit';
 import InstanceDetail from './components/InstanceDetail';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
@@ -15,7 +14,6 @@ import { StopInstanceModal } from './components/StopInstanceModal';
 import { DeleteInstanceModal } from './components/DeleteInstanceModal';
 
 export const App: React.FC = () => {
-  const { isLoading: isGhosttyLoading } = useGhosttyInit();
   const { instances, isLoading } = useLimaInstances();
   const { startInstance, stopInstance, deleteInstance } = useLimaInstance();
   const { setSelectedName, selectedInstance } = useSelectedInstance(instances);
@@ -194,7 +192,7 @@ export const App: React.FC = () => {
         onError={handleDeleteError}
       />
 
-      {isLoading || isGhosttyLoading ? (
+      {isLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-4">
           <div className="font-mono text-sm">
             <span className="text-green-500">➜</span> SYSTEM CHECK...
