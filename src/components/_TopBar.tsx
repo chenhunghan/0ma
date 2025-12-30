@@ -1,4 +1,4 @@
-import { PlusIcon } from "lucide-react"
+import { PlusIcon, TrashIcon, StopCircleIcon } from "lucide-react"
 import {
     Select,
     SelectContent,
@@ -11,10 +11,21 @@ import { Button } from "src/components/ui/button"
 
 export function TopBar() {
     return (
-        <div className="w-full px-[8px] pb-[6px] flex">
-            <InstanceSelector />
-            <PlusButton className="ml-[6px]" />
-            <StopButton className="ml-[6px]" />
+        <div className="w-full px-[8px] py-[6px] flex items-center">
+            {/* Left side */}
+            <div className="flex items-center flex-1">
+                <InstanceSelector />
+                <CreateInstanceButton className="ml-[6px]" />
+            </div>
+
+            {/* Middle side - hidden on mobile */}
+            <InstanceName name="my-instance" className="text-xs hidden md:block" />
+
+            {/* Right side */}
+            <div className="flex items-center justify-end flex-1">
+                <StopInstanceButton />
+                <DeleteInstanceButton className="ml-[6px]" />
+            </div>
         </div>
     )
 }
@@ -41,18 +52,36 @@ export function InstanceSelector() {
     )
 }
 
-export function PlusButton({ className }: { className?: string }) {
+export function CreateInstanceButton({ className }: { className?: string }) {
     return (
-        <Button variant="outline" size="icon" aria-label="Create new Lima instance" className={className}>
+        <Button variant="default" size="icon" aria-label="Create new Lima instance" className={className}>
             <PlusIcon />
         </Button>
     )
 }
 
-export function StopButton({ className }: { className?: string }) {
+export function StopInstanceButton() {
     return (
-        <Button variant="outline" className={className}>
-            Stop
+        <Button
+            variant="secondary"
+            aria-label="Stop Lima instance"
+        >
+            <StopCircleIcon className="md:hidden" />
+            <span className="hidden md:inline">Stop</span>
         </Button>
+    )
+}
+
+export function DeleteInstanceButton({ className }: { className?: string }) {
+    return (
+        <Button variant="destructive" size="icon" aria-label="Delete Lima instance" className={className}>
+            <TrashIcon />
+        </Button>
+    )
+}
+
+export function InstanceName({ className, name }: { className?: string, name: string }) {
+    return (
+        <span className={className}>{name}</span>
     )
 }

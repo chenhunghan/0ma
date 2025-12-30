@@ -6,6 +6,7 @@ import { TopBar } from "src/components/_TopBar"
 export function App() {
     return (
         <div className="h-full w-full overflow-hidden">
+            <Separator />
             <TopBar />
             <Separator />
             <Tabs defaultValue="lima" className="h-full w-full">
