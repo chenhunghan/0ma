@@ -1,10 +1,12 @@
 import { ResizableLayout } from "./components/ResizableLayout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs"
 import { Separator } from "src/components/ui/separator"
+import { TopBar } from "src/components/_TopBar"
 
 export function App() {
     return (
         <div className="h-full w-full overflow-hidden">
+            <TopBar />
             <Separator />
             <Tabs defaultValue="lima" className="h-full w-full">
                 <TabsList>
