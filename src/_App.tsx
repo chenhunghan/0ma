@@ -3,78 +3,136 @@ import { ResizableLayout } from "./components/ResizableLayout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs"
 import { Separator } from "src/components/ui/separator"
 import { TopBar } from "src/components/_TopBar"
-import { TermTabs, Terminal } from "./components/TermTabs"
+import { TermTabs, TabGroup } from "./components/TermTabs"
 
 export function App() {
+    // Initial State Factory
+    const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
+        id: tabId,
+        name: `${prefix} Tab 1`,
+        terminals: [
+            {
+                id: 1,
+                name: `${prefix} Terminal 1`,
+                content: (
+                    <div className="flex h-full w-full items-center justify-center">
+                        <span className="text-muted-foreground text-xs">{prefix} Terminal 1 Content</span>
+                    </div>
+                )
+            }
+        ]
+    })
+
     // State management for Terminal Groups
-    const createInitialTerminals = (prefix: string): Terminal[] => [
-        {
-            id: 1,
-            name: `${prefix} Terminal 1`,
-            content: (
-                <div className="flex h-full w-full items-center justify-center">
-                    <span className="text-muted-foreground text-xs">{prefix} Terminal 1 Content</span>
-                </div>
-            )
-        }
-    ]
+    const [configTabs, setConfigTabs] = useState<TabGroup[]>(() => [createInitialTab("Config", "tab-1")])
+    const [configActive, setConfigActive] = useState("tab-1")
+    const [configMaxTabId, setConfigMaxTabId] = useState(1)
+    const [configMaxTermId, setConfigMaxTermId] = useState(1)
 
-    const [configTerms, setConfigTerms] = useState<Terminal[]>(() => createInitialTerminals("Config"))
-    const [configActive, setConfigActive] = useState("term-1")
-    const [configMaxId, setConfigMaxId] = useState(1)
+    const [limaTabs, setLimaTabs] = useState<TabGroup[]>(() => [createInitialTab("Lima", "tab-1")])
+    const [limaActive, setLimaActive] = useState("tab-1")
+    const [limaMaxTabId, setLimaMaxTabId] = useState(1)
+    const [limaMaxTermId, setLimaMaxTermId] = useState(1)
 
-    const [limaTerms, setLimaTerms] = useState<Terminal[]>(() => createInitialTerminals("Lima"))
-    const [limaActive, setLimaActive] = useState("term-1")
-    const [limaMaxId, setLimaMaxId] = useState(1)
+    const [k8sTabs, setK8sTabs] = useState<TabGroup[]>(() => [createInitialTab("K8s", "tab-1")])
+    const [k8sActive, setK8sActive] = useState("tab-1")
+    const [k8sMaxTabId, setK8sMaxTabId] = useState(1)
+    const [k8sMaxTermId, setK8sMaxTermId] = useState(1)
 
-    const [k8sTerms, setK8sTerms] = useState<Terminal[]>(() => createInitialTerminals("K8s"))
-    const [k8sActive, setK8sActive] = useState("term-1")
-    const [k8sMaxId, setK8sMaxId] = useState(1)
-
-    // Dynamic terminal handlers
-    const addTerm = (
+    // Handlers
+    const addTab = (
         prefix: string,
-        terms: Terminal[],
-        setTerms: React.Dispatch<React.SetStateAction<Terminal[]>>,
-        maxId: number,
-        setMaxId: React.Dispatch<React.SetStateAction<number>>,
+        setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
+        maxTabId: number,
+        setMaxTabId: React.Dispatch<React.SetStateAction<number>>,
+        maxTermId: number,
+        setMaxTermId: React.Dispatch<React.SetStateAction<number>>,
         setActive: React.Dispatch<React.SetStateAction<string>>
     ) => {
-        if (terms.length >= 10) return
-        const nextId = maxId + 1
-        const newTerm: Terminal = {
-            id: nextId,
-            name: `${prefix} Terminal ${nextId}`,
-            content: (
-                <div className="flex h-full w-full items-center justify-center">
-                    <span className="text-muted-foreground text-xs">{prefix} Terminal ${nextId} Content</span>
-                </div>
-            )
+        const nextTabId = maxTabId + 1
+        const nextTermId = maxTermId + 1
+        const newTab: TabGroup = {
+            id: `tab-${nextTabId}`,
+            name: `${prefix} Tab ${nextTabId}`,
+            terminals: [
+                {
+                    id: nextTermId,
+                    name: `${prefix} Terminal ${nextTermId}`,
+                    content: (
+                        <div className="flex h-full w-full items-center justify-center">
+                            <span className="text-muted-foreground text-xs">{prefix} Terminal ${nextTermId} Content</span>
+                        </div>
+                    )
+                }
+            ]
         }
-        setTerms(prev => [...prev, newTerm])
-        setMaxId(nextId)
-        setActive(`term-${nextId}`)
+        setTabs(prev => [...prev, newTab])
+        setMaxTabId(nextTabId)
+        setMaxTermId(nextTermId)
+        setActive(`tab-${nextTabId}`)
     }
 
-    const removeTerm = (
-        id: number,
-        terms: Terminal[],
-        setTerms: React.Dispatch<React.SetStateAction<Terminal[]>>,
-        active: string,
-        setActive: React.Dispatch<React.SetStateAction<string>>
+    const addSideBySide = (
+        prefix: string,
+        tabId: string,
+        setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
+        maxTermId: number,
+        setMaxTermId: React.Dispatch<React.SetStateAction<number>>
     ) => {
-        setTerms(prev => {
-            const nextTerms = prev.filter(t => t.id !== id)
-            if (active === `term-${id}`) {
-                if (nextTerms.length > 0) {
-                    const closedIdx = prev.findIndex(t => t.id === id)
-                    const nextTab = nextTerms[Math.max(0, closedIdx - 1)]
-                    setActive(`term-${nextTab.id}`)
-                } else {
-                    setActive("")
+        const nextTermId = maxTermId + 1
+        setTabs(prev => prev.map(tab => {
+            if (tab.id === tabId && tab.terminals.length < 10) {
+                return {
+                    ...tab,
+                    terminals: [
+                        ...tab.terminals,
+                        {
+                            id: nextTermId,
+                            name: `${prefix} Terminal ${nextTermId}`,
+                            content: (
+                                <div className="flex h-full w-full items-center justify-center">
+                                    <span className="text-muted-foreground text-xs">{prefix} Terminal ${nextTermId} Content</span>
+                                </div>
+                            )
+                        }
+                    ]
                 }
             }
-            return nextTerms
+            return tab
+        }))
+        setMaxTermId(nextTermId)
+    }
+
+    const removeTerminal = (
+        tabId: string,
+        termId: number,
+        setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
+        activeTab: string,
+        setActiveTab: React.Dispatch<React.SetStateAction<string>>
+    ) => {
+        setTabs(prev => {
+            const tabIdx = prev.findIndex(t => t.id === tabId)
+            if (tabIdx === -1) return prev
+
+            const tab = prev[tabIdx]
+            const nextTerminals = tab.terminals.filter(t => t.id !== termId)
+
+            if (nextTerminals.length > 0) {
+                // Just remove the terminal from the tab
+                return prev.map(t => t.id === tabId ? { ...t, terminals: nextTerminals } : t)
+            } else {
+                // Last terminal in tab, remove the whole tab
+                const nextTabs = prev.filter(t => t.id !== tabId)
+                if (activeTab === tabId) {
+                    if (nextTabs.length > 0) {
+                        const nextTab = nextTabs[Math.max(0, tabIdx - 1)]
+                        setActiveTab(nextTab.id)
+                    } else {
+                        setActiveTab("")
+                    }
+                }
+                return nextTabs
+            }
         })
     }
 
@@ -105,11 +163,12 @@ export function App() {
                         ]}
                         bottom={
                             <TermTabs
-                                terminals={configTerms}
+                                tabs={configTabs}
                                 activeTabId={configActive}
                                 onTabChange={setConfigActive}
-                                onAdd={() => addTerm("Config", configTerms, setConfigTerms, configMaxId, setConfigMaxId, setConfigActive)}
-                                onRemove={(id) => removeTerm(id, configTerms, setConfigTerms, configActive, setConfigActive)}
+                                onAddTab={() => addTab("Config", setConfigTabs, configMaxTabId, setConfigMaxTabId, configMaxTermId, setConfigMaxTermId, setConfigActive)}
+                                onAddSideBySide={(id) => addSideBySide("Config", id, setConfigTabs, configMaxTermId, setConfigMaxTermId)}
+                                onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setConfigTabs, configActive, setConfigActive)}
                             />
                         }
                     />
@@ -129,11 +188,12 @@ export function App() {
                         ]}
                         bottom={
                             <TermTabs
-                                terminals={limaTerms}
+                                tabs={limaTabs}
                                 activeTabId={limaActive}
                                 onTabChange={setLimaActive}
-                                onAdd={() => addTerm("Lima", limaTerms, setLimaTerms, limaMaxId, setLimaMaxId, setLimaActive)}
-                                onRemove={(id) => removeTerm(id, limaTerms, setLimaTerms, limaActive, setLimaActive)}
+                                onAddTab={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)}
+                                onAddSideBySide={(id) => addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)}
+                                onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setLimaTabs, limaActive, setLimaActive)}
                             />
                         }
                     />
@@ -153,11 +213,12 @@ export function App() {
                         ]}
                         bottom={
                             <TermTabs
-                                terminals={k8sTerms}
+                                tabs={k8sTabs}
                                 activeTabId={k8sActive}
                                 onTabChange={setK8sActive}
-                                onAdd={() => addTerm("K8s", k8sTerms, setK8sTerms, k8sMaxId, setK8sMaxId, setK8sActive)}
-                                onRemove={(id) => removeTerm(id, k8sTerms, setK8sTerms, k8sActive, setK8sActive)}
+                                onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
+                                onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}
+                                onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setK8sTabs, k8sActive, setK8sActive)}
                             />
                         }
                     />
