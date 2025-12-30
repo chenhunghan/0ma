@@ -21,3 +21,21 @@ Object.defineProperty(window, "matchMedia", {
         dispatchEvent: vi.fn(),
     })),
 })
+
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+    observe() { }
+    unobserve() { }
+    disconnect() { }
+};
+
+// Mock PointerEvent which is missing in JSDOM but needed by Radix/Base UI
+if (!global.PointerEvent) {
+    class PointerEvent extends MouseEvent {
+        constructor(type: string, params: PointerEventInit = {}) {
+            super(type, params);
+        }
+    }
+    // @ts-ignore
+    global.PointerEvent = PointerEvent;
+}

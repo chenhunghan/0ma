@@ -146,16 +146,11 @@ export function TermTabs({
                 </Tabs>
                 <div className="ml-auto flex items-center pr-1">
                     <DropdownMenu>
-                        <DropdownMenuTrigger>
-                            <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                disabled={tabs.length >= 10 && tabs.every(t => t.terminals.length >= 10)}
-                                title="Add Terminal"
-                                className="size-7 hover:bg-muted"
-                            >
-                                <PlusIcon className="size-3.5" />
-                            </Button>
+                        <DropdownMenuTrigger
+                            className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 border border-transparent bg-clip-padding text-xs font-medium focus-visible:ring-1 aria-invalid:ring-1 inline-flex items-center justify-center whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground rounded-none [&_svg:not([class*='size-'])]:size-3 size-7 hover:bg-muted"
+                            title="Add Terminal"
+                        >
+                            <PlusIcon className="size-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
