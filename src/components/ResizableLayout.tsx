@@ -21,7 +21,7 @@ export function ResizableLayout({ columns, bottom }: ResizableLayoutProps) {
                 <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"}>
                     {columns.map((column, index) => (
                         <Fragment key={index}>
-                            <ResizablePanel defaultSize={100 / columns.length}>
+                            <ResizablePanel defaultSize={100 / columns.length} minSize={10}>
                                 {column}
                             </ResizablePanel>
                             {index < columns.length - 1 && <ResizableHandle />}
@@ -33,7 +33,7 @@ export function ResizableLayout({ columns, bottom }: ResizableLayoutProps) {
             <ResizableHandle />
 
             {/* Bottom Section */}
-            <ResizablePanel defaultSize={60} minSize={10}>
+            <ResizablePanel defaultSize={60} minSize={8}>
                 {bottom}
             </ResizablePanel>
         </ResizablePanelGroup>
