@@ -1,15 +1,18 @@
 import { ResizableLayout } from "./components/ResizableLayout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs"
+import { Separator } from "src/components/ui/separator"
 
 export function App() {
     return (
-        <div className="h-full">
-            <Tabs defaultValue="lima" className="h-full">
+        <div className="h-full w-full overflow-hidden">
+            <Separator />
+            <Tabs defaultValue="lima" className="h-full w-full">
                 <TabsList>
                     <TabsTrigger value="config">Config</TabsTrigger>
                     <TabsTrigger value="lima">Lima</TabsTrigger>
                     <TabsTrigger value="k8s">K8s</TabsTrigger>
                 </TabsList>
+                <Separator />
                 <TabsContent value="config" className="h-full">
                     <ResizableLayout
                         columns={[
