@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useState, ReactNode } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs"
 import { Separator } from "src/components/ui/separator"
 import { Button } from "src/components/ui/button"
-import { PlusIcon, Terminal as TerminalIcon } from "lucide-react"
+import { PlusIcon, Terminal as TerminalIcon, X as XIcon } from "lucide-react"
 import { useIsMobile } from "src/hooks/useMediaQuery"
 
 export interface TermTabsProps {
@@ -12,6 +12,7 @@ export interface TermTabsProps {
 interface Terminal {
     id: number
     name: string
+    content: ReactNode
 }
 
 export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
@@ -21,6 +22,11 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
         return Array.from({ length: count }, (_, i) => ({
             id: i + 1,
             name: `Terminal ${i + 1}`,
+            content: (
+                <div className="flex h-full w-full items-center justify-center">
+                    <span className="text-muted-foreground text-xs">Terminal {i + 1} Content</span>
+                </div>
+            )
         }))
     })
     const [activeTab, setActiveTab] = useState(`term-${tabs[0].id}`)
@@ -29,11 +35,33 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
     const addTerminal = () => {
         if (tabs.length < 10) {
             const nextId = maxId + 1
-            const newTerm = { id: nextId, name: `Terminal ${nextId}` }
+            const newTerm: Terminal = {
+                id: nextId,
+                name: `Terminal ${nextId}`,
+                content: (
+                    <div className="flex h-full w-full items-center justify-center">
+                        <span className="text-muted-foreground text-xs">Terminal {nextId} Content</span>
+                    </div>
+                )
+            }
             setTabs(prev => [...prev, newTerm])
             setMaxId(nextId)
             setActiveTab(`term-${nextId}`)
         }
+    }
+
+    const removeTerminal = (id: number) => {
+        if (tabs.length <= 1) return
+
+        setTabs(prev => {
+            const newTabs = prev.filter(t => t.id !== id)
+            if (activeTab === `term-${id}`) {
+                const closedIndex = prev.findIndex(t => t.id === id)
+                const nextTab = newTabs[Math.max(0, closedIndex - 1)]
+                setActiveTab(`term-${nextTab.id}`)
+            }
+            return newTabs
+        })
     }
 
     return (
@@ -68,10 +96,21 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
             <Separator />
             {
                 tabs.map((term) => (
-                    <TabsContent key={term.id} value={`term-${term.id}`} className="h-full">
-                        <div className="flex h-full w-full items-center justify-center">
-                            <span className="text-muted-foreground text-xs">{term.name} Content</span>
-                        </div>
+                    <TabsContent key={term.id} value={`term-${term.id}`} className="h-full relative group">
+                        {tabs.length > 1 && (
+                            <div className="absolute top-1.5 right-1.5 z-50 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                <Button
+                                    variant="secondary"
+                                    size="icon-xs"
+                                    className="size-5 bg-background/60 backdrop-blur-xs border border-border/50 shadow-xs hover:bg-background/90"
+                                    onClick={() => removeTerminal(term.id)}
+                                    title="Close Terminal"
+                                >
+                                    <XIcon className="size-3" />
+                                </Button>
+                            </div>
+                        )}
+                        {term.content}
                     </TabsContent>
                 ))
             }
