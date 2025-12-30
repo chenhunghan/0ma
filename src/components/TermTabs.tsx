@@ -16,26 +16,16 @@ import {
     DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu"
 
-export interface Terminal {
+interface Terminal {
     id: number
     name: string
     content: ReactNode
 }
 
-export interface TabGroup {
+interface TabGroup {
     id: string
     name: string
     terminals: Terminal[]
-}
-
-export interface TermTabsProps {
-    tabs: TabGroup[]
-    activeTabId: string
-    onTabChange: (id: string) => void
-    onAddTab: () => void
-    onAddSideBySide: (tabId: string) => void
-    onRemoveTerminal: (tabId: string, terminalId: number) => void
-    renderEmptyState?: (props: { onAdd: () => void }) => ReactNode
 }
 
 const EmptyState = ({ onAdd }: { onAdd: () => void }) => {
@@ -68,15 +58,17 @@ const EmptyState = ({ onAdd }: { onAdd: () => void }) => {
     )
 }
 
+interface TermRowProps {
+    tabId: string,
+    terminals: Terminal[],
+    onRemove: (tabId: string, terminalId: number) => void
+}
+
 export function TerminalRow({
     tabId,
     terminals,
     onRemove
-}: {
-    tabId: string,
-    terminals: Terminal[],
-    onRemove: (tabId: string, terminalId: number) => void
-}) {
+}: TermRowProps) {
     const isMobile = useIsMobile()
 
     return (
@@ -112,6 +104,17 @@ export function TerminalRow({
         </ResizablePanelGroup>
     )
 }
+
+interface TermTabsProps {
+    tabs: TabGroup[]
+    activeTabId: string
+    onTabChange: (id: string) => void
+    onAddTab: () => void
+    onAddSideBySide: (tabId: string) => void
+    onRemoveTerminal: (tabId: string, terminalId: number) => void
+    renderEmptyState?: (props: { onAdd: () => void }) => ReactNode
+}
+
 
 export function TermTabs({
     tabs,
