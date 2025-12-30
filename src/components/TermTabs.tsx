@@ -15,6 +15,36 @@ interface Terminal {
     content: ReactNode
 }
 
+const EmptyState = ({ onAdd }: { onAdd: () => void }) => {
+    const isMobile = useIsMobile()
+    return (
+        <div className="flex flex-col h-full w-full items-center justify-center gap-4 px-6 animate-in fade-in duration-500">
+            {!isMobile && (
+                <>
+                    <div className="p-4 rounded-full bg-muted/30">
+                        <TerminalIcon className="size-8 text-muted-foreground/40" />
+                    </div>
+                    <div className="text-center max-w-[240px]">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-tight">No active terminals</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1.5 leading-relaxed">
+                            Click the plus icon above or the button below to start
+                        </p>
+                    </div>
+                </>
+            )}
+            <Button
+                variant="outline"
+                size={isMobile ? "xs" : "sm"}
+                className="mt-1 h-7 px-4 text-[10px] gap-1.5"
+                onClick={onAdd}
+            >
+                <PlusIcon className="size-3" />
+                New Terminal
+            </Button>
+        </div>
+    )
+}
+
 export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
     const isMobile = useIsMobile()
     const [tabs, setTabs] = useState<Terminal[]>(() => {
@@ -29,7 +59,7 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
             )
         }))
     })
-    const [activeTab, setActiveTab] = useState(`term-${tabs[0].id}`)
+    const [activeTab, setActiveTab] = useState(`term-${tabs[0]?.id || ""}`)
     const [maxId, setMaxId] = useState(tabs.length)
 
     const addTerminal = () => {
@@ -51,18 +81,21 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
     }
 
     const removeTerminal = (id: number) => {
-        if (tabs.length <= 1) return
-
         setTabs(prev => {
             const newTabs = prev.filter(t => t.id !== id)
             if (activeTab === `term-${id}`) {
-                const closedIndex = prev.findIndex(t => t.id === id)
-                const nextTab = newTabs[Math.max(0, closedIndex - 1)]
-                setActiveTab(`term-${nextTab.id}`)
+                if (newTabs.length > 0) {
+                    const closedIndex = prev.findIndex(t => t.id === id)
+                    const nextTab = newTabs[Math.max(0, closedIndex - 1)]
+                    setActiveTab(`term-${nextTab.id}`)
+                } else {
+                    setActiveTab("")
+                }
             }
             return newTabs
         })
     }
+
 
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full w-full">
@@ -94,25 +127,26 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
                 </Button>
             </div>
             <Separator />
-            {
+            {tabs.length === 0 ? (
+                <EmptyState onAdd={addTerminal} />
+            ) : (
                 tabs.map((term) => (
                     <TabsContent key={term.id} value={`term-${term.id}`} className="h-full relative group">
-                        {tabs.length > 1 && (
-                            <div className="absolute top-1.5 right-1.5 z-50 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                                <Button
-                                    variant="secondary"
-                                    size="icon-xs"
-                                    className="size-5 bg-background/60 backdrop-blur-xs border border-border/50 shadow-xs hover:bg-background/90"
-                                    onClick={() => removeTerminal(term.id)}
-                                    title="Close Terminal"
-                                >
-                                    <XIcon className="size-3" />
-                                </Button>
-                            </div>
-                        )}
+                        <div className="absolute top-1.5 right-1.5 z-50 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                            <Button
+                                variant="secondary"
+                                size="icon-xs"
+                                className="size-5 bg-background/60 backdrop-blur-xs border border-border/50 shadow-xs hover:bg-background/90"
+                                onClick={() => removeTerminal(term.id)}
+                                title="Close Terminal"
+                            >
+                                <XIcon className="size-3" />
+                            </Button>
+                        </div>
                         {term.content}
                     </TabsContent>
                 ))
+            )
             }
         </Tabs >
     )
