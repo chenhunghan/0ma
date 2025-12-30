@@ -2,6 +2,7 @@ import { ResizableLayout } from "./components/ResizableLayout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs"
 import { Separator } from "src/components/ui/separator"
 import { TopBar } from "src/components/_TopBar"
+import { TermTabs } from "./components/TermTabs"
 
 export function App() {
     return (
@@ -30,9 +31,7 @@ export function App() {
                             </div>,
                         ]}
                         bottom={
-                            <div className="flex h-full w-full items-center justify-center">
-                                <span className="font-semibold">Config Bottom</span>
-                            </div>
+                            <TermTabs />
                         }
                     />
                 </TabsContent>
@@ -50,9 +49,7 @@ export function App() {
                             </div>,
                         ]}
                         bottom={
-                            <div className="flex h-full w-full items-center justify-center">
-                                <span className="font-semibold">Lima Bottom</span>
-                            </div>
+                            <TermTabs />
                         }
                     />
                 </TabsContent>
@@ -70,9 +67,7 @@ export function App() {
                             </div>,
                         ]}
                         bottom={
-                            <div className="flex h-full w-full items-center justify-center">
-                                <span className="font-semibold">K8s Bottom</span>
-                            </div>
+                            <TermTabs />
                         }
                     />
                 </TabsContent>
