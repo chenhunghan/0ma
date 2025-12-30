@@ -45,11 +45,11 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
                             key={term.id}
                             value={`term-${term.id}`}
                             title={term.name}
+                            className="gap-1.5 px-2.5"
                         >
-                            {isMobile ? (
-                                <TerminalIcon className="size-3.5" />
-                            ) : (
-                                term.name
+                            <TerminalIcon className="size-3.5" />
+                            {!isMobile && (
+                                <span className="text-[10px]">{term.name}</span>
                             )}
                         </TabsTrigger>
                     ))}
@@ -66,13 +66,15 @@ export function TermTabs({ defaultCount = 1 }: TermTabsProps) {
                 </Button>
             </div>
             <Separator />
-            {tabs.map((term) => (
-                <TabsContent key={term.id} value={`term-${term.id}`} className="h-full">
-                    <div className="flex h-full w-full items-center justify-center">
-                        <span className="text-muted-foreground text-xs">{term.name} Content</span>
-                    </div>
-                </TabsContent>
-            ))}
-        </Tabs>
+            {
+                tabs.map((term) => (
+                    <TabsContent key={term.id} value={`term-${term.id}`} className="h-full">
+                        <div className="flex h-full w-full items-center justify-center">
+                            <span className="text-muted-foreground text-xs">{term.name} Content</span>
+                        </div>
+                    </TabsContent>
+                ))
+            }
+        </Tabs >
     )
 }
