@@ -68,7 +68,7 @@ const EmptyState = ({ onAdd }: { onAdd: () => void }) => {
     )
 }
 
-function TerminalRow({
+export function TerminalRow({
     tabId,
     terminals,
     onRemove
