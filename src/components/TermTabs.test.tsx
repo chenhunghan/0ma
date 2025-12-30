@@ -137,7 +137,7 @@ describe("TermTabs", () => {
         expect(mockOnTabChange).toHaveBeenCalledWith("tab-2", expect.anything())
     })
 
-    it("opens menu and calls onAddTab when 'New Tab' is selected", async () => {
+    it("calls onAddTab when 'New Tab' button is clicked", () => {
         render(
             <TermTabs
                 tabs={mockTabs}
@@ -149,16 +149,13 @@ describe("TermTabs", () => {
             />
         )
 
-        const addButton = screen.getByTitle("Add Terminal")
+        const addButton = screen.getByTitle("New Tab")
         fireEvent.click(addButton)
-
-        const newTabOption = await screen.findByText("New Tab")
-        fireEvent.click(newTabOption)
 
         expect(mockOnAddTab).toHaveBeenCalled()
     })
 
-    it("opens menu and calls onAddSideBySide when 'Side-by-side' is selected", async () => {
+    it("calls onAddSideBySide when 'Side-by-side' button is clicked", () => {
         render(
             <TermTabs
                 tabs={mockTabs}
@@ -170,16 +167,13 @@ describe("TermTabs", () => {
             />
         )
 
-        const addButton = screen.getByTitle("Add Terminal")
-        fireEvent.click(addButton)
-
-        const sideBySideOption = await screen.findByText("Side-by-side")
-        fireEvent.click(sideBySideOption)
+        const sideBySideButton = screen.getByTitle("Side-by-side")
+        fireEvent.click(sideBySideButton)
 
         expect(mockOnAddSideBySide).toHaveBeenCalledWith("tab-1")
     })
 
-    it("disables Side-by-side option when no tab is active", async () => {
+    it("disables Side-by-side button when no tab is active", () => {
         render(
             <TermTabs
                 tabs={mockTabs}
@@ -191,10 +185,7 @@ describe("TermTabs", () => {
             />
         )
 
-        fireEvent.click(screen.getByTitle("Add Terminal"))
-
-        const option = await screen.findByText("Side-by-side")
-        const item = option.closest('[data-slot="dropdown-menu-item"]')
-        expect(item).toHaveAttribute('data-disabled')
+        const button = screen.getByTitle("Side-by-side")
+        expect(button).toBeDisabled()
     })
 })

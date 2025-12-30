@@ -2,27 +2,21 @@ import { ReactNode, Fragment } from "react"
 import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs"
 import { Separator } from "src/components/ui/separator"
 import { Button } from "src/components/ui/button"
-import { PlusIcon, Terminal as TerminalIcon, X as XIcon, Columns2Icon, SquarePlusIcon } from "lucide-react"
+import { Terminal as TerminalIcon, X as XIcon, Columns2Icon, SquarePlusIcon } from "lucide-react"
 import { useIsMobile } from "src/hooks/useMediaQuery"
 import {
     ResizablePanelGroup,
     ResizablePanel,
     ResizableHandle
 } from "src/components/ui/resizable"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "src/components/ui/dropdown-menu"
 
-interface Terminal {
+export interface Terminal {
     id: number
     name: string
     content: ReactNode
 }
 
-interface TabGroup {
+export interface TabGroup {
     id: string
     name: string
     terminals: Terminal[]
@@ -51,7 +45,7 @@ const EmptyState = ({ onAdd }: { onAdd: () => void }) => {
                 className="mt-1 h-7 px-4 text-[10px] gap-1.5"
                 onClick={onAdd}
             >
-                <PlusIcon className="size-3" />
+                <SquarePlusIcon className="size-3" />
                 New Tab
             </Button>
         </div>
@@ -147,31 +141,27 @@ export function TermTabs({
                         ))}
                     </TabsList>
                 </Tabs>
-                <div className="ml-auto flex items-center pr-1">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 border border-transparent bg-clip-padding text-xs font-medium focus-visible:ring-1 aria-invalid:ring-1 inline-flex items-center justify-center whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground rounded-none [&_svg:not([class*='size-'])]:size-3 size-7 hover:bg-muted"
-                            title="Add Terminal"
-                        >
-                            <PlusIcon className="size-3.5" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                onClick={onAddTab}
-                                disabled={tabs.length >= 10}
-                            >
-                                <SquarePlusIcon className="mr-2 size-3.5" />
-                                <span>New Tab</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => onAddSideBySide(activeTabId)}
-                                disabled={!activeTabId || (tabs.find(t => t.id === activeTabId)?.terminals.length ?? 0) >= 10}
-                            >
-                                <Columns2Icon className="mr-2 size-3.5" />
-                                <span>Side-by-side</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                <div className="ml-auto flex items-center pr-1 gap-0.5">
+                    <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={onAddTab}
+                        disabled={tabs.length >= 10}
+                        title="New Tab"
+                        className="size-7 hover:bg-muted"
+                    >
+                        <SquarePlusIcon className="size-3.5" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => onAddSideBySide(activeTabId)}
+                        disabled={!activeTabId || (tabs.find(t => t.id === activeTabId)?.terminals.length ?? 0) >= 10}
+                        title="Side-by-side"
+                        className="size-7 hover:bg-muted"
+                    >
+                        <Columns2Icon className="size-3.5" />
+                    </Button>
                 </div>
             </div>
             <Separator />
