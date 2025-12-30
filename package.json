@@ -28,6 +28,7 @@
     "prismjs": "^1.30",
     "react": "^19.2",
     "react-dom": "^19.2",
+    "react-resizable-panels": "^3.0.6",
     "react-simple-code-editor": "^0.14",
     "shadcn": "^3.6.2",
     "tailwind-merge": "^3.4.0",
