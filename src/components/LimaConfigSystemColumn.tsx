@@ -23,6 +23,12 @@ import {
 import { Button } from "./ui/button";
 import { Trash2Icon, PlusIcon, PencilIcon } from "lucide-react";
 import { LimaConfig } from "src/types/LimaConfig";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "./ui/accordion";
 
 interface Props {
     instanceName: string,
@@ -530,18 +536,38 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         </DialogFooter>
                     </DialogContent>
 
-                    <div className="flex flex-col gap-2">
-                        {draftConfig?.portForwards?.map((pf, idx) => (
-                            <Item key={idx} variant="muted" size="xs">
-                                <ItemContent className="overflow-hidden">
-                                    <ItemTitle className="uppercase text-[9px]">{pf.proto || 'tcp'}</ItemTitle>
-                                    <ItemDescription className="max-w-full truncate">
-                                        Guest:{pf.guestPort} → Host:{pf.hostPort}
-                                    </ItemDescription>
-                                </ItemContent>
-                            </Item>
-                        ))}
-                    </div>
+                    {draftConfig?.portForwards && draftConfig.portForwards.length > 0 && (
+                        <Accordion className="w-full">
+                            {draftConfig.portForwards.map((pf, idx) => (
+                                <AccordionItem value={`pf-${idx}`} key={idx} className="border-border/40">
+                                    <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors tracking-tight text-muted-foreground font-semibold">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] bg-muted px-1 rounded text-foreground/70 uppercase">{pf.proto || 'tcp'}</span>
+                                            <span className="font-mono text-[10px]">{pf.guestPort}</span>
+                                            <span className="text-muted-foreground/50">→</span>
+                                            <span className="font-mono text-[10px]">{pf.hostPort}</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-2 bg-muted/10">
+                                        <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground/80 bg-zinc-950/50 p-2 rounded border border-border/20">
+                                            <div className="flex justify-between">
+                                                <span>Guest IP (Must Be Zero):</span>
+                                                <span className="text-foreground/70">{pf.guestIPMustBeZero ? 'true' : 'false'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Host IP:</span>
+                                                <span className="text-foreground/70">{pf.hostIP || '127.0.0.1'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Protocol:</span>
+                                                <span className="text-foreground/70 uppercase">{pf.proto || 'tcp'}</span>
+                                            </div>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    )}
                 </Dialog>
             </div>
         </div >
