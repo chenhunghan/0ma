@@ -135,8 +135,8 @@ export function useTauriStoreValue<T = unknown>(key: string) {
         queryKey: [queryKeyForValue, storeFileName, key],
         queryFn: async () => {
             if (!store) return null;
-            const val = await store.get<T>(key);
-            return val ?? null; // Ensure we return null instead of undefined for cleaner React handling
+            const value = await store.get<T>(key);
+            return value;
         },
         enabled: !!store,
         initialData: null,

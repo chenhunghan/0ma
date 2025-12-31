@@ -4,6 +4,7 @@ import {
     ResizablePanel,
     ResizablePanelGroup,
 } from "src/components/ui/resizable"
+import { useLayoutStorage } from "src/hooks/useLayoutStorage"
 import { useIsMobile } from "src/hooks/useMediaQuery"
 
 interface ResizableLayoutProps {
@@ -13,10 +14,14 @@ interface ResizableLayoutProps {
 }
 
 export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayoutProps) {
-    const isMobile = useIsMobile()
+    const isMobile = useIsMobile();
+    const { storage } = useLayoutStorage();
 
     return (
-        <ResizablePanelGroup direction="vertical" autoSaveId={autoSaveId}>
+        <ResizablePanelGroup
+            direction="vertical"
+            autoSaveId={autoSaveId}
+            storage={storage}>
             {/* Top Section: Contains the columns (grid vertically on mobile, horizontally on desktop) */}
             {columns.length > 0 ?
                 <ResizablePanel defaultSize={40} minSize={10}>

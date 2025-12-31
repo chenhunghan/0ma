@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useEffect } from "react";
 import { useLimaYaml } from "./useLimaYaml";
-import { useTauriStore, useTauriStoreValue } from "../providers/tauri-store-provider";
-import { LimaConfig } from "../types/LimaConfig";
+import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-provider";
+import { LimaConfig } from "src/types/LimaConfig";
 
 /**
  * Hook to manage a draft Lima configuration stored in Tauri Store.
