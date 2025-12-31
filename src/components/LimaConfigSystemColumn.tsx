@@ -107,8 +107,8 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         <Label className="mb-0.5">Images</Label>
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.images || draftConfig.images.length === 0)
-                                ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 mr-[8px]" />
+                                ? <PlusIcon className="size-2.5 mr-[4px]" />
+                                : <PencilIcon className="size-2.5 mr-[4px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -230,8 +230,8 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         <Label className="mb-0.5">Mounts</Label>
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.mounts || draftConfig.mounts.length === 0)
-                                ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 mr-[8px]" />
+                                ? <PlusIcon className="size-2.5 mr-[4px]" />
+                                : <PencilIcon className="size-2.5 mr-[4px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -355,8 +355,8 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         <Label className="mb-0.5">Copy to Host</Label>
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.copyToHost || draftConfig.copyToHost.length === 0)
-                                ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 mr-[8px]" />
+                                ? <PlusIcon className="size-2.5 mr-[4px]" />
+                                : <PencilIcon className="size-2.5 mr-[4px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -455,13 +455,13 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                                     </AccordionTrigger>
                                     <AccordionContent className="p-2 bg-muted/10">
                                         <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground/80 bg-zinc-950/50 p-2 rounded border border-border/20">
-                                            <div className="flex justify-between">
-                                                <span>Guest Path:</span>
-                                                <span className="text-foreground/70 break-all ml-4">{rule.guest}</span>
+                                            <div className="flex justify-between items-start">
+                                                <span className="shrink-0">Guest Path:</span>
+                                                <span className="text-foreground/70 break-all ml-4 text-right">{rule.guest}</span>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span>Host Path:</span>
-                                                <span className="text-foreground/70 break-all ml-4">{rule.host}</span>
+                                            <div className="flex justify-between items-start">
+                                                <span className="shrink-0">Host Path:</span>
+                                                <span className="text-foreground/70 break-all ml-4 text-right">{rule.host}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Delete on Stop:</span>
@@ -491,8 +491,8 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         <Label className="mb-0.5">Port Forwards</Label>
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.portForwards || draftConfig.portForwards.length === 0)
-                                ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 mr-[8px]" />
+                                ? <PlusIcon className="size-2.5 mr-[4px]" />
+                                : <PencilIcon className="size-2.5 mr-[4px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -599,13 +599,13 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                                     </AccordionTrigger>
                                     <AccordionContent className="p-2 bg-muted/10">
                                         <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground/80 bg-zinc-950/50 p-2 rounded border border-border/20">
-                                            <div className="flex justify-between">
-                                                <span>Guest IP (Must Be Zero):</span>
-                                                <span className="text-foreground/70">{pf.guestIPMustBeZero ? 'true' : 'false'}</span>
+                                            <div className="flex justify-between items-start">
+                                                <span className="shrink-0">Guest IP (Must Be Zero):</span>
+                                                <span className="text-foreground/70 ml-4 text-right">{pf.guestIPMustBeZero ? 'true' : 'false'}</span>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span>Host IP:</span>
-                                                <span className="text-foreground/70">{pf.hostIP || '127.0.0.1'}</span>
+                                            <div className="flex justify-between items-start">
+                                                <span className="shrink-0">Host IP:</span>
+                                                <span className="text-foreground/70 break-all ml-4 text-right">{pf.hostIP || '127.0.0.1'}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Protocol:</span>

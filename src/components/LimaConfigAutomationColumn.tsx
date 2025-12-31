@@ -88,8 +88,8 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                         <Label className="mb-0.5">Provision</Label>
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.provision || draftConfig.provision.length === 0)
-                                ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 mr-[8px]" />
+                                ? <PlusIcon className="size-3.5" />
+                                : <PencilIcon className="size-3.5" />
                             }
                         </DialogTrigger>
                     </div>
@@ -247,8 +247,8 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                         <Label className="mb-0.5">Probes</Label>
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.probes || draftConfig.probes.length === 0)
-                                ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 mr-[8px]" />
+                                ? <PlusIcon className="size-3.5" />
+                                : <PencilIcon className="size-3.5" />
                             }
                         </DialogTrigger>
                     </div>
