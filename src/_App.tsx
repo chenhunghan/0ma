@@ -3,11 +3,16 @@ import { ResizableLayout } from "./components/ResizableLayout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs"
 import { Separator } from "src/components/ui/separator"
 import { TopBar } from "src/components/_TopBar"
-import { TermTabs, TabGroup } from "./components/TermTabs"
-import { EmptyTerminalState } from "./components/EmptyTerminalState"
-import { LimaConfigTabContent } from "./components/LimaConfigTabContent"
+import { TermTabs, TabGroup } from "src/components/TermTabs"
+import { EmptyTerminalState } from "src/components/EmptyTerminalState"
+import { LimaConfigTabContent } from "src/components/LimaConfigTabContent"
+import { useLayoutStorage } from "src/hooks/useLayoutStorage"
+import { Skeleton } from "./components/ui/skeleton"
+import { Spinner } from "./components/ui/spinner"
 
 export function App() {
+    const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
+
     // Initial State Factory
     const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
         id: tabId,
@@ -137,71 +142,82 @@ export function App() {
             <Separator />
             <TopBar />
             <Separator />
-            <Tabs defaultValue="lima" className="h-full w-full">
-                <TabsList>
-                    <TabsTrigger value="config">Config</TabsTrigger>
-                    <TabsTrigger value="lima">Lima</TabsTrigger>
-                    <TabsTrigger value="k8s">K8s</TabsTrigger>
-                </TabsList>
+            {isLoadingActiveTabs ?
+                <Skeleton className="h-full w-full flex items-center justify-center">
+                    <div title="Loading tabs...">
+                        <Spinner />
+                    </div>
+                </Skeleton> :
+                <Tabs
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className="h-full w-full"
+                >
+                    <TabsList>
+                        <TabsTrigger value="config">Config</TabsTrigger>
+                        <TabsTrigger value="lima">Lima</TabsTrigger>
+                        <TabsTrigger value="k8s">K8s</TabsTrigger>
+                    </TabsList>
 
-                <Separator />
+                    <Separator />
 
-                <LimaConfigTabContent tabValue="config" instanceName="0ma-s7k8" />
-                <TabsContent value="lima">
-                    <ResizableLayout
-                        autoSaveId="lima-tabs-content"
-                        columns={[
-                            <div className="flex h-full w-full items-center justify-center" key="1">
-                                <span className="font-semibold">Lima Column 1</span>
-                            </div>,
-                            <div className="flex h-full w-full items-center justify-center" key="2">
-                                <span className="font-semibold">Lima Column 2</span>
-                            </div>,
-                            <div className="flex h-full w-full items-center justify-center" key="3">
-                                <span className="font-semibold">Lima Column 3</span>
-                            </div>,
-                        ]}
-                        bottom={
-                            <TermTabs
-                                tabs={limaTabs}
-                                activeTabId={limaActive}
-                                onTabChange={setLimaActive}
-                                onAddTab={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)}
-                                onAddSideBySide={(id) => addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)}
-                                onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setLimaTabs, limaActive, setLimaActive)}
-                                emptyState={<EmptyTerminalState onAdd={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)} />}
-                            />
-                        }
-                    />
-                </TabsContent>
-                <TabsContent value="k8s">
-                    <ResizableLayout
-                        autoSaveId="k8s-tabs-content"
-                        columns={[
-                            <div className="flex h-full w-full items-center justify-center" key="1">
-                                <span className="font-semibold">K8s Column 1</span>
-                            </div>,
-                            <div className="flex h-full w-full items-center justify-center" key="2">
-                                <span className="font-semibold">K8s Column 2</span>
-                            </div>,
-                            <div className="flex h-full w-full items-center justify-center" key="3">
-                                <span className="font-semibold">K8s Column 3</span>
-                            </div>,
-                        ]}
-                        bottom={
-                            <TermTabs
-                                tabs={k8sTabs}
-                                activeTabId={k8sActive}
-                                onTabChange={setK8sActive}
-                                onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
-                                onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}
-                                onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setK8sTabs, k8sActive, setK8sActive)}
-                                emptyState={<EmptyTerminalState onAdd={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)} />}
-                            />
-                        }
-                    />
-                </TabsContent>
-            </Tabs>
+                    <LimaConfigTabContent tabValue="config" instanceName="0ma-s7k8" />
+                    <TabsContent value="lima">
+                        <ResizableLayout
+                            autoSaveId="lima-tabs-content"
+                            columns={[
+                                <div className="flex h-full w-full items-center justify-center" key="1">
+                                    <span className="font-semibold">Lima Column 1</span>
+                                </div>,
+                                <div className="flex h-full w-full items-center justify-center" key="2">
+                                    <span className="font-semibold">Lima Column 2</span>
+                                </div>,
+                                <div className="flex h-full w-full items-center justify-center" key="3">
+                                    <span className="font-semibold">Lima Column 3</span>
+                                </div>,
+                            ]}
+                            bottom={
+                                <TermTabs
+                                    tabs={limaTabs}
+                                    activeTabId={limaActive}
+                                    onTabChange={setLimaActive}
+                                    onAddTab={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)}
+                                    onAddSideBySide={(id) => addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)}
+                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setLimaTabs, limaActive, setLimaActive)}
+                                    emptyState={<EmptyTerminalState onAdd={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)} />}
+                                />
+                            }
+                        />
+                    </TabsContent>
+                    <TabsContent value="k8s">
+                        <ResizableLayout
+                            autoSaveId="k8s-tabs-content"
+                            columns={[
+                                <div className="flex h-full w-full items-center justify-center" key="1">
+                                    <span className="font-semibold">K8s Column 1</span>
+                                </div>,
+                                <div className="flex h-full w-full items-center justify-center" key="2">
+                                    <span className="font-semibold">K8s Column 2</span>
+                                </div>,
+                                <div className="flex h-full w-full items-center justify-center" key="3">
+                                    <span className="font-semibold">K8s Column 3</span>
+                                </div>,
+                            ]}
+                            bottom={
+                                <TermTabs
+                                    tabs={k8sTabs}
+                                    activeTabId={k8sActive}
+                                    onTabChange={setK8sActive}
+                                    onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
+                                    onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}
+                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setK8sTabs, k8sActive, setK8sActive)}
+                                    emptyState={<EmptyTerminalState onAdd={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)} />}
+                                />
+                            }
+                        />
+                    </TabsContent>
+                </Tabs>
+            }
         </div>
     )
 }

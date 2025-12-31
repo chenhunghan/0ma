@@ -136,7 +136,7 @@ export function useTauriStoreValue<T = unknown>(key: string) {
         queryFn: async () => {
             if (!store) return null;
             const value = await store.get<T>(key);
-            return value;
+            return value ?? null;
         },
         enabled: !!store,
         initialData: null,
