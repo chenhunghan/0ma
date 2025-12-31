@@ -1,6 +1,7 @@
 import { ResizableLayout } from "./ResizableLayout";
 import { TabsContent } from "./ui/tabs";
 import { LimaConfigResourceColumn } from "./LimaConfigResourceColumn";
+import { LimaConfigSystemColumn } from "./LimaConfigSystemColumn";
 
 export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: string, instanceName: string }) {
     return (
@@ -11,7 +12,7 @@ export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: str
                         <LimaConfigResourceColumn instanceName={instanceName} />
                     </ColunmWrapper>,
                     <ColunmWrapper key="2">
-                        <span className="font-semibold">Config Column 2</span>
+                        <LimaConfigSystemColumn instanceName={instanceName} />
                     </ColunmWrapper>,
                     <ColunmWrapper key="3">
                         <span className="font-semibold">Config Column 3</span>
