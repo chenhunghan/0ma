@@ -55,6 +55,7 @@ export function TauriStoreProvider({ children, storeFileName = defaultGlobalStor
         mutationFn: async ({ key, value }: { key: string, value: unknown }) => {
             if (store) {
                 await store.set(key, value);
+                await store.save();
             }
         },
         onSuccess: (_, { key }) => {
@@ -70,6 +71,7 @@ export function TauriStoreProvider({ children, storeFileName = defaultGlobalStor
         mutationFn: async (key: string) => {
             if (store) {
                 await store.delete(key);
+                await store.save();
             }
         },
         onSuccess: (_, key) => {

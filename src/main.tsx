@@ -13,7 +13,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <TauriStoreProvider>
-        <ThemeProvider defaultTheme="dark" storageKey="0ma-theme">
+        <ThemeProvider defaultTheme="system" storageKey="theme">
           <App />
         </ThemeProvider>
       </TauriStoreProvider>
