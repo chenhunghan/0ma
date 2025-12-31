@@ -96,6 +96,10 @@ export function LimaConfigEditor({ instanceName }: { instanceName: string }) {
                         lineDecorationsWidth: 5,
                         lineNumbersMinChars: 3,
                         contextmenu: false,
+                        scrollbar: {
+                            verticalScrollbarSize: 6,
+                            horizontalScrollbarSize: 6,
+                        },
                     }}
                 />
             </div>

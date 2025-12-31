@@ -5,12 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useLimaDraft } from "src/hooks/useLimaDraft";
 import { Spinner } from "./ui/spinner";
 import {
-    Item,
-    ItemContent,
-    ItemDescription,
-    ItemTitle,
-} from "./ui/item";
-import {
     Dialog,
     DialogClose,
     DialogContent,
@@ -24,6 +18,12 @@ import { Button } from "./ui/button";
 import { Trash2Icon, PlusIcon, PencilIcon } from "lucide-react";
 import { LimaConfig } from "src/types/LimaConfig";
 import Editor from '@monaco-editor/react';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "./ui/accordion";
 
 interface Props {
     instanceName: string,
@@ -64,11 +64,6 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
     const hasInvalidProvision = draftConfig?.provision?.some(p => !p.script?.trim());
     const hasInvalidProbe = draftConfig?.probes?.some(p => !p.description?.trim() || !p.script?.trim());
 
-    const truncateScript = (script: string, maxLength: number = 30) => {
-        if (!script) return '';
-        if (script.length <= maxLength) return script;
-        return `${script.slice(0, maxLength)}...`;
-    };
 
     return (
         <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto max-h-full">
@@ -156,6 +151,10 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                                     folding: false,
                                                     lineDecorationsWidth: 0,
                                                     lineNumbersMinChars: 3,
+                                                    scrollbar: {
+                                                        verticalScrollbarSize: 6,
+                                                        horizontalScrollbarSize: 6,
+                                                    },
                                                 }}
                                             />
                                         </div>
@@ -186,18 +185,49 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                         </DialogFooter>
                     </DialogContent>
 
-                    <div className="flex flex-col gap-2">
-                        {draftConfig?.provision?.map((p, idx) => (
-                            <Item key={idx} variant="muted" size="xs">
-                                <ItemContent className="overflow-hidden">
-                                    <ItemTitle>{p.mode || 'system'}</ItemTitle>
-                                    <ItemDescription className="max-w-full truncate font-mono" title={p.script}>
-                                        {truncateScript(p.script)}
-                                    </ItemDescription>
-                                </ItemContent>
-                            </Item>
-                        ))}
-                    </div>
+                    {draftConfig?.provision && draftConfig.provision.length > 0 && (
+                        <Accordion className="w-full">
+                            {draftConfig.provision.map((p, idx) => (
+                                <AccordionItem value={`prov-${idx}`} key={idx} className="border-border/40">
+                                    <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors uppercase tracking-tight text-muted-foreground font-semibold">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] bg-muted px-1 rounded text-foreground/70">{idx + 1}</span>
+                                            {p.mode || 'system'}
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-2 bg-muted/10">
+                                        <div className="h-[80px] border border-border/40 rounded overflow-hidden bg-zinc-950/50">
+                                            <Editor
+                                                height="100%"
+                                                defaultLanguage="shell"
+                                                theme="vs-dark"
+                                                value={p.script}
+                                                onChange={(val) => updateArrayField('provision', idx, 'script', val || '')}
+                                                options={{
+                                                    minimap: { enabled: false },
+                                                    fontSize: 10,
+                                                    lineNumbers: 'off',
+                                                    scrollBeyondLastLine: false,
+                                                    automaticLayout: true,
+                                                    padding: { top: 4, bottom: 4 },
+                                                    glyphMargin: false,
+                                                    folding: false,
+                                                    lineDecorationsWidth: 0,
+                                                    lineNumbersMinChars: 0,
+                                                    overviewRulerLanes: 0,
+                                                    hideCursorInOverviewRuler: true,
+                                                    scrollbar: {
+                                                        verticalScrollbarSize: 4,
+                                                        horizontalScrollbarSize: 4,
+                                                    },
+                                                }}
+                                            />
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    )}
                 </Dialog>
             </div>
 
@@ -270,6 +300,10 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                                     folding: false,
                                                     lineDecorationsWidth: 0,
                                                     lineNumbersMinChars: 3,
+                                                    scrollbar: {
+                                                        verticalScrollbarSize: 6,
+                                                        horizontalScrollbarSize: 6,
+                                                    },
                                                 }}
                                             />
                                         </div>
@@ -308,18 +342,54 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                         </DialogFooter>
                     </DialogContent>
 
-                    <div className="flex flex-col gap-2">
-                        {draftConfig?.probes?.map((p, idx) => (
-                            <Item key={idx} variant="muted" size="xs">
-                                <ItemContent className="overflow-hidden">
-                                    <ItemTitle>{p.description || 'unnamed'}</ItemTitle>
-                                    <ItemDescription className="max-w-full truncate font-mono" title={p.script}>
-                                        {truncateScript(p.script)}
-                                    </ItemDescription>
-                                </ItemContent>
-                            </Item>
-                        ))}
-                    </div>
+                    {draftConfig?.probes && draftConfig.probes.length > 0 && (
+                        <Accordion className="w-full">
+                            {draftConfig.probes.map((p, idx) => (
+                                <AccordionItem value={`probe-${idx}`} key={idx} className="border-border/40">
+                                    <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors tracking-tight text-muted-foreground font-semibold">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] bg-muted px-1 rounded text-foreground/70">{idx + 1}</span>
+                                            {p.description || 'unnamed'}
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-2 bg-muted/10">
+                                        <div className="h-[80px] border border-border/40 rounded overflow-hidden bg-zinc-950/50">
+                                            <Editor
+                                                height="100%"
+                                                defaultLanguage="shell"
+                                                theme="vs-dark"
+                                                value={p.script}
+                                                onChange={(val) => updateArrayField('probes', idx, 'script', val || '')}
+                                                options={{
+                                                    minimap: { enabled: false },
+                                                    fontSize: 10,
+                                                    lineNumbers: 'off',
+                                                    scrollBeyondLastLine: false,
+                                                    automaticLayout: true,
+                                                    padding: { top: 4, bottom: 4 },
+                                                    glyphMargin: false,
+                                                    folding: false,
+                                                    lineDecorationsWidth: 0,
+                                                    lineNumbersMinChars: 0,
+                                                    overviewRulerLanes: 0,
+                                                    hideCursorInOverviewRuler: true,
+                                                    scrollbar: {
+                                                        verticalScrollbarSize: 4,
+                                                        horizontalScrollbarSize: 4,
+                                                    },
+                                                }}
+                                            />
+                                        </div>
+                                        {p.hint && (
+                                            <div className="mt-2 text-[9px] text-muted-foreground italic border-t border-border/20 pt-1">
+                                                Hint: {p.hint}
+                                            </div>
+                                        )}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    )}
                 </Dialog>
             </div>
         </div>
