@@ -22,7 +22,7 @@ import {
     DialogTrigger,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Trash2Icon, PlusIcon } from "lucide-react";
+import { Trash2Icon, PlusIcon, PencilIcon } from "lucide-react";
 import { LimaConfig } from "src/types/LimaConfig";
 
 interface Props {
@@ -93,105 +93,118 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
             <ItemSeparator />
 
             {/* Images Section */}
-            <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold">Images</Label>
-                    <Dialog
-                        open={isDialogOpen}
-                        onOpenChange={(open) => {
-                            if (!open && hasInvalidImageLocation) {
-                                // Block closing if invalid
-                                return;
-                            }
-                            setIsDialogOpen(open);
-                        }}
+            <div className="grid w-full items-center gap-1.5">
+                <Dialog
+                    open={isDialogOpen}
+                    onOpenChange={(open) => {
+                        if (!open && hasInvalidImageLocation) {
+                            // Block closing if invalid
+                            return;
+                        }
+                        setIsDialogOpen(open);
+                    }}
+                >
+                    <div className="flex items-center justify-between">
+                        <Label className="mb-0.5">Images</Label>
+                        {(!draftConfig?.images || draftConfig.images.length === 0) && (
+                            <DialogTrigger render={<Button variant="outline" size="xs" />}>
+                                <PlusIcon className="size-3 mr-1" /> Add Image
+                            </DialogTrigger>
+                        )}
+                    </div>
+
+                    <DialogContent
+                        className="sm:max-w-md"
+                        showCloseButton={!hasInvalidImageLocation}
                     >
-                        <DialogTrigger render={<Button variant="outline" size="xs" />}>
-                            Edit
-                        </DialogTrigger>
-                        <DialogContent
-                            className="sm:max-w-md"
-                            showCloseButton={!hasInvalidImageLocation}
-                        >
-                            <DialogHeader>
-                                <DialogTitle>Configure Images</DialogTitle>
-                                <DialogDescription>
-                                    Add or remove virtual machine images for this instance.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                                {draftConfig?.images?.map((image, idx) => (
-                                    <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => removeArrayItem('images', idx)}
-                                            disabled={draftConfig?.images?.length === 1}
-                                            title={draftConfig?.images?.length === 1 ? "At least one image is required" : undefined}
-                                        >
-                                            <Trash2Icon className="size-3 text-destructive" />
-                                        </Button>
-                                        <div className="grid gap-1">
-                                            <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
-                                            <Input
-                                                value={image.location}
-                                                onChange={(e) => updateArrayField('images', idx, 'location', e.target.value)}
-                                                placeholder="https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img"
-                                                className="h-7 text-[11px]"
-                                            />
-                                        </div>
-                                        <div className="grid gap-1">
-                                            <Label className="text-[10px] uppercase text-muted-foreground">Arch</Label>
-                                            <Select value={image.arch || 'x86_64'} onValueChange={(val) => updateArrayField('images', idx, 'arch', val)}>
-                                                <SelectTrigger className="h-7 text-[11px] w-full">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="x86_64">x86_64</SelectItem>
-                                                    <SelectItem value="aarch64">aarch64</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
+                        <DialogHeader>
+                            <DialogTitle>Configure Images</DialogTitle>
+                            <DialogDescription>
+                                Add or remove virtual machine images for this instance.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
+                            {draftConfig?.images?.map((image, idx) => (
+                                <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => removeArrayItem('images', idx)}
+                                        disabled={draftConfig?.images?.length === 1}
+                                        title={draftConfig?.images?.length === 1 ? "At least one image is required" : undefined}
+                                    >
+                                        <Trash2Icon className="size-3 text-destructive" />
+                                    </Button>
+                                    <div className="grid gap-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
+                                        <Input
+                                            value={image.location}
+                                            onChange={(e) => updateArrayField('images', idx, 'location', e.target.value)}
+                                            placeholder="https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img"
+                                            className="h-7 text-[11px]"
+                                        />
                                     </div>
-                                ))}
-                                <Button
-                                    variant="outline"
-                                    size="xs"
-                                    className="border-dashed"
-                                    onClick={() => addArrayItem('images', { location: '', arch: 'aarch64' })}
-                                >
-                                    <PlusIcon className="size-3 mr-1" /> Add Image
-                                </Button>
-                            </div>
-                            {hasInvalidImageLocation && (
-                                <p className="text-[10px] text-destructive font-medium animate-pulse">
-                                    All images must have a valid URL.
-                                </p>
-                            )}
-                            <DialogFooter>
-                                <DialogClose
-                                    disabled={hasInvalidImageLocation}
-                                    render={<Button variant="outline" size="sm" />}
-                                >
-                                    Done
-                                </DialogClose>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                <div className="flex flex-col gap-2">
-                    {draftConfig?.images?.map((image, idx) => (
-                        <Item key={idx} variant="muted" size="xs">
-                            <ItemContent className="overflow-hidden">
-                                <ItemTitle>{image.arch || 'unknown'}</ItemTitle>
-                                <ItemDescription className="max-w-full" title={image.location}>
-                                    {image.location.slice(0, 10)}...{image.location.slice(image.location.length - 40)}
-                                </ItemDescription>
-                            </ItemContent>
-                        </Item>
-                    ))}
-                </div>
+                                    <div className="grid gap-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground">Arch</Label>
+                                        <Select value={image.arch || 'x86_64'} onValueChange={(val) => updateArrayField('images', idx, 'arch', val)}>
+                                            <SelectTrigger className="h-7 text-[11px] w-full">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="x86_64">x86_64</SelectItem>
+                                                <SelectItem value="aarch64">aarch64</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            ))}
+                            <Button
+                                variant="outline"
+                                size="xs"
+                                className="border-dashed"
+                                onClick={() => addArrayItem('images', { location: '', arch: 'aarch64' })}
+                            >
+                                <PlusIcon className="size-3 mr-1" /> Add Image
+                            </Button>
+                        </div>
+                        {hasInvalidImageLocation && (
+                            <p className="text-[10px] text-destructive font-medium animate-pulse">
+                                All images must have a valid URL.
+                            </p>
+                        )}
+                        <DialogFooter>
+                            <DialogClose
+                                disabled={hasInvalidImageLocation}
+                                render={<Button variant="outline" size="sm" />}
+                            >
+                                Done
+                            </DialogClose>
+                        </DialogFooter>
+                    </DialogContent>
+
+                    <div className="flex flex-col gap-2">
+                        {draftConfig?.images?.map((image, idx) => (
+                            <Item key={idx} variant="muted" size="xs" className="relative group">
+                                <ItemContent className="overflow-hidden pr-10">
+                                    <ItemTitle>{image.arch || 'unknown'}</ItemTitle>
+                                    <ItemDescription className="max-w-full" title={image.location}>
+                                        {image.location?.slice(0, 10)}...{image.location?.slice(image.location.length - 40)}
+                                    </ItemDescription>
+                                </ItemContent>
+                                <DialogTrigger render={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 size-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    />
+                                }>
+                                    <PencilIcon className="size-3 text-muted-foreground" />
+                                </DialogTrigger>
+                            </Item>
+                        ))}
+                    </div>
+                </Dialog>
             </div>
 
             <ItemSeparator />
