@@ -65,7 +65,7 @@ export function LimaConfigResourceColumn({ instanceName }: LimaConfigResourcePro
     }
 
     return (
-        <div className="flex flex-col gap-4 w-full max-w-sm p-4">
+        <div className="flex flex-col gap-4 w-full max-w-sm px-4 py-8 mx-auto">
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="cpus">CPUs</Label>
                 <Input
@@ -73,12 +73,13 @@ export function LimaConfigResourceColumn({ instanceName }: LimaConfigResourcePro
                     id="cpus"
                     value={draftLimaConfig?.cpus || ''}
                     onChange={(e) => handleChange('cpus', Number(e.target.value))}
+                    className="w-full"
                 />
             </div>
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="memory">Memory</Label>
                 <Select value={draftLimaConfig?.memory || '4GiB'} onValueChange={(val) => handleChange('memory', val)}>
-                    <SelectTrigger id="memory">
+                    <SelectTrigger id="memory" className="w-full">
                         <SelectValue placeholder="Select memory" />
                     </SelectTrigger>
                     <SelectContent>
@@ -93,7 +94,7 @@ export function LimaConfigResourceColumn({ instanceName }: LimaConfigResourcePro
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="disk">Disk</Label>
                 <Select value={draftLimaConfig?.disk || '100GiB'} onValueChange={(val) => handleChange('disk', val)}>
-                    <SelectTrigger id="disk">
+                    <SelectTrigger id="disk" className="w-full">
                         <SelectValue placeholder="Select disk size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -109,7 +110,7 @@ export function LimaConfigResourceColumn({ instanceName }: LimaConfigResourcePro
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="vmType">VmType</Label>
                 <Select value={draftLimaConfig?.vmType || 'vz'} onValueChange={(val) => handleChange('vmType', val)}>
-                    <SelectTrigger id="vmType">
+                    <SelectTrigger id="vmType" className="w-full">
                         <SelectValue placeholder="Select VM Type" />
                     </SelectTrigger>
                     <SelectContent>
