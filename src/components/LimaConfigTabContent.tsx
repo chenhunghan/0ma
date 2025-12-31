@@ -4,6 +4,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { Spinner } from "./ui/spinner";
 
 export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: string, instanceName: string }) {
     return (
@@ -47,7 +48,7 @@ export function LimaConfigResourceColumn({ instanceName }: LimaConfigResourcePro
     } = useLimaDraft(instanceName);
 
     if (isLoading) {
-        return <span className="font-semibold">Loading Lima Config...</span>
+        return <div title="Loading Lima Config..."><Spinner /></div>
     }
 
     return (
