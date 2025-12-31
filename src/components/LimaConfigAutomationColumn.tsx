@@ -23,7 +23,7 @@ import {
 import { Button } from "./ui/button";
 import { Trash2Icon, PlusIcon, PencilIcon } from "lucide-react";
 import { LimaConfig } from "src/types/LimaConfig";
-import { Textarea } from "./ui/textarea";
+import Editor from '@monaco-editor/react';
 
 interface Props {
     instanceName: string,
@@ -139,12 +139,26 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                     </div>
                                     <div className="grid gap-1">
                                         <Label className="text-[10px] uppercase text-muted-foreground">Script</Label>
-                                        <Textarea
-                                            value={p.script}
-                                            onChange={(e) => updateArrayField('provision', idx, 'script', e.target.value)}
-                                            placeholder="#!/bin/bash\necho 'hello world'"
-                                            className="min-h-[100px] text-[11px] font-mono"
-                                        />
+                                        <div className="min-h-[100px] border border-border/50 rounded-md overflow-hidden bg-zinc-950">
+                                            <Editor
+                                                defaultLanguage="shell"
+                                                theme="vs-dark"
+                                                value={p.script}
+                                                onChange={(val) => updateArrayField('provision', idx, 'script', val || '')}
+                                                options={{
+                                                    minimap: { enabled: false },
+                                                    fontSize: 11,
+                                                    lineNumbers: 'off',
+                                                    scrollBeyondLastLine: false,
+                                                    automaticLayout: true,
+                                                    padding: { top: 8, bottom: 8 },
+                                                    glyphMargin: false,
+                                                    folding: false,
+                                                    lineDecorationsWidth: 0,
+                                                    lineNumbersMinChars: 3,
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -234,7 +248,6 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                         <Input
                                             value={p.description}
                                             onChange={(e) => updateArrayField('probes', idx, 'description', e.target.value)}
-                                            placeholder="Check if k0s is ready"
                                             className="h-7 text-[11px]"
                                         />
                                     </div>
@@ -243,7 +256,6 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                         <Input
                                             value={p.script}
                                             onChange={(e) => updateArrayField('probes', idx, 'script', e.target.value)}
-                                            placeholder="k0s status"
                                             className="h-7 text-[11px] font-mono"
                                         />
                                     </div>
@@ -252,7 +264,6 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                         <Input
                                             value={p.hint || ''}
                                             onChange={(e) => updateArrayField('probes', idx, 'hint', e.target.value)}
-                                            placeholder="Wait for 1 minute"
                                             className="h-7 text-[11px]"
                                         />
                                     </div>
