@@ -89,7 +89,7 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.provision || draftConfig.provision.length === 0)
                                 ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 text-muted-foreground" />
+                                : <PencilIcon className="size-2.5 mr-[8px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -248,7 +248,7 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.probes || draftConfig.probes.length === 0)
                                 ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-2.5 text-muted-foreground" />
+                                : <PencilIcon className="size-2.5 mr-[8px]" />
                             }
                         </DialogTrigger>
                     </div>
