@@ -5,12 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useLimaDraft } from "src/hooks/useLimaDraft";
 import { Spinner } from "./ui/spinner";
 import {
-    Item,
-    ItemContent,
-    ItemDescription,
-    ItemTitle,
-} from "./ui/item";
-import {
     Dialog,
     DialogClose,
     DialogContent,
@@ -114,7 +108,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.images || draftConfig.images.length === 0)
                                 ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-3.5 text-muted-foreground" />
+                                : <PencilIcon className="size-2.5 mr-[8px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -189,18 +183,35 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         </DialogFooter>
                     </DialogContent>
 
-                    <div className="flex flex-col gap-2">
-                        {draftConfig?.images?.map((image, idx) => (
-                            <Item key={idx} variant="muted" size="xs">
-                                <ItemContent className="overflow-hidden">
-                                    <ItemTitle>{image.arch || 'unknown'}</ItemTitle>
-                                    <ItemDescription className="max-w-full" title={image.location}>
-                                        {image.location?.slice(0, 10)}...{image.location?.slice(image.location.length - 40)}
-                                    </ItemDescription>
-                                </ItemContent>
-                            </Item>
-                        ))}
-                    </div>
+                    {draftConfig?.images && draftConfig.images.length > 0 && (
+                        <Accordion className="w-full">
+                            {draftConfig.images.map((image, idx) => (
+                                <AccordionItem value={`image-${idx}`} key={idx} className="border-border/40">
+                                    <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors tracking-tight text-muted-foreground font-semibold">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <span className="text-[10px] bg-muted px-1 rounded text-foreground/70 shrink-0">{idx + 1}</span>
+                                            <span className="uppercase text-[9px] shrink-0 opacity-70">{image.arch || 'x86_64'}</span>
+                                            <span className="truncate opacity-80" title={image.location}>
+                                                {image.location?.slice(0, 10)}...{image.location?.slice(-20)}
+                                            </span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-2 bg-muted/10">
+                                        <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground/80 bg-zinc-950/50 p-2 rounded border border-border/20">
+                                            <div className="flex justify-between items-start">
+                                                <span className="shrink-0">Location:</span>
+                                                <span className="text-foreground/70 break-all ml-4 text-right">{image.location}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Architecture:</span>
+                                                <span className="text-foreground/70 uppercase">{image.arch || 'x86_64'}</span>
+                                            </div>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    )}
                 </Dialog>
             </div>
 
@@ -220,7 +231,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.mounts || draftConfig.mounts.length === 0)
                                 ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-3.5 text-muted-foreground" />
+                                : <PencilIcon className="size-2.5 mr-[8px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -296,18 +307,35 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         </DialogFooter>
                     </DialogContent>
 
-                    <div className="flex flex-col gap-2">
-                        {draftConfig?.mounts?.map((mount, idx) => (
-                            <Item key={idx} variant="muted" size="xs">
-                                <ItemContent className="overflow-hidden">
-                                    <ItemTitle>{mount.writable ? "R/W" : "R/O"}</ItemTitle>
-                                    <ItemDescription className="max-w-full truncate" title={mount.location}>
-                                        {truncatePath(mount.location ?? "")}
-                                    </ItemDescription>
-                                </ItemContent>
-                            </Item>
-                        ))}
-                    </div>
+                    {draftConfig?.mounts && draftConfig.mounts.length > 0 && (
+                        <Accordion className="w-full">
+                            {draftConfig.mounts.map((mount, idx) => (
+                                <AccordionItem value={`mount-${idx}`} key={idx} className="border-border/40">
+                                    <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors tracking-tight text-muted-foreground font-semibold">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <span className="text-[10px] bg-muted px-1 rounded text-foreground/70 shrink-0">{idx + 1}</span>
+                                            <span className="uppercase text-[9px] shrink-0 opacity-70">{mount.writable ? "R/W" : "R/O"}</span>
+                                            <span className="truncate opacity-80" title={mount.location}>
+                                                {truncatePath(mount.location ?? "")}
+                                            </span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-2 bg-muted/10">
+                                        <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground/80 bg-zinc-950/50 p-2 rounded border border-border/20">
+                                            <div className="flex justify-between items-start">
+                                                <span className="shrink-0">Location:</span>
+                                                <span className="text-foreground/70 break-all ml-4 text-right">{mount.location}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Writable:</span>
+                                                <span className="text-foreground/70">{mount.writable ? 'true' : 'false'}</span>
+                                            </div>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    )}
                 </Dialog>
             </div>
 
@@ -328,7 +356,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                             {(!draftConfig?.copyToHost || draftConfig.copyToHost.length === 0)
                                 ? <PlusIcon className="size-4" />
-                                : <PencilIcon className="size-3.5 text-muted-foreground" />
+                                : <PencilIcon className="size-2.5 mr-[8px]" />
                             }
                         </DialogTrigger>
                     </div>
@@ -413,17 +441,38 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         </DialogFooter>
                     </DialogContent>
 
-                    <div className="flex flex-col gap-2">
-                        {draftConfig?.copyToHost?.map((rule, idx) => (
-                            <Item key={idx} variant="muted" size="xs">
-                                <ItemContent className="overflow-hidden">
-                                    <ItemDescription className="max-w-full truncate" title={`${rule.guest} -> ${rule.host}`}>
-                                        {truncatePath(rule.guest)} → {truncatePath(rule.host)}
-                                    </ItemDescription>
-                                </ItemContent>
-                            </Item>
-                        ))}
-                    </div>
+                    {draftConfig?.copyToHost && draftConfig.copyToHost.length > 0 && (
+                        <Accordion className="w-full">
+                            {draftConfig.copyToHost.map((rule, idx) => (
+                                <AccordionItem value={`cth-${idx}`} key={idx} className="border-border/40">
+                                    <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors tracking-tight text-muted-foreground font-semibold">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <span className="text-[10px] bg-muted px-1 rounded text-foreground/70 shrink-0">{idx + 1}</span>
+                                            <span className="truncate" title={rule.guest}>{truncatePath(rule.guest)}</span>
+                                            <span className="text-muted-foreground/50 shrink-0">→</span>
+                                            <span className="truncate" title={rule.host}>{truncatePath(rule.host)}</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="p-2 bg-muted/10">
+                                        <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground/80 bg-zinc-950/50 p-2 rounded border border-border/20">
+                                            <div className="flex justify-between">
+                                                <span>Guest Path:</span>
+                                                <span className="text-foreground/70 break-all ml-4">{rule.guest}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Host Path:</span>
+                                                <span className="text-foreground/70 break-all ml-4">{rule.host}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Delete on Stop:</span>
+                                                <span className="text-foreground/70">{rule.deleteOnStop ? 'true' : 'false'}</span>
+                                            </div>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    )}
                 </Dialog>
             </div>
 
