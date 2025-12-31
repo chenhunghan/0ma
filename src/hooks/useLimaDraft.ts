@@ -21,14 +21,14 @@ export function useLimaDraft(instanceName: string) {
 
     // Use a per-instance key to prevent drafts from leaking across different instances
     const draftKey = `draftLimaConfig:${instanceName}`;
-    const { data: draftConfig, isLoading: isLoadingDraft } = useTauriStoreValue<LimaConfig>(draftKey);
+    const { data: draftConfig, isLoading: isLoadingDraft, isFetched } = useTauriStoreValue<LimaConfig>(draftKey);
 
     // Initialize draft from actual config if draft is missing
     useEffect(() => {
-        if (!isLoadingDraft && actualConfig && !draftConfig) {
+        if (isFetched && actualConfig && !draftConfig) {
             set(draftKey, actualConfig);
         }
-    }, [actualConfig, draftConfig, isLoadingDraft, set, draftKey]);
+    }, [isFetched, actualConfig, draftConfig, set, draftKey]);
 
     // Derived dirty state
     const isDirty = useMemo(() => {
