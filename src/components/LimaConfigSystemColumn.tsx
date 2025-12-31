@@ -114,11 +114,12 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                 >
                     <div className="flex items-center justify-between">
                         <Label className="mb-0.5">Images</Label>
-                        {(!draftConfig?.images || draftConfig.images.length === 0) && (
-                            <DialogTrigger render={<Button variant="outline" size="xs" />}>
-                                <PlusIcon className="size-3 mr-1" /> Add Image
-                            </DialogTrigger>
-                        )}
+                        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
+                            {(!draftConfig?.images || draftConfig.images.length === 0)
+                                ? <PlusIcon className="size-4" />
+                                : <PencilIcon className="size-3.5 text-muted-foreground" />
+                            }
+                        </DialogTrigger>
                     </div>
 
                     <DialogContent
@@ -193,22 +194,13 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
 
                     <div className="flex flex-col gap-2">
                         {draftConfig?.images?.map((image, idx) => (
-                            <Item key={idx} variant="muted" size="xs" className="relative group">
-                                <ItemContent className="overflow-hidden pr-10">
+                            <Item key={idx} variant="muted" size="xs">
+                                <ItemContent className="overflow-hidden">
                                     <ItemTitle>{image.arch || 'unknown'}</ItemTitle>
                                     <ItemDescription className="max-w-full" title={image.location}>
                                         {image.location?.slice(0, 10)}...{image.location?.slice(image.location.length - 40)}
                                     </ItemDescription>
                                 </ItemContent>
-                                <DialogTrigger render={
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 size-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    />
-                                }>
-                                    <PencilIcon className="size-3 text-muted-foreground" />
-                                </DialogTrigger>
                             </Item>
                         ))}
                     </div>
@@ -228,11 +220,12 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                 >
                     <div className="flex items-center justify-between">
                         <Label className="mb-0.5">Mounts</Label>
-                        {(!draftConfig?.mounts || draftConfig.mounts.length === 0) && (
-                            <DialogTrigger render={<Button variant="outline" size="xs" />}>
-                                <PlusIcon className="size-3 mr-1" />
-                            </DialogTrigger>
-                        )}
+                        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
+                            {(!draftConfig?.mounts || draftConfig.mounts.length === 0)
+                                ? <PlusIcon className="size-4" />
+                                : <PencilIcon className="size-3.5 text-muted-foreground" />
+                            }
+                        </DialogTrigger>
                     </div>
 
                     <DialogContent
@@ -308,22 +301,13 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
 
                     <div className="flex flex-col gap-2">
                         {draftConfig?.mounts?.map((mount, idx) => (
-                            <Item key={idx} variant="muted" size="xs" className="relative group">
-                                <ItemContent className="overflow-hidden pr-10">
+                            <Item key={idx} variant="muted" size="xs">
+                                <ItemContent className="overflow-hidden">
                                     <ItemTitle>{mount.writable ? "R/W" : "R/O"}</ItemTitle>
                                     <ItemDescription className="max-w-full truncate" title={mount.location}>
                                         {truncatePath(mount.location ?? "")}
                                     </ItemDescription>
                                 </ItemContent>
-                                <DialogTrigger render={
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 size-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    />
-                                }>
-                                    <PencilIcon className="size-3 text-muted-foreground" />
-                                </DialogTrigger>
                             </Item>
                         ))}
                     </div>
@@ -344,11 +328,12 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                 >
                     <div className="flex items-center justify-between">
                         <Label className="mb-0.5">Copy to Host</Label>
-                        {(!draftConfig?.copyToHost || draftConfig.copyToHost.length === 0) && (
-                            <DialogTrigger render={<Button variant="outline" size="xs" />}>
-                                <PlusIcon className="size-3 mr-1" />
-                            </DialogTrigger>
-                        )}
+                        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
+                            {(!draftConfig?.copyToHost || draftConfig.copyToHost.length === 0)
+                                ? <PlusIcon className="size-4" />
+                                : <PencilIcon className="size-3.5 text-muted-foreground" />
+                            }
+                        </DialogTrigger>
                     </div>
 
                     <DialogContent
@@ -433,22 +418,13 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
 
                     <div className="flex flex-col gap-2">
                         {draftConfig?.copyToHost?.map((rule, idx) => (
-                            <Item key={idx} variant="muted" size="xs" className="relative group">
-                                <ItemContent className="overflow-hidden pr-10">
+                            <Item key={idx} variant="muted" size="xs">
+                                <ItemContent className="overflow-hidden">
                                     <ItemTitle>{rule.deleteOnStop ? "Transient" : "Persistent"}</ItemTitle>
                                     <ItemDescription className="max-w-full truncate" title={`${rule.guest} -> ${rule.host}`}>
                                         {truncatePath(rule.guest)} → {truncatePath(rule.host)}
                                     </ItemDescription>
                                 </ItemContent>
-                                <DialogTrigger render={
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 size-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    />
-                                }>
-                                    <PencilIcon className="size-3 text-muted-foreground" />
-                                </DialogTrigger>
                             </Item>
                         ))}
                     </div>
