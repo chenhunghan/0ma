@@ -209,13 +209,14 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                                     lineNumbers: 'off',
                                                     scrollBeyondLastLine: false,
                                                     automaticLayout: true,
-                                                    padding: { top: 4, bottom: 4 },
+                                                    padding: { top: 1, bottom: 1 },
                                                     glyphMargin: false,
                                                     folding: false,
                                                     lineDecorationsWidth: 0,
                                                     lineNumbersMinChars: 0,
                                                     overviewRulerLanes: 0,
                                                     hideCursorInOverviewRuler: true,
+                                                    wordWrap: 'on',
                                                     scrollbar: {
                                                         verticalScrollbarSize: 4,
                                                         horizontalScrollbarSize: 4,
@@ -373,6 +374,7 @@ export function LimaConfigAutomationColumn({ instanceName }: Props) {
                                                     lineNumbersMinChars: 0,
                                                     overviewRulerLanes: 0,
                                                     hideCursorInOverviewRuler: true,
+                                                    wordWrap: 'on',
                                                     scrollbar: {
                                                         verticalScrollbarSize: 4,
                                                         horizontalScrollbarSize: 4,
