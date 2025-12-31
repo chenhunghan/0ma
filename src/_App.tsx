@@ -5,6 +5,7 @@ import { Separator } from "src/components/ui/separator"
 import { TopBar } from "src/components/_TopBar"
 import { TermTabs, TabGroup } from "./components/TermTabs"
 import { EmptyTerminalState } from "./components/EmptyTerminalState"
+import { LimaConfigTabContent } from "./components/LimaConfigTabContent"
 
 export function App() {
     // Initial State Factory
@@ -23,12 +24,6 @@ export function App() {
             }
         ]
     })
-
-    // State management for Terminal Groups
-    const [configTabs, setConfigTabs] = useState<TabGroup[]>(() => [createInitialTab("Config", "tab-1")])
-    const [configActive, setConfigActive] = useState("tab-1")
-    const [configMaxTabId, setConfigMaxTabId] = useState(1)
-    const [configMaxTermId, setConfigMaxTermId] = useState(1)
 
     const [limaTabs, setLimaTabs] = useState<TabGroup[]>(() => [createInitialTab("Lima", "tab-1")])
     const [limaActive, setLimaActive] = useState("tab-1")
@@ -148,33 +143,10 @@ export function App() {
                     <TabsTrigger value="lima">Lima</TabsTrigger>
                     <TabsTrigger value="k8s">K8s</TabsTrigger>
                 </TabsList>
+
                 <Separator />
-                <TabsContent value="config" className="h-full">
-                    <ResizableLayout
-                        columns={[
-                            <div className="flex h-full w-full items-center justify-center" key="1">
-                                <span className="font-semibold">Config Column 1</span>
-                            </div>,
-                            <div className="flex h-full w-full items-center justify-center" key="2">
-                                <span className="font-semibold">Config Column 2</span>
-                            </div>,
-                            <div className="flex h-full w-full items-center justify-center" key="3">
-                                <span className="font-semibold">Config Column 3</span>
-                            </div>,
-                        ]}
-                        bottom={
-                            <TermTabs
-                                tabs={configTabs}
-                                activeTabId={configActive}
-                                onTabChange={setConfigActive}
-                                onAddTab={() => addTab("Config", setConfigTabs, configMaxTabId, setConfigMaxTabId, configMaxTermId, setConfigMaxTermId, setConfigActive)}
-                                onAddSideBySide={(id) => addSideBySide("Config", id, setConfigTabs, configMaxTermId, setConfigMaxTermId)}
-                                onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setConfigTabs, configActive, setConfigActive)}
-                                emptyState={<EmptyTerminalState onAdd={() => addTab("Config", setConfigTabs, configMaxTabId, setConfigMaxTabId, configMaxTermId, setConfigMaxTermId, setConfigActive)} />}
-                            />
-                        }
-                    />
-                </TabsContent>
+
+                <LimaConfigTabContent tabValue="config" instanceName="0ma-s7k8" />
                 <TabsContent value="lima">
                     <ResizableLayout
                         columns={[
