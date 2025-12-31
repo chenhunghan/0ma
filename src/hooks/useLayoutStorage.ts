@@ -3,20 +3,20 @@ import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-pro
 
 export function useLayoutStorage() {
     const { set, isLoadingStore } = useTauriStore();
-    // Store all layouts in a single dictionary key
-    const { data: layouts } = useTauriStoreValue<Record<string, string>>("resizable-layouts");
 
-    const storage = useMemo(() => ({
+    const { data: resizableLayout } = useTauriStoreValue<Record<string, string>>("resizable-layouts");
+
+    const resizableLayoutStorage = useMemo(() => ({
         getItem: (name: string): string | null => {
-            return layouts?.[name] || null;
+            return resizableLayout?.[name] || null;
         },
         setItem: (name: string, value: string): void => {
             set("resizable-layouts", {
-                ...(layouts || {}),
+                ...(resizableLayout || {}),
                 [name]: value
             });
         }
-    }), [layouts, set]);
+    }), [resizableLayout, set]);
 
-    return { storage, isLoadingStore };
+    return { resizableLayoutStorage, isLoadingStore };
 }

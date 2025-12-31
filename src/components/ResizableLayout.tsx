@@ -15,13 +15,13 @@ interface ResizableLayoutProps {
 
 export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayoutProps) {
     const isMobile = useIsMobile();
-    const { storage } = useLayoutStorage();
+    const { resizableLayoutStorage } = useLayoutStorage();
 
     return (
         <ResizablePanelGroup
             direction="vertical"
             autoSaveId={autoSaveId}
-            storage={storage}>
+            storage={resizableLayoutStorage}>
             {/* Top Section: Contains the columns (grid vertically on mobile, horizontally on desktop) */}
             {columns.length > 0 ?
                 <ResizablePanel defaultSize={40} minSize={10}>
