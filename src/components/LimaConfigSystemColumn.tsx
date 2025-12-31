@@ -39,6 +39,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isMountsDialogOpen, setIsMountsDialogOpen] = useState(false);
     const [isCopyToHostDialogOpen, setIsCopyToHostDialogOpen] = useState(false);
+    const [isPortForwardsDialogOpen, setIsPortForwardsDialogOpen] = useState(false);
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>
@@ -73,6 +74,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
     const hasInvalidImageLocation = draftConfig?.images?.some(img => !img.location?.trim() || !isUrl(img.location));
     const hasInvalidMount = draftConfig?.mounts?.some(m => !m.location?.trim());
     const hasInvalidCopyToHost = draftConfig?.copyToHost?.some(c => !c.guest?.trim() || !c.host?.trim());
+    const hasInvalidPortForward = draftConfig?.portForwards?.some(p => !p.guestPort || !p.hostPort || !p.proto);
 
     const truncatePath = (path: string, maxLength: number = 20) => {
         if (!path) return '';
@@ -411,6 +413,130 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                                 <ItemContent className="overflow-hidden">
                                     <ItemDescription className="max-w-full truncate" title={`${rule.guest} -> ${rule.host}`}>
                                         {truncatePath(rule.guest)} → {truncatePath(rule.host)}
+                                    </ItemDescription>
+                                </ItemContent>
+                            </Item>
+                        ))}
+                    </div>
+                </Dialog>
+            </div>
+
+            {/* Port Forwards Section */}
+            <div className="grid w-full items-center gap-1.5">
+                <Dialog
+                    open={isPortForwardsDialogOpen}
+                    onOpenChange={(open) => {
+                        if (!open && hasInvalidPortForward) {
+                            return;
+                        }
+                        setIsPortForwardsDialogOpen(open);
+                    }}
+                >
+                    <div className="flex items-center justify-between">
+                        <Label className="mb-0.5">Port Forwards</Label>
+                        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
+                            {(!draftConfig?.portForwards || draftConfig.portForwards.length === 0)
+                                ? <PlusIcon className="size-4" />
+                                : <PencilIcon className="size-2.5 mr-[8px]" />
+                            }
+                        </DialogTrigger>
+                    </div>
+
+                    <DialogContent
+                        className="sm:max-w-md"
+                        showCloseButton={!hasInvalidPortForward}
+                    >
+                        <DialogHeader>
+                            <DialogTitle>Configure Port Forwards</DialogTitle>
+                            <DialogDescription>
+                                Map ports from the guest VM to the host machine.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
+                            {draftConfig?.portForwards?.map((pf, idx) => (
+                                <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => removeArrayItem('portForwards', idx)}
+                                    >
+                                        <Trash2Icon className="size-3 text-destructive" />
+                                    </Button>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid gap-1">
+                                            <Label className="text-[10px] uppercase text-muted-foreground">Guest Port</Label>
+                                            <Input
+                                                type="number"
+                                                value={pf.guestPort}
+                                                onChange={(e) => updateArrayField('portForwards', idx, 'guestPort', parseInt(e.target.value) || 0)}
+                                                className="h-7 text-[11px]"
+                                            />
+                                        </div>
+                                        <div className="grid gap-1">
+                                            <Label className="text-[10px] uppercase text-muted-foreground">Host Port</Label>
+                                            <Input
+                                                type="number"
+                                                value={pf.hostPort}
+                                                onChange={(e) => updateArrayField('portForwards', idx, 'hostPort', parseInt(e.target.value) || 0)}
+                                                className="h-7 text-[11px]"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground">Protocol</Label>
+                                        <Select
+                                            value={pf.proto || 'tcp'}
+                                            onValueChange={(val) => updateArrayField('portForwards', idx, 'proto', val)}
+                                        >
+                                            <SelectTrigger className="h-7 text-[11px] w-full">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="tcp">TCP</SelectItem>
+                                                <SelectItem value="udp">UDP</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            ))}
+                            <Button
+                                variant="outline"
+                                size="xs"
+                                className="border-dashed"
+                                onClick={() => addArrayItem('portForwards', {
+                                    guestPort: 8080,
+                                    hostPort: 8080,
+                                    proto: 'tcp',
+                                    guestIPMustBeZero: true,
+                                    hostIP: '127.0.0.1'
+                                })}
+                            >
+                                <PlusIcon className="size-3 mr-1" /> Add Port Forward
+                            </Button>
+                        </div>
+                        {hasInvalidPortForward && (
+                            <p className="text-[10px] text-destructive font-medium animate-pulse">
+                                All port forwards must have guest/host ports and a protocol.
+                            </p>
+                        )}
+                        <DialogFooter>
+                            <DialogClose
+                                disabled={hasInvalidPortForward}
+                                render={<Button variant="outline" size="sm" />}
+                            >
+                                Done
+                            </DialogClose>
+                        </DialogFooter>
+                    </DialogContent>
+
+                    <div className="flex flex-col gap-2">
+                        {draftConfig?.portForwards?.map((pf, idx) => (
+                            <Item key={idx} variant="muted" size="xs">
+                                <ItemContent className="overflow-hidden">
+                                    <ItemTitle className="uppercase text-[9px]">{pf.proto || 'tcp'}</ItemTitle>
+                                    <ItemDescription className="max-w-full truncate">
+                                        Guest:{pf.guestPort} → Host:{pf.hostPort}
                                     </ItemDescription>
                                 </ItemContent>
                             </Item>
