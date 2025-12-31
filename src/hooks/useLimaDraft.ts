@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useEffect } from "react";
+import { isEqual } from "lodash";
 import { useLimaYaml } from "./useLimaYaml";
 import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-provider";
 import { LimaConfig } from "src/types/LimaConfig";
@@ -30,16 +31,9 @@ export function useLimaDraft(instanceName: string) {
     }, [actualConfig, draftConfig, isLoadingDraft, set, draftKey]);
 
     // Derived dirty state
-    // Currently only tracks cpus, memory, disk, vmType
     const isDirty = useMemo(() => {
         if (!actualConfig || !draftConfig) return false;
-
-        return (
-            actualConfig.cpus !== draftConfig.cpus ||
-            actualConfig.memory !== draftConfig.memory ||
-            actualConfig.disk !== draftConfig.disk ||
-            actualConfig.vmType !== draftConfig.vmType
-        );
+        return !isEqual(actualConfig, draftConfig);
     }, [actualConfig, draftConfig]);
 
     const updateField = useCallback((field: keyof LimaConfig, value: unknown) => {
