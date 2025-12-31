@@ -9,6 +9,7 @@ export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: str
     return (
         <TabsContent value={tabValue} className="h-full">
             <ResizableLayout
+                autoSaveId="lima-config-tabs-content"
                 columns={isMobile ? [] : [
                     <ColunmWrapper key="1">
                         <LimaConfigResourceColumn instanceName={instanceName} />

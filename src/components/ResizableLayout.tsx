@@ -9,13 +9,14 @@ import { useIsMobile } from "src/hooks/useMediaQuery"
 interface ResizableLayoutProps {
     columns: ReactNode[]
     bottom: ReactNode
+    autoSaveId: string
 }
 
-export function ResizableLayout({ columns, bottom }: ResizableLayoutProps) {
+export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayoutProps) {
     const isMobile = useIsMobile()
 
     return (
-        <ResizablePanelGroup direction="vertical">
+        <ResizablePanelGroup direction="vertical" autoSaveId={autoSaveId}>
             {/* Top Section: Contains the columns (grid vertically on mobile, horizontally on desktop) */}
             {columns.length > 0 ?
                 <ResizablePanel defaultSize={40} minSize={10}>

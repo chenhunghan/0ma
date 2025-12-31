@@ -149,6 +149,7 @@ export function App() {
                 <LimaConfigTabContent tabValue="config" instanceName="0ma-s7k8" />
                 <TabsContent value="lima">
                     <ResizableLayout
+                        autoSaveId="lima-tabs-content"
                         columns={[
                             <div className="flex h-full w-full items-center justify-center" key="1">
                                 <span className="font-semibold">Lima Column 1</span>
@@ -175,6 +176,7 @@ export function App() {
                 </TabsContent>
                 <TabsContent value="k8s">
                     <ResizableLayout
+                        autoSaveId="k8s-tabs-content"
                         columns={[
                             <div className="flex h-full w-full items-center justify-center" key="1">
                                 <span className="font-semibold">K8s Column 1</span>
