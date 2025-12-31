@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs
 import { Separator } from "src/components/ui/separator"
 import { TopBar } from "src/components/_TopBar"
 import { TermTabs, TabGroup } from "./components/TermTabs"
+import { EmptyTerminalState } from "./components/EmptyTerminalState"
 
 export function App() {
     // Initial State Factory
@@ -169,6 +170,7 @@ export function App() {
                                 onAddTab={() => addTab("Config", setConfigTabs, configMaxTabId, setConfigMaxTabId, configMaxTermId, setConfigMaxTermId, setConfigActive)}
                                 onAddSideBySide={(id) => addSideBySide("Config", id, setConfigTabs, configMaxTermId, setConfigMaxTermId)}
                                 onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setConfigTabs, configActive, setConfigActive)}
+                                emptyState={<EmptyTerminalState onAdd={() => addTab("Config", setConfigTabs, configMaxTabId, setConfigMaxTabId, configMaxTermId, setConfigMaxTermId, setConfigActive)} />}
                             />
                         }
                     />
@@ -194,6 +196,7 @@ export function App() {
                                 onAddTab={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)}
                                 onAddSideBySide={(id) => addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)}
                                 onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setLimaTabs, limaActive, setLimaActive)}
+                                emptyState={<EmptyTerminalState onAdd={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)} />}
                             />
                         }
                     />
@@ -219,6 +222,7 @@ export function App() {
                                 onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
                                 onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}
                                 onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setK8sTabs, k8sActive, setK8sActive)}
+                                emptyState={<EmptyTerminalState onAdd={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)} />}
                             />
                         }
                     />

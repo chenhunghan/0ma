@@ -1,6 +1,9 @@
 import { render, screen, fireEvent } from "@testing-library/react"
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { TerminalRow, Terminal, TermTabs } from "./TermTabs"
+import { TermTabs } from "./TermTabs"
+import { Terminal } from "src/services/Terminal"
+import { TerminalRow } from "./TermRow"
+import { EmptyTerminalState } from "./EmptyTerminalState"
 
 // Utility to mock window.matchMedia state
 const setMobile = (isMobile: boolean) => {
@@ -127,6 +130,7 @@ describe("TermTabs", () => {
                 onAddTab={mockOnAddTab}
                 onAddSideBySide={mockOnAddSideBySide}
                 onRemoveTerminal={mockOnRemoveTerminal}
+                emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
             />
         )
 
@@ -146,6 +150,7 @@ describe("TermTabs", () => {
                 onAddTab={mockOnAddTab}
                 onAddSideBySide={mockOnAddSideBySide}
                 onRemoveTerminal={mockOnRemoveTerminal}
+                emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
             />
         )
 
@@ -164,6 +169,7 @@ describe("TermTabs", () => {
                 onAddTab={mockOnAddTab}
                 onAddSideBySide={mockOnAddSideBySide}
                 onRemoveTerminal={mockOnRemoveTerminal}
+                emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
             />
         )
 
@@ -182,6 +188,7 @@ describe("TermTabs", () => {
                 onAddTab={mockOnAddTab}
                 onAddSideBySide={mockOnAddSideBySide}
                 onRemoveTerminal={mockOnRemoveTerminal}
+                emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
             />
         )
 
