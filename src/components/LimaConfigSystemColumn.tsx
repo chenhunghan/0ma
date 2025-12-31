@@ -64,7 +64,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
     const isUrl = (str: string) => {
         try {
             const url = new URL(str);
-            return url.protocol === 'http:' || url.protocol === 'https:';
+            return url.protocol === 'https:';
         } catch (_) {
             return false;
         }
@@ -166,7 +166,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                             </div>
                             {hasInvalidImageLocation && (
                                 <p className="text-[10px] text-destructive font-medium animate-pulse">
-                                    * All images must have a valid URL (starting with http:// or https://).
+                                    * All images must have a valid URL.
                                 </p>
                             )}
                             <DialogFooter>
