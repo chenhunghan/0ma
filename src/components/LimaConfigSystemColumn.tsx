@@ -312,7 +312,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                                 <ItemContent className="overflow-hidden pr-10">
                                     <ItemTitle>{mount.writable ? "R/W" : "R/O"}</ItemTitle>
                                     <ItemDescription className="max-w-full truncate" title={mount.location}>
-                                        {truncatePath(mount.location)}
+                                        {truncatePath(mount.location ?? "")}
                                     </ItemDescription>
                                 </ItemContent>
                                 <DialogTrigger render={
