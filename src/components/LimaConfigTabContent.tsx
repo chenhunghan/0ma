@@ -3,6 +3,7 @@ import { ResizableLayout } from "./ResizableLayout";
 import { TabsContent } from "./ui/tabs";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useTauriStore, useTauriStoreValue } from "../providers/tauri-store-provider";
 import { LimaConfig } from "src/types/LimaConfig";
 import { useCallback, useEffect } from "react";
@@ -63,8 +64,6 @@ export function LimaConfigResourceColumn({ instanceName }: LimaConfigResourcePro
         return <span className="font-semibold">Loading Lima Config...</span>
     }
 
-    const configToDisplay = draftLimaConfig || limaConfig || {};
-
     return (
         <div className="flex flex-col gap-4 w-full max-w-sm p-4">
             <div className="grid w-full items-center gap-1.5">
@@ -72,36 +71,53 @@ export function LimaConfigResourceColumn({ instanceName }: LimaConfigResourcePro
                 <Input
                     type="number"
                     id="cpus"
-                    value={configToDisplay.cpus || ''}
+                    value={draftLimaConfig?.cpus || ''}
                     onChange={(e) => handleChange('cpus', Number(e.target.value))}
                 />
             </div>
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="memory">Memory</Label>
-                <Input
-                    type="text"
-                    id="memory"
-                    value={configToDisplay.memory || ''}
-                    onChange={(e) => handleChange('memory', e.target.value)}
-                />
+                <Select value={draftLimaConfig?.memory || '4GiB'} onValueChange={(val) => handleChange('memory', val)}>
+                    <SelectTrigger id="memory">
+                        <SelectValue placeholder="Select memory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="2GiB">2GiB</SelectItem>
+                        <SelectItem value="4GiB">4GiB</SelectItem>
+                        <SelectItem value="8GiB">8GiB</SelectItem>
+                        <SelectItem value="16GiB">16GiB</SelectItem>
+                        <SelectItem value="32GiB">32GiB</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="disk">Disk</Label>
-                <Input
-                    type="text"
-                    id="disk"
-                    value={configToDisplay.disk || ''}
-                    onChange={(e) => handleChange('disk', e.target.value)}
-                />
+                <Select value={draftLimaConfig?.disk || '100GiB'} onValueChange={(val) => handleChange('disk', val)}>
+                    <SelectTrigger id="disk">
+                        <SelectValue placeholder="Select disk size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="10GiB">10GiB</SelectItem>
+                        <SelectItem value="25GiB">25GiB</SelectItem>
+                        <SelectItem value="50GiB">50GiB</SelectItem>
+                        <SelectItem value="100GiB">100GiB</SelectItem>
+                        <SelectItem value="250GiB">250GiB</SelectItem>
+                        <SelectItem value="500GiB">500GiB</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="vmType">VmType</Label>
-                <Input
-                    type="text"
-                    id="vmType"
-                    value={configToDisplay.vmType || ''}
-                    onChange={(e) => handleChange('vmType', e.target.value)}
-                />
+                <Select value={draftLimaConfig?.vmType || 'vz'} onValueChange={(val) => handleChange('vmType', val)}>
+                    <SelectTrigger id="vmType">
+                        <SelectValue placeholder="Select VM Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="vz">VZ</SelectItem>
+                        <SelectItem value="qemu">QEMU</SelectItem>
+                        <SelectItem value="krunkit">Krunkit</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
         </div>
     )
