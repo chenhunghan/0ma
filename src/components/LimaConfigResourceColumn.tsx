@@ -3,6 +3,13 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useLimaDraft } from "src/hooks/useLimaDraft";
 import { Spinner } from "./ui/spinner";
+import {
+    Item,
+    ItemContent,
+    ItemDescription,
+    ItemTitle,
+} from "./ui/item";
+import { Separator } from "./ui/separator";
 
 interface Props {
     instanceName: string,
@@ -11,6 +18,7 @@ interface Props {
 export function LimaConfigResourceColumn({ instanceName }: Props) {
     const {
         draftConfig,
+        actualConfig,
         isDirty,
         isLoading,
         updateField
@@ -80,6 +88,16 @@ export function LimaConfigResourceColumn({ instanceName }: Props) {
                         <SelectItem value="krunkit">Krunkit</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+            <Separator />
+            {/* Read-only Lima Minimum Version */}
+            <div className="grid w-full items-center gap-1.5">
+                <Item variant="muted">
+                    <ItemContent>
+                        <ItemTitle>Lima Minimum Version</ItemTitle>
+                        <ItemDescription>{actualConfig?.minimumLimaVersion || 'N/A'}</ItemDescription>
+                    </ItemContent>
+                </Item>
             </div>
         </div>
     )

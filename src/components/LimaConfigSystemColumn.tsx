@@ -30,7 +30,6 @@ interface Props {
 
 export function LimaConfigSystemColumn({ instanceName }: Props) {
     const {
-        actualConfig,
         draftConfig,
         isDirty,
         isLoading,
@@ -89,16 +88,6 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                     Dirty
                 </div>
             )}
-
-            {/* Read-only Lima Minimum Version */}
-            <div className="grid w-full items-center gap-1.5">
-                <Item variant="muted">
-                    <ItemContent>
-                        <ItemTitle>Lima Minimum Version</ItemTitle>
-                        <ItemDescription>{actualConfig?.minimumLimaVersion || 'N/A'}</ItemDescription>
-                    </ItemContent>
-                </Item>
-            </div>
 
             {/* Images Section */}
             <div className="grid w-full items-center gap-1.5">
@@ -420,7 +409,6 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                         {draftConfig?.copyToHost?.map((rule, idx) => (
                             <Item key={idx} variant="muted" size="xs">
                                 <ItemContent className="overflow-hidden">
-                                    <ItemTitle>{rule.deleteOnStop ? "Transient" : "Persistent"}</ItemTitle>
                                     <ItemDescription className="max-w-full truncate" title={`${rule.guest} -> ${rule.host}`}>
                                         {truncatePath(rule.guest)} → {truncatePath(rule.host)}
                                     </ItemDescription>
