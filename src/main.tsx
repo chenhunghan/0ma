@@ -5,15 +5,18 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import { ThemeProvider } from "./providers/theme-provider";
 import { App } from "./_App";
+import { TauriStoreProvider } from "./providers/tauri-store-provider";
 
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="0ma-theme">
-        <App />
-      </ThemeProvider>
+      <TauriStoreProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="0ma-theme">
+          <App />
+        </ThemeProvider>
+      </TauriStoreProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );
