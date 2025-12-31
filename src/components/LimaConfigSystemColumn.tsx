@@ -95,7 +95,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
             {/* Images Section */}
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                    <Label className="text-sm font-semibold">Images ({draftConfig?.images?.length || 0})</Label>
+                    <Label className="text-xs font-semibold">Images</Label>
                     <Dialog
                         open={isDialogOpen}
                         onOpenChange={(open) => {
@@ -133,7 +133,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                                             <Trash2Icon className="size-3 text-destructive" />
                                         </Button>
                                         <div className="grid gap-1">
-                                            <Label className="text-[10px] uppercase text-muted-foreground">Location (URL only)</Label>
+                                            <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
                                             <Input
                                                 value={image.location}
                                                 onChange={(e) => updateArrayField('images', idx, 'location', e.target.value)}
@@ -166,7 +166,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                             </div>
                             {hasInvalidImageLocation && (
                                 <p className="text-[10px] text-destructive font-medium animate-pulse">
-                                    * All images must have a valid URL.
+                                    All images must have a valid URL.
                                 </p>
                             )}
                             <DialogFooter>
@@ -183,17 +183,14 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                 <div className="flex flex-col gap-2">
                     {draftConfig?.images?.map((image, idx) => (
                         <Item key={idx} variant="muted" size="xs">
-                            <ItemContent>
-                                <ItemTitle className="text-[10px]">{image.arch || 'aarch64'}</ItemTitle>
-                                <ItemDescription className="truncate max-w-[280px]">
-                                    {image.location || <span className="italic text-muted-foreground/50">No location set</span>}
+                            <ItemContent className="overflow-hidden">
+                                <ItemTitle>{image.arch || 'unknown'}</ItemTitle>
+                                <ItemDescription className="max-w-full" title={image.location}>
+                                    {image.location.slice(0, 10)}...{image.location.slice(image.location.length - 40)}
                                 </ItemDescription>
                             </ItemContent>
                         </Item>
                     ))}
-                    {(!draftConfig?.images || draftConfig.images.length === 0) && (
-                        <span className="text-xs text-muted-foreground italic px-1">No images configured.</span>
-                    )}
                 </div>
             </div>
 
