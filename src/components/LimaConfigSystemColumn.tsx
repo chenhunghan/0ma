@@ -9,7 +9,6 @@ import {
     ItemContent,
     ItemDescription,
     ItemTitle,
-    ItemSeparator
 } from "./ui/item";
 import {
     Dialog,
@@ -39,6 +38,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
     } = useLimaDraft(instanceName);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isMountsDialogOpen, setIsMountsDialogOpen] = useState(false);
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>
@@ -71,6 +71,7 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
     };
 
     const hasInvalidImageLocation = draftConfig?.images?.some(img => !img.location?.trim() || !isUrl(img.location));
+    const hasInvalidMount = draftConfig?.mounts?.some(m => !m.location?.trim());
 
     return (
         <div className="flex flex-col gap-6 w-full max-w-sm px-4 py-8 mx-auto relative overflow-y-auto max-h-full">
@@ -89,8 +90,6 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                     </ItemContent>
                 </Item>
             </div>
-
-            <ItemSeparator />
 
             {/* Images Section */}
             <div className="grid w-full items-center gap-1.5">
@@ -207,60 +206,121 @@ export function LimaConfigSystemColumn({ instanceName }: Props) {
                 </Dialog>
             </div>
 
-            <ItemSeparator />
-
             {/* Mounts Section */}
-            <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <Label className="text-sm font-semibold">Mounts</Label>
-                    <Button variant="outline" size="xs" onClick={() => addArrayItem('mounts', { location: '', writable: false })}>
-                        <PlusIcon className="size-3 mr-1" /> Add Mount
-                    </Button>
-                </div>
-                <div className="flex flex-col gap-3">
-                    {draftConfig?.mounts?.map((mount, idx) => (
-                        <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
+            <div className="grid w-full items-center gap-1.5">
+                <Dialog
+                    open={isMountsDialogOpen}
+                    onOpenChange={(open) => {
+                        if (!open && hasInvalidMount) {
+                            return;
+                        }
+                        setIsMountsDialogOpen(open);
+                    }}
+                >
+                    <div className="flex items-center justify-between">
+                        <Label className="mb-0.5">Mounts</Label>
+                        {(!draftConfig?.mounts || draftConfig.mounts.length === 0) && (
+                            <DialogTrigger render={<Button variant="outline" size="xs" />}>
+                                <PlusIcon className="size-3 mr-1" />
+                            </DialogTrigger>
+                        )}
+                    </div>
+
+                    <DialogContent
+                        className="sm:max-w-md"
+                        showCloseButton={!hasInvalidMount}
+                    >
+                        <DialogHeader>
+                            <DialogTitle>Configure Mounts</DialogTitle>
+                            <DialogDescription>
+                                Configure directories to mount from the host into the guest VM.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
+                            {draftConfig?.mounts?.map((mount, idx) => (
+                                <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => removeArrayItem('mounts', idx)}
+                                    >
+                                        <Trash2Icon className="size-3 text-destructive" />
+                                    </Button>
+                                    <div className="grid gap-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
+                                        <Input
+                                            value={mount.location}
+                                            onChange={(e) => updateArrayField('mounts', idx, 'location', e.target.value)}
+                                            placeholder="Path to mount"
+                                            className="h-7 text-[11px]"
+                                        />
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground">Writable</Label>
+                                        <Select
+                                            value={mount.writable ? "true" : "false"}
+                                            onValueChange={(val) => updateArrayField('mounts', idx, 'writable', val === "true")}
+                                        >
+                                            <SelectTrigger className="h-7 text-[11px] w-full">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="true">True</SelectItem>
+                                                <SelectItem value="false">False</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            ))}
                             <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => removeArrayItem('mounts', idx)}
+                                variant="outline"
+                                size="xs"
+                                className="border-dashed"
+                                onClick={() => addArrayItem('mounts', { location: '', writable: false })}
                             >
-                                <Trash2Icon className="size-3 text-destructive" />
+                                <PlusIcon className="size-3 mr-1" /> Add Mount
                             </Button>
-                            <div className="grid gap-1">
-                                <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
-                                <Input
-                                    value={mount.location}
-                                    onChange={(e) => updateArrayField('mounts', idx, 'location', e.target.value)}
-                                    placeholder="Path to mount"
-                                    className="h-7 text-[11px]"
-                                />
-                            </div>
-                            <div className="grid gap-1">
-                                <Label className="text-[10px] uppercase text-muted-foreground">Writable</Label>
-                                <Select
-                                    value={mount.writable ? "true" : "false"}
-                                    onValueChange={(val) => updateArrayField('mounts', idx, 'writable', val === "true")}
-                                >
-                                    <SelectTrigger className="h-7 text-[11px] w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="true">True</SelectItem>
-                                        <SelectItem value="false">False</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
                         </div>
-                    ))}
-                    {(!draftConfig?.mounts || draftConfig.mounts.length === 0) && (
-                        <span className="text-xs text-muted-foreground italic px-1">No mounts configured.</span>
-                    )}
-                </div>
+                        {hasInvalidMount && (
+                            <p className="text-[10px] text-destructive font-medium animate-pulse">
+                                All mounts must have a valid location.
+                            </p>
+                        )}
+                        <DialogFooter>
+                            <DialogClose
+                                disabled={hasInvalidMount}
+                                render={<Button variant="outline" size="sm" />}
+                            >
+                                Done
+                            </DialogClose>
+                        </DialogFooter>
+                    </DialogContent>
+
+                    <div className="flex flex-col gap-2">
+                        {draftConfig?.mounts?.map((mount, idx) => (
+                            <Item key={idx} variant="muted" size="xs" className="relative group">
+                                <ItemContent className="overflow-hidden pr-10">
+                                    <ItemTitle>{mount.writable ? "R/W" : "R/O"}</ItemTitle>
+                                    <ItemDescription className="max-w-full truncate" title={mount.location}>
+                                        {mount.location || <span className="italic text-muted-foreground/50">No location set</span>}
+                                    </ItemDescription>
+                                </ItemContent>
+                                <DialogTrigger render={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 size-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    />
+                                }>
+                                    <PencilIcon className="size-3 text-muted-foreground" />
+                                </DialogTrigger>
+                            </Item>
+                        ))}
+                    </div>
+                </Dialog>
             </div>
 
-            <ItemSeparator />
 
             {/* Copy to Host Section */}
             <div className="flex flex-col gap-4">
