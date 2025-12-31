@@ -2,12 +2,14 @@ import { ResizableLayout } from "./ResizableLayout";
 import { TabsContent } from "./ui/tabs";
 import { LimaConfigResourceColumn } from "./LimaConfigResourceColumn";
 import { LimaConfigSystemColumn } from "./LimaConfigSystemColumn";
+import { useIsMobile } from "src/hooks/useMediaQuery";
 
 export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: string, instanceName: string }) {
+    const isMobile = useIsMobile()
     return (
         <TabsContent value={tabValue} className="h-full">
             <ResizableLayout
-                columns={[
+                columns={isMobile ? [] : [
                     <ColunmWrapper key="1">
                         <LimaConfigResourceColumn instanceName={instanceName} />
                     </ColunmWrapper>,

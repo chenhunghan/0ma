@@ -17,7 +17,7 @@ export function ResizableLayout({ columns, bottom }: ResizableLayoutProps) {
     return (
         <ResizablePanelGroup direction="vertical">
             {/* Top Section: Contains the columns (grid vertically on mobile, horizontally on desktop) */}
-            <ResizablePanel defaultSize={40} minSize={10}>
+            {columns.length > 0 ? <ResizablePanel defaultSize={40} minSize={10}>
                 <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"}>
                     {columns.map((column, index) => (
                         <Fragment key={index}>
@@ -28,12 +28,12 @@ export function ResizableLayout({ columns, bottom }: ResizableLayoutProps) {
                         </Fragment>
                     ))}
                 </ResizablePanelGroup>
-            </ResizablePanel>
+            </ResizablePanel> : null}
 
-            <ResizableHandle />
+            {columns.length > 0 ? <ResizableHandle /> : null}
 
             {/* Bottom Section */}
-            <ResizablePanel defaultSize={60} minSize={8}>
+            <ResizablePanel defaultSize={columns.length > 0 ? 60 : 100} minSize={8}>
                 {bottom}
             </ResizablePanel>
         </ResizablePanelGroup>
