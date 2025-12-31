@@ -43,6 +43,10 @@ export function useLimaDraft(instanceName: string) {
         }
     }, [draftConfig, actualConfig, set, draftKey]);
 
+    const updateDraftConfig = useCallback((newConfig: LimaConfig) => {
+        set(draftKey, newConfig);
+    }, [set, draftKey]);
+
     const resetDraft = useCallback(() => {
         if (actualConfig) {
             set(draftKey, actualConfig);
@@ -63,6 +67,7 @@ export function useLimaDraft(instanceName: string) {
         isApplying: isWritingLima,
         applyError: writeLimaError,
         updateField,
+        updateDraftConfig,
         resetDraft,
         applyDraft,
     };

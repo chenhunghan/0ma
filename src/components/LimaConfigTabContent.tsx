@@ -4,6 +4,7 @@ import { LimaConfigResourceColumn } from "./LimaConfigResourceColumn";
 import { LimaConfigSystemColumn } from "./LimaConfigSystemColumn";
 import { LimaConfigAutomationColumn } from "./LimaConfigAutomationColumn";
 import { useIsMobile } from "src/hooks/useMediaQuery";
+import { LimaConfigEditor } from "./LimaConfigEditor";
 
 export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: string, instanceName: string }) {
     const isMobile = useIsMobile()
@@ -22,7 +23,7 @@ export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: str
                         <LimaConfigAutomationColumn instanceName={instanceName} />
                     </ColunmWrapper>,
                 ]}
-                bottom={<div />}
+                bottom={<LimaConfigEditor instanceName={instanceName} />}
             />
         </TabsContent>
     )

@@ -42,7 +42,7 @@ export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayout
             <ResizableHandle className={columns.length > 0 ? "" : "hidden"} />
 
             {/* Bottom Section */}
-            <ResizablePanel defaultSize={columns.length > 0 ? 60 : 100} minSize={8}>
+            <ResizablePanel defaultSize={columns.length > 0 ? 60 : 100} minSize={15}>
                 {bottom}
             </ResizablePanel>
         </ResizablePanelGroup>
