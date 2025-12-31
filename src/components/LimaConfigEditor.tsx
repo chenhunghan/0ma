@@ -96,6 +96,7 @@ export function LimaConfigEditor({ instanceName }: { instanceName: string }) {
                         folding: true,
                         lineDecorationsWidth: 5,
                         lineNumbersMinChars: 3,
+                        contextmenu: false,
                     }}
                 />
             </div>
