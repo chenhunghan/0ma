@@ -2,6 +2,7 @@ import { ResizableLayout } from "./ResizableLayout";
 import { TabsContent } from "./ui/tabs";
 import { LimaConfigResourceColumn } from "./LimaConfigResourceColumn";
 import { LimaConfigSystemColumn } from "./LimaConfigSystemColumn";
+import { LimaConfigAutomationColumn } from "./LimaConfigAutomationColumn";
 import { useIsMobile } from "src/hooks/useMediaQuery";
 
 export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: string, instanceName: string }) {
@@ -18,7 +19,7 @@ export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: str
                         <LimaConfigSystemColumn instanceName={instanceName} />
                     </ColunmWrapper>,
                     <ColunmWrapper key="3">
-                        <span className="font-semibold">Config Column 3</span>
+                        <LimaConfigAutomationColumn instanceName={instanceName} />
                     </ColunmWrapper>,
                 ]}
                 bottom={<div />}
