@@ -54,6 +54,7 @@ export function ProbesAccordion() {
                                         overviewRulerLanes: 0,
                                         hideCursorInOverviewRuler: true,
                                         wordWrap: 'on',
+                                        readOnly: true,
                                         scrollbar: {
                                             verticalScrollbarSize: 4,
                                             horizontalScrollbarSize: 4,
