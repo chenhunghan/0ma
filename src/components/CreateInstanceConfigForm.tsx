@@ -1,22 +1,15 @@
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useLimaDraft } from "src/hooks/useLimaDraft";
-import { Spinner } from "./ui/spinner";
-import {
-    Item,
-    ItemContent,
-    ItemDescription,
-    ItemTitle,
-} from "./ui/item";
-import { Separator } from "./ui/separator";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+import { Spinner } from "./ui/spinner";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Separator } from "./ui/separator";
 
-export function LimaConfigResourceColumn() {
+export function CreateInstanceConfigForm() {
     const { selectedName } = useSelectedInstance();
     const {
         draftConfig,
-        actualConfig,
         isLoading,
         updateField
     } = useLimaDraft(selectedName);
@@ -26,14 +19,14 @@ export function LimaConfigResourceColumn() {
     }
 
     return (
-        <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto max-h-full">
+        <div className="flex flex-col gap-4 w-full px-4 py-2 lg:px-8 lg:py-2 relative overflow-y-auto max-h-full">
             <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="cpus">CPUs</Label>
+                <Label htmlFor="cpus" >CPUs</Label>
                 <Input
                     type="number"
-                    id="cpus"
                     min={1}
                     max={128}
+                    id="cpus"
                     value={draftConfig?.cpus || ''}
                     onChange={(e) => updateField('cpus', Number(e.target.value))}
                     className="w-full"
@@ -85,15 +78,6 @@ export function LimaConfigResourceColumn() {
                 </Select>
             </div>
             <Separator />
-            {/* Read-only Lima Minimum Version */}
-            <div className="grid w-full items-center gap-1.5">
-                <Item variant="muted">
-                    <ItemContent>
-                        <ItemTitle>Lima Minimum Version</ItemTitle>
-                        <ItemDescription>{actualConfig?.minimumLimaVersion || 'N/A'}</ItemDescription>
-                    </ItemContent>
-                </Item>
-            </div>
         </div>
     )
 }

@@ -1,6 +1,7 @@
 import { PlusIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { CreateInstanceConfigForm } from "./CreateInstanceConfigForm";
 
 export function CreateInstance({ className }: { className?: string }) {
     return (
@@ -11,7 +12,7 @@ export function CreateInstance({ className }: { className?: string }) {
                 </Button>
             </DialogTrigger>
             <CreateInstanceDialogContent>
-                null
+                <CreateInstanceConfigForm />
             </CreateInstanceDialogContent>
         </Dialog>
     )
@@ -36,6 +37,7 @@ function CreateInstanceDialogFooter() {
         </DialogFooter>
     )
 }
+
 function CreateInstanceDialogContent({ children }: { children: React.ReactNode }) {
     return (
         <DialogContent>
