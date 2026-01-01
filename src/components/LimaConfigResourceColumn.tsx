@@ -19,7 +19,6 @@ export function LimaConfigResourceColumn({ instanceName }: Props) {
     const {
         draftConfig,
         actualConfig,
-        isDirty,
         isLoading,
         updateField
     } = useLimaDraft(instanceName);
@@ -30,11 +29,6 @@ export function LimaConfigResourceColumn({ instanceName }: Props) {
 
     return (
         <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto max-h-full">
-            {isDirty && (
-                <div className="absolute top-2 right-4 text-[10px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 font-bold uppercase tracking-wider rounded border border-yellow-500/20 animate-pulse z-10">
-                    Dirty
-                </div>
-            )}
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="cpus">CPUs</Label>
                 <Input
