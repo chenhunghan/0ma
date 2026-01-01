@@ -40,7 +40,7 @@ function CreateInstanceDialogFooter() {
 
 function CreateInstanceDialogContent({ children }: { children: React.ReactNode }) {
     return (
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
             <CreateInstanceDialogHeader />
             {children}
             <CreateInstanceDialogFooter />
