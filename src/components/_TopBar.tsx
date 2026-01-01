@@ -8,9 +8,10 @@ import {
     SelectValue,
 } from "src/components/ui/select"
 import { Button } from "src/components/ui/button"
-import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { Spinner } from "./ui/spinner";
+import { LimaInstance } from "src/types/LimaInstance";
+import { useLimaInstances } from "src/hooks/useLimaInstances";
 
 export function TopBar() {
 
@@ -36,14 +37,14 @@ export function TopBar() {
 
 
 export function InstanceSelector() {
-    const { instances, isLoading } = useLimaInstances();
-    const { setSelectedName, selectedInstance } = useSelectedInstance(instances);
+    const { instances, isLoading: isLoadingInstances } = useLimaInstances();
+    const { selectedName, isLoading, setSelectedName } = useSelectedInstance();
 
     return (
         <Select
-            value={selectedInstance?.name ?? ""}
+            value={selectedName ?? ""}
             onValueChange={setSelectedName}
-            disabled={isLoading}
+            disabled={isLoading || isLoadingInstances}
         >
             <SelectTrigger className="w-[180px]">
                 {isLoading ? (
@@ -57,7 +58,7 @@ export function InstanceSelector() {
             </SelectTrigger>
             <SelectContent>
                 <SelectGroup>
-                    {instances.map((instance) => (
+                    {instances.map((instance: LimaInstance) => (
                         <SelectItem key={instance.name} value={instance.name}>
                             {instance.name}
                         </SelectItem>
@@ -97,14 +98,13 @@ export function DeleteInstanceButton({ className }: { className?: string }) {
 }
 
 export function InstanceName({ className }: { className?: string }) {
-    const { instances, isLoading } = useLimaInstances();
-    const { selectedInstance } = useSelectedInstance(instances);
+    const { selectedName, isLoading } = useSelectedInstance();
     if (isLoading) {
         return (
             <span className={className} title="Loading Lima instances"><Spinner /></span>
         )
     }
     return (
-        <span className={className} title={`Selected Lima instance: ${selectedInstance?.name}`}>{selectedInstance?.name}</span>
+        <span className={className} title={`Selected Lima instance: ${selectedName}`}>{selectedName}</span>
     )
 }

@@ -3,20 +3,21 @@ import {
   Terminal,
 } from 'lucide-react';
 import { InstanceStatus } from './types/InstanceStatus';
-import { useLimaInstances } from './hooks/useLimaInstances';
 import { useLimaInstance } from './hooks/useLimaInstance';
 import { useSelectedInstance } from './hooks/useSelectedInstance';
 import InstanceDetail from './components/InstanceDetail';
+import { LimaInstance } from './types/LimaInstance';
 import { CreateInstanceModal } from './components/CreateInstanceModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { StartLogsModal } from './components/StartLogsModal';
 import { StopInstanceModal } from './components/StopInstanceModal';
 import { DeleteInstanceModal } from './components/DeleteInstanceModal';
+import { useLimaInstances } from './hooks/useLimaInstances';
 
 export const App: React.FC = () => {
-  const { instances, isLoading } = useLimaInstances();
   const { startInstance, stopInstance, deleteInstance } = useLimaInstance();
-  const { setSelectedName, selectedInstance } = useSelectedInstance(instances);
+  const { instances } = useLimaInstances();
+  const { isLoading, setSelectedName, selectedInstance } = useSelectedInstance();
 
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -87,10 +88,10 @@ export const App: React.FC = () => {
     setDeletingInstanceName(null);
 
     // Switch to another instance after successful deletion
-    const remainingInstances = instances.filter(i => i.name !== instanceName);
+    const remainingInstances = instances.filter((i: LimaInstance) => i.name !== instanceName);
     if (remainingInstances.length > 0) {
       // Priority 1: Switch to a Running instance
-      const runningInstance = remainingInstances.find(i => i.status === InstanceStatus.Running);
+      const runningInstance = remainingInstances.find((i: LimaInstance) => i.status === InstanceStatus.Running);
       const nextName = runningInstance ? runningInstance.name : remainingInstances[0].name;
       setSelectedName(nextName);
     } else {
