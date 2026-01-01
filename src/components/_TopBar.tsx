@@ -36,20 +36,32 @@ export function TopBar() {
 
 
 export function InstanceSelector() {
+    const { instances, isLoading } = useLimaInstances();
+    const { setSelectedName, selectedInstance } = useSelectedInstance(instances);
+
     return (
         <Select
-            defaultValue="apple"
+            value={selectedInstance?.name ?? ""}
+            onValueChange={setSelectedName}
+            disabled={isLoading}
         >
-            <SelectTrigger>
-                <SelectValue placeholder="Select a Lima instance" />
+            <SelectTrigger className="w-[180px]">
+                {isLoading ? (
+                    <div className="flex items-center gap-2">
+                        <Spinner />
+                        <span className="text-muted-foreground">Loading...</span>
+                    </div>
+                ) : (
+                    <SelectValue placeholder="Select a Lima instance" />
+                )}
             </SelectTrigger>
             <SelectContent>
                 <SelectGroup>
-                    <SelectItem value="apple">Apple</SelectItem>
-                    <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="blueberry">Blueberry</SelectItem>
-                    <SelectItem value="grapes">Grapes</SelectItem>
-                    <SelectItem value="pineapple">Pineapple</SelectItem>
+                    {instances.map((instance) => (
+                        <SelectItem key={instance.name} value={instance.name}>
+                            {instance.name}
+                        </SelectItem>
+                    ))}
                 </SelectGroup>
             </SelectContent>
         </Select>
