@@ -5,6 +5,11 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Separator } from "./ui/separator";
+import { ConfigSection } from "./ConfigSection";
+import { ImagesDialog } from "./ImagesDialog";
+import { CopyToHostDialog } from "./CopyToHostDialog";
+import { PortForwardsDialog } from "./PortForwardsDialog";
+import { MountsDialog } from "./MountsDialog";
 
 export function CreateInstanceConfigForm() {
     const { selectedName } = useSelectedInstance();
@@ -82,6 +87,10 @@ export function CreateInstanceConfigForm() {
                 </Select>
             </div>
             <Separator />
+            <ConfigSection dialog={<ImagesDialog />} />
+            <ConfigSection dialog={<MountsDialog />} />
+            <ConfigSection dialog={<CopyToHostDialog />} />
+            <ConfigSection dialog={<PortForwardsDialog />} />
         </div>
     )
 }
