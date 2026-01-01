@@ -12,15 +12,15 @@ import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { Spinner } from "./ui/spinner";
 import { LimaInstance } from "src/types/LimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
+import { CreateInstance } from "./CreateInstance";
 
 export function TopBar() {
-
     return (
         <div className="w-full px-[8px] py-[6px] flex items-center">
             {/* Left side */}
             <div className="flex items-center flex-1">
                 <InstanceSelector />
-                <CreateInstanceButton className="ml-[6px]" />
+                <CreateInstance className="ml-[6px]" />
             </div>
 
             {/* Middle side - hidden on mobile */}
@@ -66,14 +66,6 @@ export function InstanceSelector() {
                 </SelectGroup>
             </SelectContent>
         </Select>
-    )
-}
-
-export function CreateInstanceButton({ className }: { className?: string }) {
-    return (
-        <Button variant="default" size="icon" aria-label="Create new Lima instance" className={className}>
-            <PlusIcon />
-        </Button>
     )
 }
 
