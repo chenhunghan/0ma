@@ -67,8 +67,8 @@ export function ProvisionStepsDialog() {
                 <Label className="mb-0.5">Provision</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                     {(!draftConfig?.provision || draftConfig.provision.length === 0)
-                        ? <PlusIcon className="size-3.5" />
-                        : <PencilIcon className="size-3.5" />
+                        ? <PlusIcon className="size-2.5 mr-[4px]" />
+                        : <PencilIcon className="size-2.5 mr-[4px]" />
                     }
                 </DialogTrigger>
             </div>

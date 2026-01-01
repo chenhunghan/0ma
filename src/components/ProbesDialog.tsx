@@ -66,8 +66,8 @@ export function ProbesDialog() {
                 <Label className="mb-0.5">Probes</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                     {(!draftConfig?.probes || draftConfig.probes.length === 0)
-                        ? <PlusIcon className="size-3.5" />
-                        : <PencilIcon className="size-3.5" />
+                        ? <PlusIcon className="size-2.5 mr-[4px]" />
+                        : <PencilIcon className="size-2.5 mr-[4px]" />
                     }
                 </DialogTrigger>
             </div>
