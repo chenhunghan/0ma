@@ -10,6 +10,10 @@ import { ImagesDialog } from "./ImagesDialog";
 import { CopyToHostDialog } from "./CopyToHostDialog";
 import { PortForwardsDialog } from "./PortForwardsDialog";
 import { MountsDialog } from "./MountsDialog";
+import { ProvisionStepsDialog } from "./ProvisionStepsDialog";
+import { ProvisionStepsAccordion } from "./ProvisionStepsAccordion";
+import { ProbesDialog } from "./ProbesDialog";
+import { ProbesAccordion } from "./ProbesAccordion";
 
 export function CreateInstanceConfigForm() {
     const { selectedName } = useSelectedInstance();
@@ -91,6 +95,12 @@ export function CreateInstanceConfigForm() {
             <ConfigSection dialog={<MountsDialog />} />
             <ConfigSection dialog={<CopyToHostDialog />} />
             <ConfigSection dialog={<PortForwardsDialog />} />
+            <ConfigSection dialog={<ProvisionStepsDialog />}>
+                <ProvisionStepsAccordion />
+            </ConfigSection>
+            <ConfigSection dialog={<ProbesDialog />}>
+                <ProbesAccordion />
+            </ConfigSection>
         </div>
     )
 }
