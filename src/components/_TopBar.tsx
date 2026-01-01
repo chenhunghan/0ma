@@ -1,4 +1,4 @@
-import { PlusIcon, TrashIcon, StopCircleIcon } from "lucide-react"
+import { TrashIcon, StopCircleIcon } from "lucide-react"
 import {
     Select,
     SelectContent,
