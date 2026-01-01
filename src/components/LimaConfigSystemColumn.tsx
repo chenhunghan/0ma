@@ -5,8 +5,11 @@ import { ImagesDialog } from "./ImagesDialog";
 import { MountsDialog } from "./MountsDialog";
 import { CopyToHostDialog } from "./CopyToHostDialog";
 import { PortForwardsDialog } from "./PortForwardsDialog";
-import { ImageSection } from "./ImagesSection";
+import { ConfigSection } from "./ConfigSection";
 import { ImageAccordion } from "./ImageAccordion";
+import { MountsAccordion } from "./MountsAccordion";
+import { CopyToHostAccordion } from "./CopyToHostAccordion";
+import { PortForwardsAccordion } from "./PortForwardsAccordion";
 
 export function LimaConfigSystemColumn() {
     const { selectedName } = useSelectedInstance();
@@ -18,12 +21,21 @@ export function LimaConfigSystemColumn() {
 
     return (
         <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto max-h-full">
-            <ImageSection dialog={<ImagesDialog />}>
+            <ConfigSection dialog={<ImagesDialog />}>
                 <ImageAccordion />
-            </ImageSection>
-            <MountsDialog />
-            <CopyToHostDialog />
-            <PortForwardsDialog />
+            </ConfigSection>
+
+            <ConfigSection dialog={<MountsDialog />}>
+                <MountsAccordion />
+            </ConfigSection>
+
+            <ConfigSection dialog={<CopyToHostDialog />}>
+                <CopyToHostAccordion />
+            </ConfigSection>
+
+            <ConfigSection dialog={<PortForwardsDialog />}>
+                <PortForwardsAccordion />
+            </ConfigSection>
         </div >
     )
 }
