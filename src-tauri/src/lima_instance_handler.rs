@@ -10,6 +10,25 @@ use tokio::process::Command as TokioCommand;
 struct LimaCreatePayload {
     instance_name: String,
     message: String,
+    message_id: String,
+    timestamp: String,
+}
+
+fn create_instance_create_event(instance_name: String, message: String) -> LimaCreatePayload {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+
+    let timestamp = now.to_string();
+    let message_id = uuid::Uuid::new_v4().to_string();
+
+    LimaCreatePayload {
+        instance_name,
+        message,
+        message_id,
+        timestamp,
+    }
 }
 
 /// Create a Lima instance using the managed configuration
@@ -38,10 +57,10 @@ pub async fn create_lima_instance_cmd(
     // Emit create event
     app.emit(
         "lima-instance-create",
-        LimaCreatePayload {
-            instance_name: instance_name.clone(),
-            message: format!("Creating Lima instance '{}'...", instance_name),
-        },
+        create_instance_create_event(
+            instance_name.clone(),
+            format!("Creating Lima instance '{}'...", instance_name),
+        ),
     )
     .map_err(|e| format!("Failed to emit create event: {}", e))?;
 
@@ -56,10 +75,10 @@ pub async fn create_lima_instance_cmd(
             None => {
                 let _ = app_handle.emit(
                     "lima-instance-create-error",
-                    LimaCreatePayload {
-                        instance_name: instance_name_clone,
-                        message: "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.".to_string(),
-                    },
+                    create_instance_create_event(
+                        instance_name_clone,
+                        "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.".to_string(),
+                    ),
                 );
                 return;
             }
@@ -83,10 +102,7 @@ pub async fn create_lima_instance_cmd(
             Err(e) => {
                 let _ = app_handle.emit(
                     "lima-instance-create-error",
-                    LimaCreatePayload {
-                        instance_name: instance_name_clone,
-                        message: e.to_string(),
-                    },
+                    create_instance_create_event(instance_name_clone, e.to_string()),
                 );
                 let _ = std::fs::remove_file(&temp_config_path_clone);
                 return;
@@ -102,10 +118,7 @@ pub async fn create_lima_instance_cmd(
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stdout.emit(
                         "lima-instance-create-stdout",
-                        LimaCreatePayload {
-                            instance_name: instance_name_stdout.clone(),
-                            message: line,
-                        },
+                        create_instance_create_event(instance_name_stdout.clone(), line),
                     );
                 }
             });
@@ -120,10 +133,7 @@ pub async fn create_lima_instance_cmd(
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stderr.emit(
                         "lima-instance-create-stderr",
-                        LimaCreatePayload {
-                            instance_name: instance_name_stderr.clone(),
-                            message: line,
-                        },
+                        create_instance_create_event(instance_name_stderr.clone(), line),
                     );
                 }
             });
@@ -138,10 +148,7 @@ pub async fn create_lima_instance_cmd(
                 if status.success() {
                     let _ = app_handle.emit(
                         "lima-instance-create-success",
-                        LimaCreatePayload {
-                            instance_name: instance_name_clone,
-                            message: "Created".to_string(),
-                        },
+                        create_instance_create_event(instance_name_clone, "Created".to_string()),
                     );
                 } else {
                     let error_msg = format!(
@@ -150,10 +157,7 @@ pub async fn create_lima_instance_cmd(
                     );
                     let _ = app_handle.emit(
                         "lima-instance-create-error",
-                        LimaCreatePayload {
-                            instance_name: instance_name_clone,
-                            message: error_msg,
-                        },
+                        create_instance_create_event(instance_name_clone, error_msg),
                     );
                 }
             }
@@ -162,10 +166,7 @@ pub async fn create_lima_instance_cmd(
                 let error_msg = format!("Failed to wait for limactl create process: {}", e);
                 let _ = app_handle.emit(
                     "lima-instance-create-error",
-                    LimaCreatePayload {
-                        instance_name: instance_name_clone,
-                        message: error_msg,
-                    },
+                    create_instance_create_event(instance_name_clone, error_msg),
                 );
             }
         }
