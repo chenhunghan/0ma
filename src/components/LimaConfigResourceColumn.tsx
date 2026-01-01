@@ -10,18 +10,16 @@ import {
     ItemTitle,
 } from "./ui/item";
 import { Separator } from "./ui/separator";
+import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-interface Props {
-    instanceName: string,
-}
-
-export function LimaConfigResourceColumn({ instanceName }: Props) {
+export function LimaConfigResourceColumn() {
+    const { selectedName } = useSelectedInstance();
     const {
         draftConfig,
         actualConfig,
         isLoading,
         updateField
-    } = useLimaDraft(instanceName);
+    } = useLimaDraft(selectedName);
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>

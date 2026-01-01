@@ -6,12 +6,15 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { isEqual } from "lodash";
 import { Spinner } from "./ui/spinner";
 
-export function LimaConfigEditor({ instanceName }: { instanceName: string }) {
+import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+
+export function LimaConfigEditor() {
+    const { selectedName } = useSelectedInstance();
     const {
         draftConfig,
         updateDraftConfig,
         isLoading
-    } = useLimaDraft(instanceName);
+    } = useLimaDraft(selectedName);
 
     const [yamlValue, setYamlValue] = useState<string>("");
     const [error, setError] = useState<string | null>(null);

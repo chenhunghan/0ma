@@ -6,7 +6,7 @@ import { LimaConfigAutomationColumn } from "./LimaConfigAutomationColumn";
 import { useIsMobile } from "src/hooks/useMediaQuery";
 import { LimaConfigEditor } from "./LimaConfigEditor";
 
-export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: string, instanceName: string }) {
+export function LimaConfigTabContent({ tabValue }: { tabValue: string }) {
     const isMobile = useIsMobile()
     return (
         <TabsContent value={tabValue} className="h-full">
@@ -14,16 +14,16 @@ export function LimaConfigTabContent({ tabValue, instanceName }: { tabValue: str
                 autoSaveId="lima-config-tabs-content"
                 columns={isMobile ? [] : [
                     <ColunmWrapper key="1">
-                        <LimaConfigResourceColumn instanceName={instanceName} />
+                        <LimaConfigResourceColumn />
                     </ColunmWrapper>,
                     <ColunmWrapper key="2">
-                        <LimaConfigSystemColumn instanceName={instanceName} />
+                        <LimaConfigSystemColumn />
                     </ColunmWrapper>,
                     <ColunmWrapper key="3">
-                        <LimaConfigAutomationColumn instanceName={instanceName} />
+                        <LimaConfigAutomationColumn />
                     </ColunmWrapper>,
                 ]}
-                bottom={<LimaConfigEditor instanceName={instanceName} />}
+                bottom={<LimaConfigEditor />}
             />
         </TabsContent>
     )

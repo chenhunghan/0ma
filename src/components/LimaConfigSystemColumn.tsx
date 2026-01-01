@@ -23,17 +23,15 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "./ui/accordion";
+import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-interface Props {
-    instanceName: string,
-}
-
-export function LimaConfigSystemColumn({ instanceName }: Props) {
+export function LimaConfigSystemColumn() {
+    const { selectedName } = useSelectedInstance();
     const {
         draftConfig,
         isLoading,
         updateField
-    } = useLimaDraft(instanceName);
+    } = useLimaDraft(selectedName);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isMountsDialogOpen, setIsMountsDialogOpen] = useState(false);

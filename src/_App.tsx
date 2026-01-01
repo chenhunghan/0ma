@@ -161,7 +161,7 @@ export function App() {
 
                     <Separator />
 
-                    <LimaConfigTabContent tabValue="config" instanceName="0ma-s7k8" />
+                    <LimaConfigTabContent tabValue="config" />
                     <TabsContent value="lima">
                         <ResizableLayout
                             autoSaveId="lima-tabs-content"
