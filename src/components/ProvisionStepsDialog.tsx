@@ -22,16 +22,15 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "./ui/accordion";
+import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-interface Props {
-    instanceName: string;
-}
 
-export function ProvisionStepsDialog({ instanceName }: Props) {
+export function ProvisionStepsDialog() {
+    const { selectedName } = useSelectedInstance();
     const {
         draftConfig,
         updateField
-    } = useLimaDraft(instanceName);
+    } = useLimaDraft(selectedName);
 
     const [isProvisionDialogOpen, setIsProvisionDialogOpen] = useState(false);
 

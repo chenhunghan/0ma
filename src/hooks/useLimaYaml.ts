@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { LimaConfig } from "../types/LimaConfig";
 
-export function useLimaYaml(instanceName: string) {
+export function useLimaYaml(instanceName: string | null) {
   const queryClient = useQueryClient();
 
   const {

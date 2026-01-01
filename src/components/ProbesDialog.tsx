@@ -22,16 +22,14 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "./ui/accordion";
+import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-interface Props {
-    instanceName: string;
-}
-
-export function ProbesDialog({ instanceName }: Props) {
+export function ProbesDialog() {
+    const { selectedName } = useSelectedInstance();
     const {
         draftConfig,
         updateField
-    } = useLimaDraft(instanceName);
+    } = useLimaDraft(selectedName);
 
     const [isProbesDialogOpen, setIsProbesDialogOpen] = useState(false);
 
