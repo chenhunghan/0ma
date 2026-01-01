@@ -20,7 +20,7 @@ export function LimaConfigSystemColumn() {
     }
 
     return (
-        <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto max-h-full">
+        <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
             <ConfigSection dialog={<ImagesDialog />}>
                 <ImageAccordion />
             </ConfigSection>

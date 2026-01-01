@@ -31,7 +31,7 @@ export function LimaConfigTabContent({ tabValue }: { tabValue: string }) {
 
 function ColunmWrapper({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex h-full w-full">
+        <div className="flex flex-col h-full w-full justify-center">
             {children}
         </div>
     )

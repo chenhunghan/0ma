@@ -26,7 +26,7 @@ export function LimaConfigResourceColumn() {
     }
 
     return (
-        <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto max-h-full">
+        <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
             <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="cpus">CPUs</Label>
                 <Input
