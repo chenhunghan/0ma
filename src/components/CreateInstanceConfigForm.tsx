@@ -3,7 +3,6 @@ import { Spinner } from "./ui/spinner";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Separator } from "./ui/separator";
 import { ConfigSection } from "./ConfigSection";
 import { ImagesDialog } from "./ImagesDialog";
 import { CopyToHostDialog } from "./CopyToHostDialog";
