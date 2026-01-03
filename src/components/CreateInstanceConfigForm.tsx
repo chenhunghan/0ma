@@ -25,7 +25,7 @@ export function CreateInstanceConfigForm() {
         updateField
     } = useCreateLimaInstanceDraft();
 
-    if (isLoading) {
+    if (isLoading || !draftConfig) {
         return <div title="Loading Lima Config..."><Spinner /></div>
     }
 
