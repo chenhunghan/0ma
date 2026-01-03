@@ -16,7 +16,7 @@ const DEFAULT_LIMA_CREATE_STATE: LogState = {
     stderr: [],
     error: [],
     isLoading: false,
-    isSuccess: false
+    isSuccess: undefined
 };
 
 const getCreateLogsQueryKey = (instanceName: string) => ['lima', 'create-logs', instanceName];
