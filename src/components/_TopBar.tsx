@@ -49,7 +49,7 @@ function Dialogs() {
 
     const { createInstance } = useLimaInstance();
     const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
-    const { reset: resetLogs } = useOnLimaCreateLogs(instanceName);
+    const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
 
     const handleCreateInstance = () => {
         if (!draftConfig || !instanceName) return;
@@ -59,12 +59,12 @@ function Dialogs() {
     };
 
     const handleRetry = () => {
-        resetLogs();
+        resetCreateLogs();
         setCreateInstanceDialogOpen(true);
     };
 
     const handleCloseError = () => {
-        resetLogs();
+        resetCreateLogs();
     };
 
     return (
