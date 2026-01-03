@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useMemo } from 'react';
 import { load, Store } from '@tauri-apps/plugin-store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { defaultGlobalStoreFileName, queryKeyForValue } from "./tauri-store-constants";
 
 interface TauriStoreContextType {
     store: Store | null;
@@ -25,8 +26,6 @@ interface TauriStoreProviderProps {
     storeFileName?: string;
 }
 
-export const defaultGlobalStoreFileName = 'app.json';
-export const queryKeyForValue = 'tauri-store-value';
 
 export function TauriStoreProvider({ children, storeFileName = defaultGlobalStoreFileName }: TauriStoreProviderProps) {
     const queryClient = useQueryClient();
