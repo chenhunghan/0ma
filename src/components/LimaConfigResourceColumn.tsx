@@ -1,7 +1,7 @@
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
 import { Spinner } from "./ui/spinner";
 import {
     Item,
@@ -19,7 +19,7 @@ export function LimaConfigResourceColumn() {
         actualConfig,
         isLoading,
         updateField
-    } = useLimaDraft(selectedName);
+    } = useUpdateLimaInstanceDraft(selectedName);
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>

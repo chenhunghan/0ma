@@ -1,4 +1,4 @@
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
 import Editor from '@monaco-editor/react';
 import { useState, useEffect } from "react";
 import { stringify, parse } from "yaml";
@@ -14,7 +14,7 @@ export function LimaConfigEditor() {
         draftConfig,
         updateDraftConfig,
         isLoading
-    } = useLimaDraft(selectedName);
+    } = useUpdateLimaInstanceDraft(selectedName);
 
     const [yamlValue, setYamlValue] = useState<string>("");
     const [error, setError] = useState<string | null>(null);

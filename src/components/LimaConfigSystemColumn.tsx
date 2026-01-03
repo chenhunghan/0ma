@@ -1,4 +1,4 @@
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
 import { Spinner } from "./ui/spinner";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { ImagesDialog } from "./ImagesDialog";
@@ -13,7 +13,7 @@ import { PortForwardsAccordion } from "./PortForwardsAccordion";
 
 export function LimaConfigSystemColumn() {
     const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField, isLoading } = useLimaDraft(selectedName);
+    const { draftConfig, updateField, isLoading } = useUpdateLimaInstanceDraft(selectedName);
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>

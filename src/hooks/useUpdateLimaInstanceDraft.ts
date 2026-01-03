@@ -5,10 +5,10 @@ import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-pro
 import { LimaConfig } from "src/types/LimaConfig";
 
 /**
- * Hook to manage a draft Lima configuration stored in Tauri Store.
+ * Hook to manage a draft Lima configuration stored in Tauri Store to update an existing instance.
  * Computes 'isDirty' by comparing draft with actual config from limactl.
  */
-export function useLimaDraft(instanceName: string | null) {
+export function useUpdateLimaInstanceDraft(instanceName: string | null) {
     const {
         limaConfig: actualConfig,
         isLoadingLima,
