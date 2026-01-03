@@ -12,7 +12,10 @@ import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { Spinner } from "./ui/spinner";
 import { LimaInstance } from "src/types/LimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
-import { CreateInstance } from "./CreateInstance";
+import { CreateInstanceDialog } from "./CreateInstanceDialog";
+import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
+import { useState } from "react";
+
 
 export function TopBar() {
     return (
@@ -20,7 +23,7 @@ export function TopBar() {
             {/* Left side */}
             <div className="flex items-center flex-1">
                 <InstanceSelector />
-                <CreateInstance className="ml-[6px]" />
+                <Dialogs />
             </div>
 
             {/* Middle side - hidden on mobile */}
@@ -32,6 +35,32 @@ export function TopBar() {
                 <DeleteInstanceButton className="ml-[6px]" />
             </div>
         </div>
+    )
+}
+
+
+function Dialogs() {
+    const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
+    const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
+
+    const handleCreateInstanceSuccess = () => {
+        setCreateInstanceDialogOpen(false);
+        setCreatingInstanceDialogOpen(true);
+    };
+
+    return (
+        <>
+            <CreateInstanceDialog
+                className="ml-[6px]"
+                open={createInstanceDialogOpen}
+                onDialogOpenChange={setCreateInstanceDialogOpen}
+                onCreateInstanceSuccess={handleCreateInstanceSuccess}
+            />
+            <CreatingInstanceDialog
+                open={creatingInstanceDialogOpen}
+                onDialogOpenChange={setCreatingInstanceDialogOpen}
+            />
+        </>
     )
 }
 

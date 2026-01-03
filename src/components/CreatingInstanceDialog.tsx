@@ -1,19 +1,24 @@
-import { PlusIcon } from "lucide-react";
 import { Button } from "./ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { LogViewer } from "./LogViewer";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
+import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 
+interface Props {
+    className?: string;
+    open: boolean;
+    onDialogOpenChange: (open: boolean) => void;
+}
 
-export function CreatingInstance({ className }: { className?: string }) {
-    const logState = useOnLimaCreateLogs("")
+export function CreatingInstanceDialog({ className: _className, open, onDialogOpenChange }: Props) {
+    const { instanceName } = useCreateLimaInstanceDraft();
+    // Ensure we don't pass undefined/null to the hook if instanceName is empty (though the hook handles strings)
+    const logState = useOnLimaCreateLogs(instanceName || "");
+
     return (
-        <Dialog>
-            <DialogTrigger>
-                <Button variant="default" size="icon" aria-label="Create new Lima instance" className={className}>
-                    <PlusIcon />
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onDialogOpenChange}>
+
+
             <CreatingInstanceDialogContent>
                 <LogViewer logState={logState} />
             </CreatingInstanceDialogContent>
@@ -36,7 +41,6 @@ function CreatingInstanceDialogFooter() {
             <DialogClose>
                 <Button variant="outline" title="Close the instance will not cancel the creation process">Close</Button>
             </DialogClose>
-            <Button variant="default">Create</Button>
         </DialogFooter>
     )
 }
