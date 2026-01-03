@@ -31,8 +31,23 @@ export const DEFAULT_LIMA_CREATE_STATE: CreateStatus = {
 
 export const getCreateLogsQueryKey = (instanceName: string) => ['lima', 'create-logs', instanceName];
 
-const sortLogs = (logs: CreateLog[]) => {
-    return [...logs].sort((a, b) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0));
+export const insertLog = (logs: CreateLog[], newLog: CreateLog): CreateLog[] => {
+    // If empty or newLog is newer/equal to the last one, append.
+    if (logs.length === 0 || newLog.timestamp >= logs[logs.length - 1].timestamp) {
+        return [...logs, newLog];
+    }
+
+    // Find insertion index (first log that is newer than newLog)
+    const index = logs.findIndex(log => log.timestamp > newLog.timestamp);
+
+    // This shouldn't happen given the first check, but for safety:
+    if (index === -1) {
+        return [...logs, newLog];
+    }
+
+    const newLogs = [...logs];
+    newLogs.splice(index, 0, newLog);
+    return newLogs;
 };
 /**
  * useOnLimaCreateLogs
@@ -85,11 +100,12 @@ export function useOnLimaCreateLogs(instanceName: string) {
                     return prev;
                 }
 
+
                 const newLog: CreateLog = { id: message_id, message, timestamp };
 
                 return {
                     ...prev,
-                    stdout: sortLogs([...prev["stdout"], newLog])
+                    stdout: insertLog(prev.stdout, newLog)
                 };
             });
         }));
@@ -103,11 +119,12 @@ export function useOnLimaCreateLogs(instanceName: string) {
                     return prev;
                 }
 
+
                 const newLog: CreateLog = { id: message_id, message, timestamp };
 
                 return {
                     ...prev,
-                    stderr: sortLogs([...prev["stderr"], newLog])
+                    stderr: insertLog(prev.stderr, newLog)
                 };
             });
         }));
@@ -124,12 +141,13 @@ export function useOnLimaCreateLogs(instanceName: string) {
                         return prev;
                     }
 
+
                     const newLog: CreateLog = { id: message_id, message, timestamp };
 
                     return {
                         ...prev,
                         isCreating: false,
-                        error: sortLogs([...prev.error, newLog]),
+                        error: insertLog(prev.error, newLog),
                     };
                 });
             })
