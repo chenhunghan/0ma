@@ -21,7 +21,9 @@ export function CreateInstanceConfigForm() {
     const {
         draftConfig,
         isLoading,
-        updateField
+        updateField,
+        instanceName,
+        setInstanceName
     } = useCreateLimaInstanceDraft();
 
     if (isLoading || !draftConfig) {
@@ -31,6 +33,18 @@ export function CreateInstanceConfigForm() {
     return (
         <div className="grid grid-cols-2 gap-x-12 gap-y-4 w-full px-4 py-4 lg:px-8 lg:py-4 relative overflow-y-auto max-h-full items-start">
             <div className="flex flex-col gap-3 min-w-0">
+                <div className="grid grid-cols-[60px_1fr] items-center gap-4">
+                    <Label htmlFor="instanceName" className="text-muted-foreground">Name</Label>
+                    <Input
+                        type="text"
+                        id="instanceName"
+                        value={instanceName}
+                        onChange={(e) => setInstanceName(e.target.value)}
+                        className="w-full min-w-0"
+                        size="sm"
+                    />
+                </div>
+
                 <div className="grid grid-cols-[60px_1fr] items-center gap-4">
                     <Label htmlFor="cpus" className="text-muted-foreground">CPUs</Label>
                     <Input
