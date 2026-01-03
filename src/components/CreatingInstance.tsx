@@ -31,7 +31,7 @@ function CreatingInstanceDialogFooter() {
     return (
         <DialogFooter>
             <DialogClose>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" title="Close the instance will not cancel the creation process">Close</Button>
             </DialogClose>
             <Button variant="default">Create</Button>
         </DialogFooter>
