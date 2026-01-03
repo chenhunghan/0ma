@@ -31,6 +31,9 @@ export const DEFAULT_LIMA_CREATE_STATE: CreateStatus = {
 
 export const getCreateLogsQueryKey = (instanceName: string) => ['lima', 'create-logs', instanceName];
 
+const sortLogs = (logs: CreateLog[]) => {
+    return [...logs].sort((a, b) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0));
+};
 /**
  * useOnLimaCreateLogs
  * 
@@ -60,10 +63,6 @@ export function useOnLimaCreateLogs(instanceName: string) {
                 if (!prev) return DEFAULT_LIMA_CREATE_STATE;
                 return updater(prev);
             });
-        };
-
-        const sortLogs = (logs: CreateLog[]) => {
-            return [...logs].sort((a, b) => (a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0));
         };
 
         // 1. Creation Started
