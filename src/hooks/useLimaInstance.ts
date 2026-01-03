@@ -55,23 +55,23 @@ export function useLimaInstance() {
     deleteMutation.reset();
   };
 
-  return {    
+  return {
     // Create instance mutation
     createInstance: createMutation.mutate,
     createError: createMutation.error,
-    
+
     // Start instance mutation
     startInstance: startMutation.mutate,
     startError: startMutation.error,
-    
+
     // Stop instance mutation
     stopInstance: stopMutation.mutate,
     stopError: stopMutation.error,
-    
+
     // Delete instance mutation
     deleteInstance: deleteMutation.mutate,
     deleteError: deleteMutation.error,
-    
+
     // General utilities
     clearStatus,
   };

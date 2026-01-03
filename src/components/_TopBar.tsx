@@ -12,6 +12,8 @@ import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { Spinner } from "./ui/spinner";
 import { LimaInstance } from "src/types/LimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
+import { useLimaInstance } from "src/hooks/useLimaInstance";
+import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
 import { useState } from "react";
@@ -43,18 +45,31 @@ function Dialogs() {
     const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
     const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
 
-    const handleCreateInstanceSuccess = () => {
-        setCreateInstanceDialogOpen(false);
+    const { createInstance } = useLimaInstance();
+    const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
+
+    const handleCreateInstance = () => {
+        if (!draftConfig || !instanceName) return;
+
         setCreatingInstanceDialogOpen(true);
+
+        createInstance({ config: draftConfig, instanceName }, {
+            onSuccess: () => {
+                console.log(`Starting creation of instance ${instanceName}`);
+            },
+            onError: (error) => {
+                console.error(`Failed to create instance: ${error.message}`);
+            }
+        });
     };
 
     return (
         <>
             <CreateInstanceDialog
-                className="ml-[6px]"
+                buttonClassName="ml-[6px]"
                 open={createInstanceDialogOpen}
                 onDialogOpenChange={setCreateInstanceDialogOpen}
-                onCreateInstanceSuccess={handleCreateInstanceSuccess}
+                onClickCreate={handleCreateInstance}
             />
             <CreatingInstanceDialog
                 open={creatingInstanceDialogOpen}
