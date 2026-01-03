@@ -84,8 +84,9 @@ export function useOnLimaCreateLogs(instanceName: string) {
         unlistenPromises.push(
             listen<LimaCreatePayload>('lima-instance-create', (event) => {
                 if (event.payload.instance_name !== instanceName) return;
-                updateCache((prev) => ({
-                    ...prev,
+                updateCache(() => ({
+                    // Reset all logs
+                    ...DEFAULT_LIMA_CREATE_STATE,
                     isCreating: true,
                 }));
             })
