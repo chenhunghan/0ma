@@ -55,15 +55,7 @@ function Dialogs() {
         if (!draftConfig || !instanceName) return;
 
         setCreatingInstanceDialogOpen(true);
-
-        createInstance({ config: draftConfig, instanceName }, {
-            onSuccess: () => {
-                console.log(`Starting creation of instance ${instanceName}`);
-            },
-            onError: (error) => {
-                console.error(`Failed to create instance: ${error.message}`);
-            }
-        });
+        createInstance({ config: draftConfig, instanceName });
     };
 
     const handleRetry = () => {
