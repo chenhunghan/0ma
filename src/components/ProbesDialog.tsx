@@ -55,7 +55,7 @@ export function ProbesDialog({ value: probes, onChange }: Props) {
                 setIsProbesDialogOpen(open);
             }}
         >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
                 <Label className="mb-0.5">Probes</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                     {(!probes || probes.length === 0)

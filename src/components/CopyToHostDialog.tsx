@@ -57,7 +57,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
                 setIsOpen(open);
             }}
         >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
                 <Label className="mb-0.5">Copy to Host</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                     {(!rules || rules.length === 0)

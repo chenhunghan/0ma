@@ -63,7 +63,7 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
                 setIsOpen(open);
             }}
         >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
                 <Label className="mb-0.5">Port Forwards</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                     {(!portForwards || portForwards.length === 0)

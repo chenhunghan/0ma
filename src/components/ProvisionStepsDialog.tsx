@@ -55,7 +55,7 @@ export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props)
                 setIsProvisionDialogOpen(open);
             }}
         >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
                 <Label className="mb-0.5">Provision</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                     {(!provisionSteps || provisionSteps.length === 0)

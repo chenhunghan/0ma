@@ -57,7 +57,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
                 setIsOpen(open);
             }}
         >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
                 <Label className="mb-0.5">Mounts</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
                     {(!mounts || mounts.length === 0)

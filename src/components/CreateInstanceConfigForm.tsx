@@ -30,9 +30,9 @@ export function CreateInstanceConfigForm() {
     }
 
     return (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4 w-full px-4 py-4 lg:px-8 lg:py-4 relative overflow-y-auto max-h-full items-start">
+        <div className="grid grid-cols-2 gap-x-12 gap-y-4 w-full px-4 py-4 lg:px-8 lg:py-4 relative overflow-y-auto max-h-full items-start">
             <div className="flex flex-col gap-3 min-w-0">
-                <div className="grid grid-cols-[80px_1fr] items-center gap-4">
+                <div className="grid grid-cols-[60px_1fr] items-center gap-4">
                     <Label htmlFor="cpus" className="text-muted-foreground">CPUs</Label>
                     <Input
                         type="number"
@@ -46,7 +46,7 @@ export function CreateInstanceConfigForm() {
                     />
                 </div>
 
-                <div className="grid grid-cols-[80px_1fr] items-center gap-4">
+                <div className="grid grid-cols-[60px_1fr] items-center gap-4">
                     <Label htmlFor="memory" className="text-muted-foreground">Memory</Label>
                     <Select value={draftConfig?.memory || '4GiB'} onValueChange={(val) => updateField('memory', val)}>
                         <SelectTrigger id="memory" className="w-full min-w-0" size="sm">
@@ -63,7 +63,7 @@ export function CreateInstanceConfigForm() {
                     </Select>
                 </div>
 
-                <div className="grid grid-cols-[80px_1fr] items-center gap-4">
+                <div className="grid grid-cols-[60px_1fr] items-center gap-4">
                     <Label htmlFor="disk" className="text-muted-foreground">Disk</Label>
                     <Select value={draftConfig?.disk || '100GiB'} onValueChange={(val) => updateField('disk', val)}>
                         <SelectTrigger id="disk" className="w-full min-w-0" size="sm">
@@ -80,7 +80,7 @@ export function CreateInstanceConfigForm() {
                     </Select>
                 </div>
 
-                <div className="grid grid-cols-[80px_1fr] items-center gap-4">
+                <div className="grid grid-cols-[60px_1fr] items-center gap-4">
                     <Label htmlFor="vmType" className="text-muted-foreground">VmType</Label>
                     <Select value={draftConfig?.vmType || 'vz'} onValueChange={(val) => updateField('vmType', val)}>
                         <SelectTrigger id="vmType" className="w-full min-w-0" size="sm">
@@ -93,8 +93,7 @@ export function CreateInstanceConfigForm() {
                         </SelectContent>
                     </Select>
                 </div>
-                <Separator className="my-1" />
-                <Separator className="my-1" />
+
                 <ConfigSection dialog={
                     <ImagesDialog
                         value={draftConfig.images || []}
