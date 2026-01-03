@@ -33,7 +33,7 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
 
     const hasInvalid = (portForwards || []).some(p => !p.guestPort || !p.hostPort || !p.proto);
 
-    const updatePortForward = (index: number, field: string, value: any) => {
+    const updatePortForward = (index: number, field: string, value: string | number) => {
         const newPortForwards = [...portForwards];
         newPortForwards[index] = { ...newPortForwards[index], [field]: value };
         onChange(newPortForwards);
@@ -118,7 +118,7 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
                                 <Label className="text-[10px] uppercase text-muted-foreground">Protocol</Label>
                                 <Select
                                     value={pf.proto || 'tcp'}
-                                    onValueChange={(val) => updatePortForward(idx, 'proto', val)}
+                                    onValueChange={(val) => updatePortForward(idx, 'proto', val || 'tcp')}
                                 >
                                     <SelectTrigger className="h-7 text-[11px] w-full">
                                         <SelectValue />

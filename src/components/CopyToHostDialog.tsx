@@ -33,7 +33,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
 
     const hasInvalid = (rules || []).some(c => !c.guest?.trim() || !c.host?.trim());
 
-    const updateRule = (index: number, field: string, value: any) => {
+    const updateRule = (index: number, field: string, value: string | boolean) => {
         const newRules = [...rules];
         newRules[index] = { ...newRules[index], [field]: value };
         onChange(newRules);

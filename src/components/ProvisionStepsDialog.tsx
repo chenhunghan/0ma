@@ -26,7 +26,7 @@ interface Props {
 export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props) {
     const [isProvisionDialogOpen, setIsProvisionDialogOpen] = useState(false);
 
-    const updateArrayField = (index: number, subField: keyof Provision, value: any) => {
+    const updateArrayField = (index: number, subField: keyof Provision, value: string) => {
         const arr = [...(provisionSteps || [])];
         arr[index] = { ...arr[index], [subField]: value };
         onChange(arr);
@@ -90,7 +90,7 @@ export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props)
                                 <Label className="text-[10px] uppercase text-muted-foreground">Mode</Label>
                                 <Select
                                     value={p.mode || 'system'}
-                                    onValueChange={(val) => updateArrayField(idx, 'mode', val)}
+                                    onValueChange={(val) => updateArrayField(idx, 'mode', val || 'system')}
                                 >
                                     <SelectTrigger className="h-7 text-[11px] w-full">
                                         <SelectValue />

@@ -26,7 +26,7 @@ interface Props {
 export function ProbesDialog({ value: probes, onChange }: Props) {
     const [isProbesDialogOpen, setIsProbesDialogOpen] = useState(false);
 
-    const updateArrayField = (index: number, subField: keyof Probe, value: any) => {
+    const updateArrayField = (index: number, subField: keyof Probe, value: string) => {
         const arr = [...(probes || [])];
         arr[index] = { ...arr[index], [subField]: value };
         onChange(arr);

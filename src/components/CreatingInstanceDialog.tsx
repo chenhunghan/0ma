@@ -5,14 +5,15 @@ import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 
 interface Props {
-    className?: string;
     open: boolean;
     onDialogOpenChange: (open: boolean) => void;
 }
 
-export function CreatingInstanceDialog({ className: _className, open, onDialogOpenChange }: Props) {
+export function CreatingInstanceDialog({ open, onDialogOpenChange }: Props) {
     const { instanceName } = useCreateLimaInstanceDraft();
-    const logState = useOnLimaCreateLogs(instanceName);
+    const logState = useOnLimaCreateLogs(instanceName, {
+        onSuccess: () => onDialogOpenChange(false)
+    });
 
     return (
         <Dialog open={open} onOpenChange={onDialogOpenChange}>

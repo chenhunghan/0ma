@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Log, LogState } from 'src/types/Log';
@@ -28,9 +28,14 @@ const getCreateLogsQueryKey = (instanceName: string) => ['lima', 'create-logs', 
  * We use the unique message_id from the backend to prevent duplicate log entries
  * and ensure chronological ordering by sorting by the nano-timestamp.
  */
-export function useOnLimaCreateLogs(instanceName: string) {
+export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?: () => void }) {
     const queryClient = useQueryClient();
     const queryKey = getCreateLogsQueryKey(instanceName);
+    const onSuccessRef = useRef(options?.onSuccess);
+
+    useEffect(() => {
+        onSuccessRef.current = options?.onSuccess;
+    }, [options?.onSuccess]);
 
     const { data } = useQuery({
         queryKey,
@@ -140,6 +145,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
                     isSuccess: true,
                 }));
                 queryClient.invalidateQueries({ queryKey: ["instances"] });
+                onSuccessRef.current?.();
             })
         );
 

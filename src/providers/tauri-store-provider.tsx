@@ -119,6 +119,7 @@ export function TauriStoreProvider({ children, storeFileName = defaultGlobalStor
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTauriStore() {
     const context = useContext(TauriStoreContext);
     if (context === undefined) {
@@ -127,6 +128,7 @@ export function useTauriStore() {
     return context;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTauriStoreValue<T = unknown>(key: string) {
     const { store, storeFileName } = useTauriStore();
 

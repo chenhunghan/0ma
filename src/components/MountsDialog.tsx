@@ -33,7 +33,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
 
     const hasInvalid = (mounts || []).some(m => !m.location?.trim());
 
-    const updateMount = (index: number, field: string, value: any) => {
+    const updateMount = (index: number, field: string, value: string | boolean) => {
         const newMounts = [...mounts];
         newMounts[index] = { ...newMounts[index], [field]: value };
         onChange(newMounts);

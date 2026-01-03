@@ -36,6 +36,6 @@ if (!global.PointerEvent) {
             super(type, params);
         }
     }
-    // @ts-ignore
+    // @ts-expect-error -- PointerEvent is missing in JSDOM
     global.PointerEvent = PointerEvent;
 }

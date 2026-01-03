@@ -35,14 +35,14 @@ export function ImagesDialog({ value: images, onChange }: Props) {
         try {
             const url = new URL(str);
             return url.protocol === 'https:';
-        } catch (_) {
+        } catch {
             return false;
         }
     };
 
     const hasInvalid = (images || []).some(img => !img.location?.trim() || !isUrl(img.location));
 
-    const updateImage = (index: number, field: string, value: any) => {
+    const updateImage = (index: number, field: string, value: string) => {
         const newImages = [...images];
         newImages[index] = { ...newImages[index], [field]: value };
         onChange(newImages);
@@ -110,7 +110,7 @@ export function ImagesDialog({ value: images, onChange }: Props) {
                             </div>
                             <div className="grid gap-1">
                                 <Label className="text-[10px] uppercase text-muted-foreground">Arch</Label>
-                                <Select value={image.arch || 'x86_64'} onValueChange={(val) => updateImage(idx, 'arch', val)}>
+                                <Select value={image.arch || 'x86_64'} onValueChange={(val) => updateImage(idx, 'arch', val || 'x86_64')}>
                                     <SelectTrigger className="h-7 text-[11px] w-full">
                                         <SelectValue />
                                     </SelectTrigger>

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 "use client"
 
 import * as React from "react"
@@ -271,6 +272,7 @@ function ComboboxChipsInput({
 function useComboboxAnchor() {
   return React.useRef<HTMLDivElement | null>(null)
 }
+
 
 export {
   Combobox,
