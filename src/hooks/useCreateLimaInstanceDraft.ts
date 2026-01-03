@@ -3,7 +3,7 @@ import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-pro
 import { LimaConfig } from "src/types/LimaConfig";
 import { useDefaultK0sLimaConfig } from "./useDefaultK0sLimaConfig";
 
-const CREATE_INSTANCE_DRAFT_KEY = "createInstanceDraft";
+const CREATE_INSTANCE_DRAFT_KEY = "createLimaInstanceDraft";
 
 /**
  * Hook to manage a draft Lima configuration for creating a NEW instance.
@@ -18,7 +18,7 @@ export function useCreateLimaInstanceDraft() {
     const {
         defaultConfig,
         isLoading: isLoadingDefault
-    } = useDefaultK0sLimaConfig("default");
+    } = useDefaultK0sLimaConfig("0ma");
 
     const {
         data: draftConfig,

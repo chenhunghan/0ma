@@ -23,7 +23,7 @@ export function useUpdateLimaInstanceDraft() {
     const { set } = useTauriStore();
 
     // Use a per-instance key to prevent drafts from leaking across different instances
-    const draftKey = `draftLimaConfig:${instanceName}`;
+    const draftKey = `updateLimaInstanceDraft:${instanceName}`;
     const { data: draftConfig, isLoading: isLoadingDraft, isFetched } = useTauriStoreValue<LimaConfig>(draftKey);
 
     // Initialize draft from actual config if draft is missing
