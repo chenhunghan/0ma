@@ -7,12 +7,15 @@ import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft
 interface Props {
     open: boolean;
     onDialogOpenChange: (open: boolean) => void;
+    onCreateInstanceSuccess?: () => void;
 }
 
-export function CreatingInstanceDialog({ open, onDialogOpenChange }: Props) {
+export function CreatingInstanceDialog({ open, onDialogOpenChange, onCreateInstanceSuccess }: Props) {
     const { instanceName } = useCreateLimaInstanceDraft();
     const logState = useOnLimaCreateLogs(instanceName, {
-        onSuccess: () => onDialogOpenChange(false)
+        onSuccess: () => {
+            onCreateInstanceSuccess?.();
+        }
     });
 
     return (

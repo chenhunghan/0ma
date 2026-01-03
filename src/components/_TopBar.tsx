@@ -17,6 +17,7 @@ import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
 import { ErrorCreateInstanceDialog } from "./ErrorCreateInstanceDialog";
+import { StartInstanceDialog } from "./StartInstanceDialog";
 import { useState } from "react";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 
@@ -46,8 +47,9 @@ export function TopBar() {
 function Dialogs() {
     const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
     const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
+    const [startInstanceDialogOpen, setStartInstanceDialogOpen] = useState(false);
 
-    const { createInstance } = useLimaInstance();
+    const { createInstance, startInstance } = useLimaInstance();
     const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
     const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
 
@@ -67,6 +69,12 @@ function Dialogs() {
         resetCreateLogs();
     };
 
+    const handleStartInstance = () => {
+        if (instanceName) {
+            startInstance(instanceName);
+        }
+    };
+
     return (
         <>
             <CreateInstanceDialog
@@ -78,10 +86,19 @@ function Dialogs() {
             <CreatingInstanceDialog
                 open={creatingInstanceDialogOpen}
                 onDialogOpenChange={setCreatingInstanceDialogOpen}
+                onCreateInstanceSuccess={() => {
+                    setCreatingInstanceDialogOpen(false);
+                    setStartInstanceDialogOpen(true);
+                }}
             />
             <ErrorCreateInstanceDialog
                 onRetry={handleRetry}
                 onClose={handleCloseError}
+            />
+            <StartInstanceDialog
+                open={startInstanceDialogOpen}
+                onOpenChange={setStartInstanceDialogOpen}
+                onStart={handleStartInstance}
             />
         </>
     )
