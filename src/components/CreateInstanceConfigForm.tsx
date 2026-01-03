@@ -1,5 +1,4 @@
-import { useLimaDraft } from "src/hooks/useLimaDraft";
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 import { Spinner } from "./ui/spinner";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -10,18 +9,21 @@ import { ImagesDialog } from "./ImagesDialog";
 import { CopyToHostDialog } from "./CopyToHostDialog";
 import { PortForwardsDialog } from "./PortForwardsDialog";
 import { MountsDialog } from "./MountsDialog";
+import { MountsAccordion } from "./MountsAccordion";
+import { CopyToHostAccordion } from "./CopyToHostAccordion";
+import { PortForwardsAccordion } from "./PortForwardsAccordion";
+import { ImageAccordion } from "./ImageAccordion";
 import { ProvisionStepsDialog } from "./ProvisionStepsDialog";
 import { ProvisionStepsAccordion } from "./ProvisionStepsAccordion";
 import { ProbesDialog } from "./ProbesDialog";
 import { ProbesAccordion } from "./ProbesAccordion";
 
 export function CreateInstanceConfigForm() {
-    const { selectedName } = useSelectedInstance();
     const {
         draftConfig,
         isLoading,
         updateField
-    } = useLimaDraft(selectedName);
+    } = useCreateLimaInstanceDraft();
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>
@@ -92,18 +94,60 @@ export function CreateInstanceConfigForm() {
                     </Select>
                 </div>
                 <Separator className="my-1" />
-                <ConfigSection dialog={<ImagesDialog />} />
-                <ConfigSection dialog={<MountsDialog />} />
-                <ConfigSection dialog={<CopyToHostDialog />} />
-                <ConfigSection dialog={<PortForwardsDialog />} />
+                <Separator className="my-1" />
+                <ConfigSection dialog={
+                    <ImagesDialog
+                        value={draftConfig.images || []}
+                        onChange={(val) => updateField('images', val)}
+                    />
+                }>
+                    <ImageAccordion value={draftConfig.images || []} />
+                </ConfigSection>
+
+                <ConfigSection dialog={
+                    <MountsDialog
+                        value={draftConfig.mounts || []}
+                        onChange={(val) => updateField('mounts', val)}
+                    />
+                }>
+                    <MountsAccordion value={draftConfig.mounts || []} />
+                </ConfigSection>
+
+                <ConfigSection dialog={
+                    <CopyToHostDialog
+                        value={draftConfig.copyToHost || []}
+                        onChange={(val) => updateField('copyToHost', val)}
+                    />
+                }>
+                    <CopyToHostAccordion value={draftConfig.copyToHost || []} />
+                </ConfigSection>
+
+                <ConfigSection dialog={
+                    <PortForwardsDialog
+                        value={draftConfig.portForwards || []}
+                        onChange={(val) => updateField('portForwards', val)}
+                    />
+                }>
+                    <PortForwardsAccordion value={draftConfig.portForwards || []} />
+                </ConfigSection>
             </div>
 
             <div className="flex flex-col gap-3 min-w-0">
-                <ConfigSection dialog={<ProvisionStepsDialog />}>
-                    <ProvisionStepsAccordion />
+                <ConfigSection dialog={
+                    <ProvisionStepsDialog
+                        value={draftConfig.provision || []}
+                        onChange={(val) => updateField('provision', val)}
+                    />
+                }>
+                    <ProvisionStepsAccordion value={draftConfig.provision || []} />
                 </ConfigSection>
-                <ConfigSection dialog={<ProbesDialog />}>
-                    <ProbesAccordion />
+                <ConfigSection dialog={
+                    <ProbesDialog
+                        value={draftConfig.probes || []}
+                        onChange={(val) => updateField('probes', val)}
+                    />
+                }>
+                    <ProbesAccordion value={draftConfig.probes || []} />
                 </ConfigSection>
             </div>
         </div>

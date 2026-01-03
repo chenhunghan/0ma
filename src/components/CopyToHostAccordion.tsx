@@ -1,5 +1,5 @@
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { CopyToHost } from "src/types/LimaConfig";
+
 import {
     Accordion,
     AccordionContent,
@@ -7,11 +7,7 @@ import {
     AccordionTrigger,
 } from "./ui/accordion";
 
-export function CopyToHostAccordion() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig } = useLimaDraft(selectedName);
-
-    const rules = draftConfig?.copyToHost || [];
+export function CopyToHostAccordion({ value: rules }: { value: CopyToHost[] }) {
 
     const truncatePath = (path: string, maxLength: number = 20) => {
         if (!path) return '';

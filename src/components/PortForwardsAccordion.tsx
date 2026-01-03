@@ -1,5 +1,5 @@
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { PortForward } from "src/types/LimaConfig";
+
 import {
     Accordion,
     AccordionContent,
@@ -7,11 +7,7 @@ import {
     AccordionTrigger,
 } from "./ui/accordion";
 
-export function PortForwardsAccordion() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig } = useLimaDraft(selectedName);
-
-    const portForwards = draftConfig?.portForwards || [];
+export function PortForwardsAccordion({ value: portForwards }: { value: PortForward[] }) {
 
     return (
         portForwards.length > 0 && (

@@ -1,17 +1,13 @@
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+import { Image } from "src/types/LimaConfig";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "./ui/accordion";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
 
-export function ImageAccordion() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig } = useLimaDraft(selectedName);
 
-    const images = draftConfig?.images || [];
+export function ImageAccordion({ value: images }: { value: Image[] }) {
 
     return (
         images.length > 0 && (

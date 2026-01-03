@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { PortForward } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -20,25 +21,26 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-export function PortForwardsDialog() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField } = useLimaDraft(selectedName);
+
+interface Props {
+    value: PortForward[];
+    onChange: (portForwards: PortForward[]) => void;
+}
+
+export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
-    const portForwards = draftConfig?.portForwards || [];
-    const hasInvalid = portForwards.some(p => !p.guestPort || !p.hostPort || !p.proto);
+    const hasInvalid = (portForwards || []).some(p => !p.guestPort || !p.hostPort || !p.proto);
 
-    const updatePF = (index: number, field: string, value: any) => {
-        const newPFs = [...portForwards];
-        newPFs[index] = { ...newPFs[index], [field]: value };
-        updateField('portForwards', newPFs);
+    const updatePortForward = (index: number, field: string, value: any) => {
+        const newPortForwards = [...portForwards];
+        newPortForwards[index] = { ...newPortForwards[index], [field]: value };
+        onChange(newPortForwards);
     };
 
-    const addPF = () => {
-        updateField('portForwards', [...portForwards, {
+    const addPortForward = () => {
+        onChange([...portForwards, {
             guestPort: 8080,
             hostPort: 8080,
             proto: 'tcp',
@@ -47,10 +49,10 @@ export function PortForwardsDialog() {
         }]);
     };
 
-    const removePF = (index: number) => {
-        const newPFs = [...portForwards];
-        newPFs.splice(index, 1);
-        updateField('portForwards', newPFs);
+    const removePortForward = (index: number) => {
+        const newPortForwards = [...portForwards];
+        newPortForwards.splice(index, 1);
+        onChange(newPortForwards);
     };
 
     return (
@@ -82,13 +84,13 @@ export function PortForwardsDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                    {portForwards.map((pf, idx) => (
+                    {(portForwards || []).map((pf, idx) => (
                         <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => removePF(idx)}
+                                onClick={() => removePortForward(idx)}
                             >
                                 <Trash2Icon className="size-3 text-destructive" />
                             </Button>
@@ -98,7 +100,7 @@ export function PortForwardsDialog() {
                                     <Input
                                         type="number"
                                         value={pf.guestPort}
-                                        onChange={(e) => updatePF(idx, 'guestPort', parseInt(e.target.value) || 0)}
+                                        onChange={(e) => updatePortForward(idx, 'guestPort', Number(e.target.value) || 0)}
                                         className="h-7 text-[11px]"
                                     />
                                 </div>
@@ -107,7 +109,7 @@ export function PortForwardsDialog() {
                                     <Input
                                         type="number"
                                         value={pf.hostPort}
-                                        onChange={(e) => updatePF(idx, 'hostPort', parseInt(e.target.value) || 0)}
+                                        onChange={(e) => updatePortForward(idx, 'hostPort', Number(e.target.value) || 0)}
                                         className="h-7 text-[11px]"
                                     />
                                 </div>
@@ -116,7 +118,7 @@ export function PortForwardsDialog() {
                                 <Label className="text-[10px] uppercase text-muted-foreground">Protocol</Label>
                                 <Select
                                     value={pf.proto || 'tcp'}
-                                    onValueChange={(val) => updatePF(idx, 'proto', val)}
+                                    onValueChange={(val) => updatePortForward(idx, 'proto', val)}
                                 >
                                     <SelectTrigger className="h-7 text-[11px] w-full">
                                         <SelectValue />
@@ -133,7 +135,7 @@ export function PortForwardsDialog() {
                         variant="outline"
                         size="xs"
                         className="border-dashed"
-                        onClick={addPF}
+                        onClick={addPortForward}
                     >
                         <PlusIcon className="size-3 mr-1" /> Add Port Forward
                     </Button>

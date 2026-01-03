@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { CopyToHost } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -20,31 +21,32 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-export function CopyToHostDialog() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField } = useLimaDraft(selectedName);
+
+interface Props {
+    value: CopyToHost[];
+    onChange: (rules: CopyToHost[]) => void;
+}
+
+export function CopyToHostDialog({ value: rules, onChange }: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
-    const rules = draftConfig?.copyToHost || [];
-    const hasInvalid = rules.some(c => !c.guest?.trim() || !c.host?.trim());
+    const hasInvalid = (rules || []).some(c => !c.guest?.trim() || !c.host?.trim());
 
     const updateRule = (index: number, field: string, value: any) => {
         const newRules = [...rules];
         newRules[index] = { ...newRules[index], [field]: value };
-        updateField('copyToHost', newRules);
+        onChange(newRules);
     };
 
     const addRule = () => {
-        updateField('copyToHost', [...rules, { guest: '', host: '', deleteOnStop: false }]);
+        onChange([...rules, { guest: '', host: '', deleteOnStop: false }]);
     };
 
     const removeRule = (index: number) => {
         const newRules = [...rules];
         newRules.splice(index, 1);
-        updateField('copyToHost', newRules);
+        onChange(newRules);
     };
 
     return (
@@ -76,7 +78,7 @@ export function CopyToHostDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                    {rules.map((rule, idx) => (
+                    {(rules || []).map((rule, idx) => (
                         <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
                             <Button
                                 variant="ghost"

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { Mount } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -20,31 +21,32 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-export function MountsDialog() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField } = useLimaDraft(selectedName);
+
+interface Props {
+    value: Mount[];
+    onChange: (mounts: Mount[]) => void;
+}
+
+export function MountsDialog({ value: mounts, onChange }: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
-    const mounts = draftConfig?.mounts || [];
-    const hasInvalid = mounts.some(m => !m.location?.trim());
+    const hasInvalid = (mounts || []).some(m => !m.location?.trim());
 
     const updateMount = (index: number, field: string, value: any) => {
         const newMounts = [...mounts];
         newMounts[index] = { ...newMounts[index], [field]: value };
-        updateField('mounts', newMounts);
+        onChange(newMounts);
     };
 
     const addMount = () => {
-        updateField('mounts', [...mounts, { location: '', writable: false }]);
+        onChange([...mounts, { location: '', writable: false }]);
     };
 
     const removeMount = (index: number) => {
         const newMounts = [...mounts];
         newMounts.splice(index, 1);
-        updateField('mounts', newMounts);
+        onChange(newMounts);
     };
 
     return (
@@ -76,7 +78,7 @@ export function MountsDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                    {mounts.map((mount, idx) => (
+                    {(mounts || []).map((mount, idx) => (
                         <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
                             <Button
                                 variant="ghost"

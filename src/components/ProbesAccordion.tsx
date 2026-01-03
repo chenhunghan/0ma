@@ -1,5 +1,5 @@
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { Probe } from "src/types/LimaConfig";
+
 import {
     Accordion,
     AccordionContent,
@@ -7,19 +7,8 @@ import {
     AccordionTrigger,
 } from "./ui/accordion";
 import Editor from '@monaco-editor/react';
-import { LimaConfig } from "src/types/LimaConfig";
 
-export function ProbesAccordion() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField } = useLimaDraft(selectedName);
-
-    const probes = draftConfig?.probes || [];
-
-    const updateArrayField = (field: keyof LimaConfig, index: number, subField: string, value: any) => {
-        const arr = [...((draftConfig?.[field] as any[]) || [])];
-        arr[index] = { ...arr[index], [subField]: value };
-        updateField(field, arr);
-    };
+export function ProbesAccordion({ value: probes }: { value: Probe[] }) {
 
     return (
         probes.length > 0 && (
@@ -39,7 +28,6 @@ export function ProbesAccordion() {
                                     defaultLanguage="shell"
                                     theme="vs-dark"
                                     value={p.script}
-                                    onChange={(val) => updateArrayField('probes', idx, 'script', val || '')}
                                     options={{
                                         minimap: { enabled: false },
                                         fontSize: 10,

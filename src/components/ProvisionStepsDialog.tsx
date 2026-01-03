@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+
 import {
     Dialog,
     DialogClose,
@@ -14,37 +14,36 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Trash2Icon, PlusIcon, PencilIcon } from "lucide-react";
-import { LimaConfig } from "src/types/LimaConfig";
+import { Provision } from "src/types/LimaConfig";
 import Editor from '@monaco-editor/react';
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-export function ProvisionStepsDialog() {
-    const { selectedName } = useSelectedInstance();
-    const {
-        draftConfig,
-        updateField
-    } = useLimaDraft(selectedName);
 
+interface Props {
+    value: Provision[];
+    onChange: (steps: Provision[]) => void;
+}
+
+export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props) {
     const [isProvisionDialogOpen, setIsProvisionDialogOpen] = useState(false);
 
-    const updateArrayField = (field: keyof LimaConfig, index: number, subField: string, value: any) => {
-        const arr = [...((draftConfig?.[field] as any[]) || [])];
+    const updateArrayField = (index: number, subField: keyof Provision, value: any) => {
+        const arr = [...(provisionSteps || [])];
         arr[index] = { ...arr[index], [subField]: value };
-        updateField(field, arr);
+        onChange(arr);
     };
 
-    const addArrayItem = (field: keyof LimaConfig, defaultItem: any) => {
-        const arr = [...((draftConfig?.[field] as any[]) || []), defaultItem];
-        updateField(field, arr);
+    const addArrayItem = (defaultItem: Provision) => {
+        const arr = [...(provisionSteps || []), defaultItem];
+        onChange(arr);
     };
 
-    const removeArrayItem = (field: keyof LimaConfig, index: number) => {
-        const arr = [...((draftConfig?.[field] as any[]) || [])];
+    const removeArrayItem = (index: number) => {
+        const arr = [...(provisionSteps || [])];
         arr.splice(index, 1);
-        updateField(field, arr);
+        onChange(arr);
     };
 
-    const hasInvalidProvision = draftConfig?.provision?.some(p => !p.script?.trim());
+    const hasInvalidProvision = provisionSteps?.some(p => !p.script?.trim());
 
     return (
         <Dialog
@@ -59,7 +58,7 @@ export function ProvisionStepsDialog() {
             <div className="flex items-center justify-between">
                 <Label className="mb-0.5">Provision</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
-                    {(!draftConfig?.provision || draftConfig.provision.length === 0)
+                    {(!provisionSteps || provisionSteps.length === 0)
                         ? <PlusIcon className="size-2.5 mr-[4px]" />
                         : <PencilIcon className="size-2.5 mr-[4px]" />
                     }
@@ -77,13 +76,13 @@ export function ProvisionStepsDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                    {draftConfig?.provision?.map((p, idx) => (
+                    {provisionSteps?.map((p, idx) => (
                         <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => removeArrayItem('provision', idx)}
+                                onClick={() => removeArrayItem(idx)}
                             >
                                 <Trash2Icon className="size-3 text-destructive" />
                             </Button>
@@ -91,7 +90,7 @@ export function ProvisionStepsDialog() {
                                 <Label className="text-[10px] uppercase text-muted-foreground">Mode</Label>
                                 <Select
                                     value={p.mode || 'system'}
-                                    onValueChange={(val) => updateArrayField('provision', idx, 'mode', val)}
+                                    onValueChange={(val) => updateArrayField(idx, 'mode', val)}
                                 >
                                     <SelectTrigger className="h-7 text-[11px] w-full">
                                         <SelectValue />
@@ -111,7 +110,7 @@ export function ProvisionStepsDialog() {
                                         defaultLanguage="shell"
                                         theme="vs-dark"
                                         value={p.script}
-                                        onChange={(val) => updateArrayField('provision', idx, 'script', val || '')}
+                                        onChange={(val) => updateArrayField(idx, 'script', val || '')}
                                         options={{
                                             minimap: { enabled: false },
                                             fontSize: 11,
@@ -137,7 +136,7 @@ export function ProvisionStepsDialog() {
                         variant="outline"
                         size="xs"
                         className="border-dashed"
-                        onClick={() => addArrayItem('provision', { mode: 'system', script: '' })}
+                        onClick={() => addArrayItem({ mode: 'system', script: '' })}
                     >
                         <PlusIcon className="size-3 mr-1" /> Add Provision Step
                     </Button>

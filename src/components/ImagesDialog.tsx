@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { Image } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -20,12 +21,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-export function ImagesDialog() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField } = useLimaDraft(selectedName);
+
+interface Props {
+    value: Image[];
+    onChange: (images: Image[]) => void;
+}
+
+export function ImagesDialog({ value: images, onChange }: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
     const isUrl = (str: string) => {
@@ -37,23 +40,22 @@ export function ImagesDialog() {
         }
     };
 
-    const images = draftConfig?.images || [];
-    const hasInvalid = images.some(img => !img.location?.trim() || !isUrl(img.location));
+    const hasInvalid = (images || []).some(img => !img.location?.trim() || !isUrl(img.location));
 
     const updateImage = (index: number, field: string, value: any) => {
         const newImages = [...images];
         newImages[index] = { ...newImages[index], [field]: value };
-        updateField('images', newImages);
+        onChange(newImages);
     };
 
     const addImage = () => {
-        updateField('images', [...images, { location: '', arch: 'aarch64' }]);
+        onChange([...images, { location: '', arch: 'aarch64' }]);
     };
 
     const removeImage = (index: number) => {
         const newImages = [...images];
         newImages.splice(index, 1);
-        updateField('images', newImages);
+        onChange(newImages);
     };
 
     return (
@@ -85,7 +87,7 @@ export function ImagesDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                    {images.map((image, idx) => (
+                    {(images || []).map((image, idx) => (
                         <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
                             <Button
                                 variant="ghost"

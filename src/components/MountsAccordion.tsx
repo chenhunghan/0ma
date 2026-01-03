@@ -1,5 +1,5 @@
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { Mount } from "src/types/LimaConfig";
+
 import {
     Accordion,
     AccordionContent,
@@ -7,11 +7,7 @@ import {
     AccordionTrigger,
 } from "./ui/accordion";
 
-export function MountsAccordion() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig } = useLimaDraft(selectedName);
-
-    const mounts = draftConfig?.mounts || [];
+export function MountsAccordion({ value: mounts }: { value: Mount[] }) {
 
     const truncatePath = (path: string, maxLength: number = 20) => {
         if (!path) return '';

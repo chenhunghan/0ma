@@ -9,7 +9,7 @@ import { ProbesAccordion } from "./ProbesAccordion";
 
 export function LimaConfigAutomationColumn() {
     const { selectedName } = useSelectedInstance();
-    const { isLoading } = useLimaDraft(selectedName);
+    const { draftConfig, updateField, isLoading } = useLimaDraft(selectedName);
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>
@@ -17,12 +17,22 @@ export function LimaConfigAutomationColumn() {
 
     return (
         <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
-            <ConfigSection dialog={<ProvisionStepsDialog />}>
-                <ProvisionStepsAccordion />
+            <ConfigSection dialog={
+                <ProvisionStepsDialog
+                    value={draftConfig?.provision || []}
+                    onChange={(val) => updateField('provision', val)}
+                />
+            }>
+                <ProvisionStepsAccordion value={draftConfig?.provision || []} />
             </ConfigSection>
 
-            <ConfigSection dialog={<ProbesDialog />}>
-                <ProbesAccordion />
+            <ConfigSection dialog={
+                <ProbesDialog
+                    value={draftConfig?.probes || []}
+                    onChange={(val) => updateField('probes', val)}
+                />
+            }>
+                <ProbesAccordion value={draftConfig?.probes || []} />
             </ConfigSection>
         </div>
     )

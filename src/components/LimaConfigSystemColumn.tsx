@@ -13,7 +13,7 @@ import { PortForwardsAccordion } from "./PortForwardsAccordion";
 
 export function LimaConfigSystemColumn() {
     const { selectedName } = useSelectedInstance();
-    const { isLoading } = useLimaDraft(selectedName);
+    const { draftConfig, updateField, isLoading } = useLimaDraft(selectedName);
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>
@@ -21,20 +21,40 @@ export function LimaConfigSystemColumn() {
 
     return (
         <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
-            <ConfigSection dialog={<ImagesDialog />}>
-                <ImageAccordion />
+            <ConfigSection dialog={
+                <ImagesDialog
+                    value={draftConfig?.images || []}
+                    onChange={(val) => updateField('images', val)}
+                />
+            }>
+                <ImageAccordion value={draftConfig?.images || []} />
             </ConfigSection>
 
-            <ConfigSection dialog={<MountsDialog />}>
-                <MountsAccordion />
+            <ConfigSection dialog={
+                <MountsDialog
+                    value={draftConfig?.mounts || []}
+                    onChange={(val) => updateField('mounts', val)}
+                />
+            }>
+                <MountsAccordion value={draftConfig?.mounts || []} />
             </ConfigSection>
 
-            <ConfigSection dialog={<CopyToHostDialog />}>
-                <CopyToHostAccordion />
+            <ConfigSection dialog={
+                <CopyToHostDialog
+                    value={draftConfig?.copyToHost || []}
+                    onChange={(val) => updateField('copyToHost', val)}
+                />
+            }>
+                <CopyToHostAccordion value={draftConfig?.copyToHost || []} />
             </ConfigSection>
 
-            <ConfigSection dialog={<PortForwardsDialog />}>
-                <PortForwardsAccordion />
+            <ConfigSection dialog={
+                <PortForwardsDialog
+                    value={draftConfig?.portForwards || []}
+                    onChange={(val) => updateField('portForwards', val)}
+                />
+            }>
+                <PortForwardsAccordion value={draftConfig?.portForwards || []} />
             </ConfigSection>
         </div >
     )

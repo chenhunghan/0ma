@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+
 import {
     Dialog,
     DialogClose,
@@ -14,37 +14,36 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Trash2Icon, PlusIcon, PencilIcon } from "lucide-react";
-import { LimaConfig } from "src/types/LimaConfig";
+import { Probe } from "src/types/LimaConfig";
 import Editor from '@monaco-editor/react';
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
-export function ProbesDialog() {
-    const { selectedName } = useSelectedInstance();
-    const {
-        draftConfig,
-        updateField
-    } = useLimaDraft(selectedName);
 
+interface Props {
+    value: Probe[];
+    onChange: (probes: Probe[]) => void;
+}
+
+export function ProbesDialog({ value: probes, onChange }: Props) {
     const [isProbesDialogOpen, setIsProbesDialogOpen] = useState(false);
 
-    const updateArrayField = (field: keyof LimaConfig, index: number, subField: string, value: any) => {
-        const arr = [...((draftConfig?.[field] as any[]) || [])];
+    const updateArrayField = (index: number, subField: keyof Probe, value: any) => {
+        const arr = [...(probes || [])];
         arr[index] = { ...arr[index], [subField]: value };
-        updateField(field, arr);
+        onChange(arr);
     };
 
-    const addArrayItem = (field: keyof LimaConfig, defaultItem: any) => {
-        const arr = [...((draftConfig?.[field] as any[]) || []), defaultItem];
-        updateField(field, arr);
+    const addArrayItem = (defaultItem: Probe) => {
+        const arr = [...(probes || []), defaultItem];
+        onChange(arr);
     };
 
-    const removeArrayItem = (field: keyof LimaConfig, index: number) => {
-        const arr = [...((draftConfig?.[field] as any[]) || [])];
+    const removeArrayItem = (index: number) => {
+        const arr = [...(probes || [])];
         arr.splice(index, 1);
-        updateField(field, arr);
+        onChange(arr);
     };
 
-    const hasInvalidProbe = draftConfig?.probes?.some(p => !p.description?.trim() || !p.script?.trim());
+    const hasInvalidProbe = probes?.some(p => !p.description?.trim() || !p.script?.trim());
 
     return (
         <Dialog
@@ -59,7 +58,7 @@ export function ProbesDialog() {
             <div className="flex items-center justify-between">
                 <Label className="mb-0.5">Probes</Label>
                 <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
-                    {(!draftConfig?.probes || draftConfig.probes.length === 0)
+                    {(!probes || probes.length === 0)
                         ? <PlusIcon className="size-2.5 mr-[4px]" />
                         : <PencilIcon className="size-2.5 mr-[4px]" />
                     }
@@ -77,13 +76,13 @@ export function ProbesDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                    {draftConfig?.probes?.map((p, idx) => (
+                    {probes?.map((p, idx) => (
                         <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => removeArrayItem('probes', idx)}
+                                onClick={() => removeArrayItem(idx)}
                             >
                                 <Trash2Icon className="size-3 text-destructive" />
                             </Button>
@@ -91,7 +90,7 @@ export function ProbesDialog() {
                                 <Label className="text-[10px] uppercase text-muted-foreground">Description</Label>
                                 <Input
                                     value={p.description}
-                                    onChange={(e) => updateArrayField('probes', idx, 'description', e.target.value)}
+                                    onChange={(e) => updateArrayField(idx, 'description', e.target.value)}
                                     className="h-7 text-[11px]"
                                 />
                             </div>
@@ -102,7 +101,7 @@ export function ProbesDialog() {
                                         defaultLanguage="shell"
                                         theme="vs-dark"
                                         value={p.script}
-                                        onChange={(val) => updateArrayField('probes', idx, 'script', val || '')}
+                                        onChange={(val) => updateArrayField(idx, 'script', val || '')}
                                         options={{
                                             minimap: { enabled: false },
                                             fontSize: 11,
@@ -126,7 +125,7 @@ export function ProbesDialog() {
                                 <Label className="text-[10px] uppercase text-muted-foreground">Hint (Optional)</Label>
                                 <Input
                                     value={p.hint || ''}
-                                    onChange={(e) => updateArrayField('probes', idx, 'hint', e.target.value)}
+                                    onChange={(e) => updateArrayField(idx, 'hint', e.target.value)}
                                     className="h-7 text-[11px]"
                                 />
                             </div>
@@ -136,7 +135,7 @@ export function ProbesDialog() {
                         variant="outline"
                         size="xs"
                         className="border-dashed"
-                        onClick={() => addArrayItem('probes', { description: '', script: '' })}
+                        onClick={() => addArrayItem({ description: '', script: '' })}
                     >
                         <PlusIcon className="size-3 mr-1" /> Add Probe
                     </Button>

@@ -1,5 +1,5 @@
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
-import { useLimaDraft } from "src/hooks/useLimaDraft";
+import { Provision } from "src/types/LimaConfig";
+
 import {
     Accordion,
     AccordionContent,
@@ -7,19 +7,8 @@ import {
     AccordionTrigger,
 } from "./ui/accordion";
 import Editor from '@monaco-editor/react';
-import { LimaConfig } from "src/types/LimaConfig";
 
-export function ProvisionStepsAccordion() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField } = useLimaDraft(selectedName);
-
-    const provision = draftConfig?.provision || [];
-
-    const updateArrayField = (field: keyof LimaConfig, index: number, subField: string, value: any) => {
-        const arr = [...((draftConfig?.[field] as any[]) || [])];
-        arr[index] = { ...arr[index], [subField]: value };
-        updateField(field, arr);
-    };
+export function ProvisionStepsAccordion({ value: provision }: { value: Provision[] }) {
 
     return (
         provision.length > 0 && (
@@ -39,7 +28,6 @@ export function ProvisionStepsAccordion() {
                                     defaultLanguage="shell"
                                     theme="vs-dark"
                                     value={p.script}
-                                    onChange={(val) => updateArrayField('provision', idx, 'script', val || '')}
                                     options={{
                                         minimap: { enabled: false },
                                         fontSize: 10,
