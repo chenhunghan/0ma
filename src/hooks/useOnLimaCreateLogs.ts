@@ -1,19 +1,8 @@
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
-export interface CreateLog {
-    id: string;
-    message: string;
-    timestamp: string; // Nano-timestamp from backend
-}
-
-export interface CreateStatus {
-    stdout: CreateLog[];
-    stderr: CreateLog[];
-    error: CreateLog[];
-    isCreating: boolean;
-}
+import { Log, LogState } from 'src/types/Log';
+import { insertLog } from 'src/services/insertLog';
 
 interface LimaCreatePayload {
     instance_name: string;
@@ -22,33 +11,15 @@ interface LimaCreatePayload {
     timestamp: string;
 }
 
-export const DEFAULT_LIMA_CREATE_STATE: CreateStatus = {
+const DEFAULT_LIMA_CREATE_STATE: LogState = {
     stdout: [],
     stderr: [],
     error: [],
-    isCreating: false,
+    isLoading: false,
 };
 
-export const getCreateLogsQueryKey = (instanceName: string) => ['lima', 'create-logs', instanceName];
+const getCreateLogsQueryKey = (instanceName: string) => ['lima', 'create-logs', instanceName];
 
-export const insertLog = (logs: CreateLog[], newLog: CreateLog): CreateLog[] => {
-    // If empty or newLog is newer/equal to the last one, append.
-    if (logs.length === 0 || newLog.timestamp >= logs[logs.length - 1].timestamp) {
-        return [...logs, newLog];
-    }
-
-    // Find insertion index (first log that is newer than newLog)
-    const index = logs.findIndex(log => log.timestamp > newLog.timestamp);
-
-    // This shouldn't happen given the first check, but for safety:
-    if (index === -1) {
-        return [...logs, newLog];
-    }
-
-    const newLogs = [...logs];
-    newLogs.splice(index, 0, newLog);
-    return newLogs;
-};
 /**
  * useOnLimaCreateLogs
  * 
@@ -62,7 +33,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
 
     const { data } = useQuery({
         queryKey,
-        queryFn: () => queryClient.getQueryData<CreateStatus>(queryKey),
+        queryFn: () => queryClient.getQueryData<LogState>(queryKey),
         staleTime: Infinity,
         gcTime: Infinity,
         initialData: DEFAULT_LIMA_CREATE_STATE,
@@ -72,9 +43,9 @@ export function useOnLimaCreateLogs(instanceName: string) {
         let active = true;
         const unlistenPromises: Promise<() => void>[] = [];
 
-        const updateCache = (updater: (prev: CreateStatus) => CreateStatus) => {
+        const updateCache = (updater: (prev: LogState) => LogState) => {
             if (!active) return;
-            queryClient.setQueryData<CreateStatus>(queryKey, (prev) => {
+            queryClient.setQueryData<LogState>(queryKey, (prev) => {
                 if (!prev) return DEFAULT_LIMA_CREATE_STATE;
                 return updater(prev);
             });
@@ -87,7 +58,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
                 updateCache(() => ({
                     // Reset all logs
                     ...DEFAULT_LIMA_CREATE_STATE,
-                    isCreating: true,
+                    isLoading: true,
                 }));
             })
         );
@@ -102,7 +73,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
                 }
 
 
-                const newLog: CreateLog = { id: message_id, message, timestamp };
+                const newLog: Log = { id: message_id, message, timestamp };
 
                 return {
                     ...prev,
@@ -121,7 +92,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
                 }
 
 
-                const newLog: CreateLog = { id: message_id, message, timestamp };
+                const newLog: Log = { id: message_id, message, timestamp };
 
                 return {
                     ...prev,
@@ -143,11 +114,11 @@ export function useOnLimaCreateLogs(instanceName: string) {
                     }
 
 
-                    const newLog: CreateLog = { id: message_id, message, timestamp };
+                    const newLog: Log = { id: message_id, message, timestamp };
 
                     return {
                         ...prev,
-                        isCreating: false,
+                        isLoading: false,
                         error: insertLog(prev.error, newLog),
                     };
                 });
@@ -163,7 +134,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
                     stdout: [],
                     stderr: [],
                     error: [],
-                    isCreating: false,
+                    isLoading: false,
                 }));
                 queryClient.invalidateQueries({ queryKey: ["instances"] });
             })
@@ -179,7 +150,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
         stdout: data?.stdout ?? [],
         stderr: data?.stderr ?? [],
         error: data?.error ?? [],
-        isCreating: data?.isCreating ?? false,
+        isLoading: data?.isLoading ?? false,
         reset: () => queryClient.setQueryData(queryKey, DEFAULT_LIMA_CREATE_STATE),
     };
 }

@@ -1,9 +1,12 @@
 import { PlusIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { LogViewer } from "./LogViewer";
+import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 
 
 export function CreatingInstance({ className }: { className?: string }) {
+    const logState = useOnLimaCreateLogs("")
     return (
         <Dialog>
             <DialogTrigger>
@@ -12,7 +15,7 @@ export function CreatingInstance({ className }: { className?: string }) {
                 </Button>
             </DialogTrigger>
             <CreatingInstanceDialogContent>
-                null
+                <LogViewer logState={logState} />
             </CreatingInstanceDialogContent>
         </Dialog>
     )

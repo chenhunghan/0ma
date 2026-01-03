@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { insertLog, CreateLog } from './useOnLimaCreateLogs';
+import { insertLog } from './insertLog';
+import { Log } from 'src/types/Log';
 
 describe('insertLog', () => {
-    const makeLog = (ts: string, id: string): CreateLog => ({
+    const makeLog = (ts: string, id: string): Log => ({
         id,
         message: `msg ${id}`,
         timestamp: ts
@@ -40,7 +41,7 @@ describe('insertLog', () => {
     });
 
     it('should handle empty logs', () => {
-        const logs: CreateLog[] = [];
+        const logs: Log[] = [];
         const newLog = makeLog('10', '1');
         const result = insertLog(logs, newLog);
         expect(result).toHaveLength(1);

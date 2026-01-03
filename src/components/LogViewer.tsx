@@ -2,25 +2,20 @@ import React, { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
+import { LogState } from 'src/types/Log';
 
-interface InstanceModalLog {
-  type: 'stdout' | 'stderr' | 'error' | 'info' | 'success';
-  message: string;
-  timestamp: Date;
+interface Props {
+  logState: LogState;
 }
 
-interface InstanceModalLogViewerProps {
-  logs: InstanceModalLog[];
-}
-
-const TERM_CONFIG = {
+const LOG_VIEW_TERM_CONFIG = {
   fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
   fontSize: 11,
   lineHeight: 1.15,
   theme: {
     background: '#000000',
     foreground: '#d4d4d8', // zinc-300
-    cursor: '#10b981', // emerald-500
+    cursor: 'transparent', // emerald-500
     selectionBackground: '#27272a', // zinc-800
     black: '#000000',
     red: '#ef4444',
@@ -41,7 +36,7 @@ const TERM_CONFIG = {
   },
 };
 
-export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ logs }) => {
+export const LogViewer: React.FC<Props> = ({ logState }) => {
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -52,7 +47,7 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
 
     // Create terminal instance
     const term = new Terminal({
-      ...TERM_CONFIG,
+      ...LOG_VIEW_TERM_CONFIG,
       cursorBlink: false,
       cursorStyle: 'block',
       disableStdin: true,
@@ -100,19 +95,12 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
     };
   }, []);
 
-  // Write logs to terminal
+  // Write stdout to terminal
   useEffect(() => {
     const term = terminalRef.current;
     if (!term) return;
 
-    logs.forEach((log) => {
-      const logKey = `${log.timestamp.getTime()}-${log.type}-${log.message}`;
-
-      // Skip if already processed
-      if (processedLogsRef.current.has(logKey)) return;
-
-      processedLogsRef.current.add(logKey);
-
+    logState.stdout.forEach((log) => {
       try {
         term.writeln(log.message);
 
@@ -122,7 +110,24 @@ export const InstanceModalLogViewer: React.FC<InstanceModalLogViewerProps> = ({ 
         console.error('Error writing to terminal:', e);
       }
     });
-  }, [logs]);
+  }, [logState.stdout]);
+
+  // Write stderr to terminal
+  useEffect(() => {
+    const term = terminalRef.current;
+    if (!term) return;
+
+    logState.stderr.forEach((log) => {
+      try {
+        term.writeln(log.message);
+
+        // Auto-scroll to bottom
+        term.scrollToBottom();
+      } catch (e) {
+        console.error('Error writing to terminal:', e);
+      }
+    });
+  }, [logState.stderr]);
 
   return (
     <div className="h-full w-full overflow-hidden bg-black" ref={terminalContainerRef} />
