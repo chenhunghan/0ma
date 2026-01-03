@@ -16,6 +16,7 @@ const DEFAULT_LIMA_CREATE_STATE: LogState = {
     stderr: [],
     error: [],
     isLoading: false,
+    isSuccess: false
 };
 
 const getCreateLogsQueryKey = (instanceName: string) => ['lima', 'create-logs', instanceName];
@@ -120,6 +121,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
                         ...prev,
                         isLoading: false,
                         error: insertLog(prev.error, newLog),
+                        isSuccess: false,
                     };
                 });
             })
@@ -135,6 +137,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
                     stderr: [],
                     error: [],
                     isLoading: false,
+                    isSuccess: true,
                 }));
                 queryClient.invalidateQueries({ queryKey: ["instances"] });
             })
@@ -151,6 +154,7 @@ export function useOnLimaCreateLogs(instanceName: string) {
         stderr: data?.stderr ?? [],
         error: data?.error ?? [],
         isLoading: data?.isLoading ?? false,
+        isSuccess: data?.isSuccess,
         reset: () => queryClient.setQueryData(queryKey, DEFAULT_LIMA_CREATE_STATE),
     };
 }

@@ -16,7 +16,8 @@ import { useLimaInstance } from "src/hooks/useLimaInstance";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 
 
 export function TopBar() {
@@ -47,6 +48,7 @@ function Dialogs() {
 
     const { createInstance } = useLimaInstance();
     const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
+    const { isSuccess, error } = useOnLimaCreateLogs(instanceName);
 
     const handleCreateInstance = () => {
         if (!draftConfig || !instanceName) return;
@@ -62,6 +64,16 @@ function Dialogs() {
             }
         });
     };
+
+    const handleCreatingInstanceSuccess = () => {
+        setCreatingInstanceDialogOpen(false);
+    };
+
+    useEffect(() => {
+        if (isSuccess) {
+            handleCreatingInstanceSuccess();
+        }
+    }, [isSuccess]);
 
     return (
         <>

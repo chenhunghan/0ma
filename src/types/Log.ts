@@ -9,4 +9,5 @@ export interface LogState {
     stderr: Log[];
     error: Log[];
     isLoading: boolean;
+    isSuccess?: boolean;
 }
