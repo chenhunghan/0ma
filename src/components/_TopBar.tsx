@@ -16,6 +16,7 @@ import { useLimaInstance } from "src/hooks/useLimaInstance";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
+import { ErrorCreateInstanceDialog } from "./ErrorCreateInstanceDialog";
 import { useEffect, useState } from "react";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 
@@ -45,10 +46,11 @@ export function TopBar() {
 function Dialogs() {
     const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
     const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
     const { createInstance } = useLimaInstance();
-    const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
-    const { isSuccess, error } = useOnLimaCreateLogs(instanceName);
+    const { draftConfig, instanceName, resetDraft } = useCreateLimaInstanceDraft();
+    const { isSuccess: isSuccessCreatingInstance, error: errorCreatingInstance, reset: resetLogs } = useOnLimaCreateLogs(instanceName);
 
     const handleCreateInstance = () => {
         if (!draftConfig || !instanceName) return;
@@ -66,14 +68,33 @@ function Dialogs() {
     };
 
     const handleCreatingInstanceSuccess = () => {
+        resetDraft();
         setCreatingInstanceDialogOpen(false);
     };
 
     useEffect(() => {
-        if (isSuccess) {
+        if (isSuccessCreatingInstance) {
             handleCreatingInstanceSuccess();
         }
-    }, [isSuccess]);
+    }, [isSuccessCreatingInstance]);
+
+    useEffect(() => {
+        if (errorCreatingInstance.length > 0 && !isSuccessCreatingInstance) {
+            setCreatingInstanceDialogOpen(false);
+            setErrorDialogOpen(true);
+        }
+    }, [errorCreatingInstance, isSuccessCreatingInstance]);
+
+    const handleRetry = () => {
+        resetLogs();
+        setErrorDialogOpen(false);
+        setCreateInstanceDialogOpen(true);
+    };
+
+    const handleCloseError = () => {
+        resetLogs();
+        setErrorDialogOpen(false);
+    };
 
     return (
         <>
@@ -86,6 +107,13 @@ function Dialogs() {
             <CreatingInstanceDialog
                 open={creatingInstanceDialogOpen}
                 onDialogOpenChange={setCreatingInstanceDialogOpen}
+            />
+            <ErrorCreateInstanceDialog
+                open={errorDialogOpen}
+                onOpenChange={setErrorDialogOpen}
+                errors={errorCreatingInstance}
+                onRetry={handleRetry}
+                onClose={handleCloseError}
             />
         </>
     )
