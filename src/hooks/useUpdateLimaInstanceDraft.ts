@@ -4,11 +4,14 @@ import { useLimaYaml } from "./useLimaYaml";
 import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-provider";
 import { LimaConfig } from "src/types/LimaConfig";
 
+import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+
 /**
  * Hook to manage a draft Lima configuration stored in Tauri Store to update an existing instance.
  * Computes 'isDirty' by comparing draft with actual config from limactl.
  */
-export function useUpdateLimaInstanceDraft(instanceName: string | null) {
+export function useUpdateLimaInstanceDraft() {
+    const { selectedName: instanceName } = useSelectedInstance();
     const {
         limaConfig: actualConfig,
         isLoadingLima,

@@ -2,14 +2,12 @@ import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft
 import { Spinner } from "./ui/spinner";
 import { ProvisionStepsDialog } from "./ProvisionStepsDialog";
 import { ProbesDialog } from "./ProbesDialog";
-import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { ConfigSection } from "./ConfigSection";
 import { ProvisionStepsAccordion } from "./ProvisionStepsAccordion";
 import { ProbesAccordion } from "./ProbesAccordion";
 
 export function LimaConfigAutomationColumn() {
-    const { selectedName } = useSelectedInstance();
-    const { draftConfig, updateField, isLoading } = useUpdateLimaInstanceDraft(selectedName);
+    const { draftConfig, updateField, isLoading } = useUpdateLimaInstanceDraft();
 
     if (isLoading) {
         return <div title="Loading Lima Config..."><Spinner /></div>
