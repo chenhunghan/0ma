@@ -11,6 +11,7 @@ export function useDefaultK0sLimaConfig(
     data: defaultConfig,
     error,
     isLoading,
+    isFetched,
     refetch,
   } = useQuery({
     queryKey: ["default_k0s_lima_config", instanceName, installHelm, installLocalPathProvisioner],
@@ -29,7 +30,7 @@ export function useDefaultK0sLimaConfig(
   return {
     defaultConfig,
     error,
-    isLoading,
+    isLoading: isLoading || !isFetched,
     refetch,
   };
 }
