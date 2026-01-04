@@ -15,7 +15,7 @@ const LOG_VIEW_TERM_CONFIG = {
   theme: {
     background: '#000000',
     foreground: '#d4d4d8', // zinc-300
-    cursor: 'transparent', // emerald-500
+    cursor: 'transparent',
     selectionBackground: '#27272a', // zinc-800
     black: '#000000',
     red: '#ef4444',
@@ -49,7 +49,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
     const term = new Terminal({
       ...LOG_VIEW_TERM_CONFIG,
       cursorBlink: false,
-      cursorStyle: 'block',
+      cursorStyle: 'underline',
       disableStdin: true,
       allowProposedApi: true,
     });
@@ -58,6 +58,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
     term.loadAddon(fitAddon);
 
     term.open(terminalContainerRef.current);
+    term.write('\x1b[?25l');
 
     terminalRef.current = term;
     fitAddonRef.current = fitAddon;

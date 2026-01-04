@@ -22,7 +22,6 @@ import {
     SelectValue,
 } from "./ui/select";
 
-
 interface Props {
     value: CopyToHost[];
     onChange: (rules: CopyToHost[]) => void;
