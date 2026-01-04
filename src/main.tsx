@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 
 import "./index.css";
 import { ThemeProvider } from "./providers/theme-provider";
-import { App } from "./_App";
+import { App } from "./App";
 import { TauriStoreProvider } from "./providers/tauri-store-provider";
 
 const queryClient = new QueryClient();
