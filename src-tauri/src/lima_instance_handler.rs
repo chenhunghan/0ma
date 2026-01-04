@@ -7,14 +7,14 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
 
 #[derive(Clone, serde::Serialize)]
-struct LimaCreatePayload {
+struct LimaLogPayload {
     instance_name: String,
     message: String,
     message_id: String,
     timestamp: String,
 }
 
-fn create_instance_create_event(instance_name: String, message: String) -> LimaCreatePayload {
+fn create_log_payload(instance_name: String, message: String) -> LimaLogPayload {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
@@ -23,7 +23,7 @@ fn create_instance_create_event(instance_name: String, message: String) -> LimaC
     let timestamp = now.to_string();
     let message_id = uuid::Uuid::new_v4().to_string();
 
-    LimaCreatePayload {
+    LimaLogPayload {
         instance_name,
         message,
         message_id,
@@ -57,7 +57,7 @@ pub async fn create_lima_instance_cmd(
     // Emit create event
     app.emit(
         "lima-instance-create",
-        create_instance_create_event(
+        create_log_payload(
             instance_name.clone(),
             format!("Creating Lima instance '{}'...", instance_name),
         ),
@@ -75,7 +75,7 @@ pub async fn create_lima_instance_cmd(
             None => {
                 let _ = app_handle.emit(
                     "lima-instance-create-error",
-                    create_instance_create_event(
+                    create_log_payload(
                         instance_name_clone,
                         "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.".to_string(),
                     ),
@@ -102,7 +102,7 @@ pub async fn create_lima_instance_cmd(
             Err(e) => {
                 let _ = app_handle.emit(
                     "lima-instance-create-error",
-                    create_instance_create_event(instance_name_clone, e.to_string()),
+                    create_log_payload(instance_name_clone, e.to_string()),
                 );
                 let _ = std::fs::remove_file(&temp_config_path_clone);
                 return;
@@ -118,7 +118,7 @@ pub async fn create_lima_instance_cmd(
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stdout.emit(
                         "lima-instance-create-stdout",
-                        create_instance_create_event(instance_name_stdout.clone(), line),
+                        create_log_payload(instance_name_stdout.clone(), line),
                     );
                 }
             });
@@ -133,7 +133,7 @@ pub async fn create_lima_instance_cmd(
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stderr.emit(
                         "lima-instance-create-stderr",
-                        create_instance_create_event(instance_name_stderr.clone(), line),
+                        create_log_payload(instance_name_stderr.clone(), line),
                     );
                 }
             });
@@ -148,7 +148,7 @@ pub async fn create_lima_instance_cmd(
                 if status.success() {
                     let _ = app_handle.emit(
                         "lima-instance-create-success",
-                        create_instance_create_event(instance_name_clone, "Created".to_string()),
+                        create_log_payload(instance_name_clone, "Created".to_string()),
                     );
                 } else {
                     let error_msg = format!(
@@ -157,7 +157,7 @@ pub async fn create_lima_instance_cmd(
                     );
                     let _ = app_handle.emit(
                         "lima-instance-create-error",
-                        create_instance_create_event(instance_name_clone, error_msg),
+                        create_log_payload(instance_name_clone, error_msg),
                     );
                 }
             }
@@ -166,7 +166,7 @@ pub async fn create_lima_instance_cmd(
                 let error_msg = format!("Failed to wait for limactl create process: {}", e);
                 let _ = app_handle.emit(
                     "lima-instance-create-error",
-                    create_instance_create_event(instance_name_clone, error_msg),
+                    create_log_payload(instance_name_clone, error_msg),
                 );
             }
         }
@@ -185,7 +185,10 @@ pub async fn start_lima_instance_cmd(
     // Emit start event
     app.emit(
         "lima-instance-start",
-        &format!("Starting Lima instance '{}'...", instance_name),
+        create_log_payload(
+            instance_name.clone(),
+            format!("Starting Lima instance '{}'...", instance_name),
+        ),
     )
     .map_err(|e| format!("Failed to emit start event: {}", e))?;
 
@@ -197,7 +200,13 @@ pub async fn start_lima_instance_cmd(
         let lima_cmd = match find_lima_executable() {
             Some(cmd) => cmd,
             None => {
-                let _ = app_handle.emit("lima-instance-start-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                let _ = app_handle.emit(
+                    "lima-instance-start-error",
+                    create_log_payload(
+                        instance_name_clone.clone(),
+                        "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.".to_string(),
+                    ),
+                );
                 return;
             }
         };
@@ -213,7 +222,10 @@ pub async fn start_lima_instance_cmd(
         let mut child = match child {
             Ok(c) => c,
             Err(e) => {
-                let _ = app_handle.emit("lima-instance-start-error", &e.to_string());
+                let _ = app_handle.emit(
+                    "lima-instance-start-error",
+                    create_log_payload(instance_name_clone.clone(), e.to_string()),
+                );
                 return;
             }
         };
@@ -227,7 +239,10 @@ pub async fn start_lima_instance_cmd(
                 let mut essential_ready = false;
 
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stdout.emit("lima-instance-start-stdout", &line);
+                    let _ = app_handle_stdout.emit(
+                        "lima-instance-start-stdout",
+                        create_log_payload(instance_name_stdout.clone(), line.clone()),
+                    );
 
                     // Detect when VM is essentially ready (SSH + provisions done)
                     // Lima transitions from "essential" to "optional" requirements
@@ -241,7 +256,10 @@ pub async fn start_lima_instance_cmd(
                         essential_ready = true;
                         let _ = app_handle_stdout.emit(
                             "lima-instance-start-ready",
-                            &format!("Instance '{}' is ready for use (waiting for optional hooks to complete)", instance_name_stdout)
+                            create_log_payload(
+                                instance_name_stdout.clone(),
+                                format!("Instance '{}' is ready for use (waiting for optional hooks to complete)", instance_name_stdout),
+                            ),
                         );
                     }
                 }
@@ -257,7 +275,10 @@ pub async fn start_lima_instance_cmd(
                 let mut essential_ready = false;
 
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stderr.emit("lima-instance-start-stderr", &line);
+                    let _ = app_handle_stderr.emit(
+                        "lima-instance-start-stderr",
+                        create_log_payload(instance_name_stderr.clone(), line.clone()),
+                    );
 
                     // Detect when VM is essentially ready (SSH + provisions done)
                     // Lima transitions from "essential" to "optional" requirements
@@ -271,7 +292,10 @@ pub async fn start_lima_instance_cmd(
                         essential_ready = true;
                         let _ = app_handle_stderr.emit(
                             "lima-instance-start-ready",
-                            &format!("Instance '{}' is ready for use (waiting for optional hooks to complete)", instance_name_stderr)
+                            create_log_payload(
+                                instance_name_stderr.clone(),
+                                format!("Instance '{}' is ready for use (waiting for optional hooks to complete)", instance_name_stderr),
+                            ),
                         );
                     }
                 }
@@ -282,13 +306,19 @@ pub async fn start_lima_instance_cmd(
         match child.wait().await {
             Ok(status) => {
                 if status.success() {
-                    let _ = app_handle.emit("lima-instance-start-success", &instance_name_clone);
+                    let _ = app_handle.emit(
+                        "lima-instance-start-success",
+                        create_log_payload(instance_name_clone, "Started".to_string()),
+                    );
                 } else {
                     let error_msg = format!(
                         "Failed to start Lima instance. Exit code: {:?}",
                         status.code()
                     );
-                    let _ = app_handle.emit("lima-instance-start-error", &error_msg);
+                    let _ = app_handle.emit(
+                        "lima-instance-start-error",
+                        create_log_payload(instance_name_clone, error_msg),
+                    );
                 }
             }
             Err(e) => {
