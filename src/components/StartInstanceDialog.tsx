@@ -40,8 +40,7 @@ export function StartInstanceDialog({ open, onOpenChange, onStart, instanceName,
                         onStart();
                         onOpenChange(false);
                     }}>
-                        <PlayIcon className="mr-2 h-4 w-4" />
-                        Start Instance
+                        Start
                     </Button>
                 </DialogFooter>
             </DialogContent>

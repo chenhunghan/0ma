@@ -189,12 +189,12 @@ describe("CreateStartInstanceDialogs", () => {
             // "Creating Instance" should disappear (or be replaced)
             // StartInstanceDialog title is "Instance Created"
             expect(screen.getByText("Instance Created")).toBeInTheDocument();
-            // Button is "Start Instance"
-            expect(screen.getByRole("button", { name: "Start Instance" })).toBeInTheDocument();
+            // Button is "Start"
+            expect(screen.getByRole("button", { name: "Start" })).toBeInTheDocument();
         });
 
         // 6. Click Start
-        const startButton = screen.getByRole("button", { name: "Start Instance" });
+        const startButton = screen.getByRole("button", { name: "Start" });
         fireEvent.click(startButton);
 
         // Verify start command called
@@ -304,7 +304,7 @@ describe("CreateStartInstanceDialogs", () => {
         await waitFor(() => expect(screen.getByText("Instance Created")).toBeInTheDocument());
 
         // 4. Start
-        fireEvent.click(screen.getByRole("button", { name: "Start Instance" }));
+        fireEvent.click(screen.getByRole("button", { name: "Start" }));
 
         await waitFor(() => {
             expect(mockInvoke).toHaveBeenCalledWith("start_lima_instance_cmd", {

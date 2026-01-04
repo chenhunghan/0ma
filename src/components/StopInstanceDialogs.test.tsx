@@ -243,7 +243,7 @@ describe("StopInstanceDialogs", () => {
         expect(screen.getByText(/Are you sure you want to start instance/)).toBeInTheDocument();
 
         // 3. Confirm Start
-        const confirmStartButton = screen.getByRole("button", { name: "Start Instance" });
+        const confirmStartButton = screen.getByRole("button", { name: "Start" });
         fireEvent.click(confirmStartButton);
 
         await waitFor(() => {
