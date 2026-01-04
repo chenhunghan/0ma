@@ -3,7 +3,6 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { LogViewer } from "./LogViewer";
 import { useOnLimaStartLogs } from "src/hooks/useOnLimaStartLogs";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
-import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 interface Props {
@@ -14,14 +13,9 @@ interface Props {
 
 export function StartingInstanceDialog({ open, onDialogOpenChange, onSuccess }: Props) {
     const { instanceName } = useCreateLimaInstanceDraft();
-    const logState = useOnLimaStartLogs(instanceName);
-
-    useEffect(() => {
-        if (logState.isSuccess) {
-            onSuccess?.();
-            onDialogOpenChange(false);
-        }
-    }, [logState.isSuccess, onSuccess, onDialogOpenChange]);
+    const logState = useOnLimaStartLogs(instanceName, {
+        onSuccess
+    });
 
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
