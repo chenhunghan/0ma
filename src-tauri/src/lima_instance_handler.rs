@@ -93,6 +93,7 @@ pub async fn create_lima_instance_cmd(
                 &instance_name_clone,
                 &temp_config_path_clone.to_string_lossy(),
             ])
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -215,6 +216,7 @@ pub async fn start_lima_instance_cmd(
         // Run limactl start command
         let child = TokioCommand::new(&lima_cmd)
             .args(["start", "--tty=false", &instance_name_clone])
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -362,6 +364,7 @@ pub async fn stop_lima_instance_cmd(
         // Run limactl stop command
         let child = TokioCommand::new(&lima_cmd)
             .args(["stop", "--tty=false", &instance_name_clone])
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -454,6 +457,7 @@ pub async fn delete_lima_instance_cmd(
         // Run limactl delete command with --force to ensure complete deletion
         let child = TokioCommand::new(&lima_cmd)
             .args(["delete", "--force", "--tty=false", &instance_name_clone])
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
