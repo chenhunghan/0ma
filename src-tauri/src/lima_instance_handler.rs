@@ -88,6 +88,7 @@ pub async fn create_lima_instance_cmd(
         let child = TokioCommand::new(&lima_cmd)
             .args([
                 "create",
+                "--tty=false",
                 "--name",
                 &instance_name_clone,
                 &temp_config_path_clone.to_string_lossy(),
@@ -213,7 +214,7 @@ pub async fn start_lima_instance_cmd(
 
         // Run limactl start command
         let child = TokioCommand::new(&lima_cmd)
-            .args(["start", &instance_name_clone])
+            .args(["start", "--tty=false", &instance_name_clone])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -360,7 +361,7 @@ pub async fn stop_lima_instance_cmd(
 
         // Run limactl stop command
         let child = TokioCommand::new(&lima_cmd)
-            .args(["stop", &instance_name_clone])
+            .args(["stop", "--tty=false", &instance_name_clone])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
