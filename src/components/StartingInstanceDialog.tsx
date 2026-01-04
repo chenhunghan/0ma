@@ -19,10 +19,14 @@ export function StartingInstanceDialog({ open, onDialogOpenChange, onSuccess }: 
 
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
-            // User manually closed the dialog
+            // User manually closed the dialog.
+            // This includes: ESC key, clicking background overlay, or clicking the "Close" button.
             onDialogOpenChange(false);
-            // We treat manual close as "done watching" - triggers navigation to Lima tab in parent
-            onSuccess?.();
+
+            // Only switch tab if the instance is ready or successful
+            if (logState.isReady || logState.isSuccess) {
+                onSuccess?.();
+            }
         } else {
             onDialogOpenChange(true);
         }
@@ -38,7 +42,6 @@ export function StartingInstanceDialog({ open, onDialogOpenChange, onSuccess }: 
 }
 
 function StartingInstanceDialogContent({ children, isReady, isSuccess, isError }: { children: React.ReactNode, isReady?: boolean, isSuccess?: boolean, isError?: boolean }) {
-    const canClose = isReady || isSuccess || isError;
 
     return (
         <DialogContent className="sm:max-w-2xl">
@@ -53,17 +56,11 @@ function StartingInstanceDialogContent({ children, isReady, isSuccess, isError }
             </DialogHeader>
             {children}
             <DialogFooter>
-                {canClose ? (
-                    <DialogClose>
-                        <Button variant="default" title={isSuccess ? "Close the dialog" : "The instance is ready, you can close the dialog"}>
-                            {isSuccess ? "Done" : "Close"}
-                        </Button>
-                    </DialogClose>
-                ) : (
-                    <Button variant="outline" disabled title="Please wait for the instance to be ready">
-                        Close
+                <DialogClose>
+                    <Button variant={isSuccess || isReady ? "default" : "outline"} title={isSuccess ? "Close the dialog" : "The instance is ready, you can close the dialog"}>
+                        {isSuccess ? "Done" : (isReady ? "Ready" : "Close")}
                     </Button>
-                )}
+                </DialogClose>
             </DialogFooter>
         </DialogContent>
     )
