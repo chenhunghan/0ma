@@ -13,6 +13,7 @@ import { Spinner } from "./ui/spinner";
 import { LimaInstance } from "src/types/LimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { CreateStartInstanceDialogs } from "./CreateStartInstanceDialogs";
+import { InstanceStatus } from "src/types/InstanceStatus";
 
 
 export function TopBar() {
@@ -21,6 +22,7 @@ export function TopBar() {
             {/* Left side */}
             <div className="flex items-center flex-1">
                 <InstanceSelector />
+                {/** Create new instance button and dialogs it triggers */}
                 <CreateStartInstanceDialogs />
             </div>
 
@@ -70,10 +72,15 @@ export function InstanceSelector() {
 }
 
 export function StopInstanceButton() {
+    const { selectedInstance, isLoading } = useSelectedInstance();
+    const disabled =
+        selectedInstance?.status !== InstanceStatus.Running ||
+        isLoading;
     return (
         <Button
             variant="secondary"
             aria-label="Stop Lima instance"
+            disabled={disabled}
         >
             <StopCircleIcon className="md:hidden" />
             <span className="hidden md:inline">Stop</span>
