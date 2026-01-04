@@ -13,8 +13,7 @@ interface Props {
 }
 
 export function StartingInstanceDialog({ open, onDialogOpenChange, onSuccess, instanceName }: Props) {
-    if (!instanceName) return null;
-    const logState = useOnLimaStartLogs(instanceName, {
+    const logState = useOnLimaStartLogs(instanceName || "", {
         onSuccess
     });
 

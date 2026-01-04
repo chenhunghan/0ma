@@ -12,9 +12,8 @@ interface Props {
 }
 
 export function StoppingInstanceDialog({ open, onDialogOpenChange, instanceName, onSuccess }: Props) {
-    if (!instanceName) return null;
+    const logState = useOnLimaStopLogs(instanceName || "");
 
-    const logState = useOnLimaStopLogs(instanceName);
 
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {

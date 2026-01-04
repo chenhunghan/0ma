@@ -1,6 +1,5 @@
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-import { PlayIcon } from "lucide-react";
 
 interface Props {
     open: boolean;
@@ -11,8 +10,6 @@ interface Props {
 }
 
 export function StartInstanceDialog({ open, onOpenChange, onStart, instanceName, variant = "created" }: Props) {
-    if (!instanceName) return null;
-
     const isCreated = variant === "created";
 
     return (

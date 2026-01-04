@@ -10,15 +10,15 @@ import { InstanceStatus } from "src/types/InstanceStatus";
 // Mock @tauri-apps/api/core
 const mockInvoke = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({
-    invoke: (cmd: string, args: any) => Promise.resolve(mockInvoke(cmd, args)),
+    invoke: (cmd: string, args: unknown) => Promise.resolve(mockInvoke(cmd, args)),
 }));
 
 // Mock @tauri-apps/api/event
 const { eventListeners } = vi.hoisted(() => ({
-    eventListeners: {} as Record<string, ((event: any) => void)[]>
+    eventListeners: {} as Record<string, ((event: unknown) => void)[]>
 }));
 
-const mockListen = vi.fn((event: string, handler: (event: any) => void) => {
+const mockListen = vi.fn((event: string, handler: (event: unknown) => void) => {
     if (!eventListeners[event]) {
         eventListeners[event] = [];
     }
@@ -29,11 +29,11 @@ const mockListen = vi.fn((event: string, handler: (event: any) => void) => {
 });
 
 vi.mock("@tauri-apps/api/event", () => ({
-    listen: (event: string, handler: (event: any) => void) => mockListen(event, handler),
+    listen: (event: string, handler: (event: unknown) => void) => mockListen(event, handler),
 }));
 
 // Helper to simulate events
-const emitEvent = (eventName: string, payload: any) => {
+const emitEvent = (eventName: string, payload: unknown) => {
     const listeners = eventListeners[eventName];
     if (listeners) {
         listeners.forEach(handler => handler({ payload }));
@@ -90,7 +90,7 @@ describe("StopInstanceDialogs", () => {
         vi.restoreAllMocks();
     });
 
-    const renderComponent = (selectedInstanceOverride?: any) => {
+    const renderComponent = (selectedInstanceOverride?: { status?: string; name?: string }) => {
         mockUseSelectedInstance.mockReturnValue({
             selectedInstance: selectedInstanceOverride || { status: InstanceStatus.Running },
             selectedName: selectedInstanceOverride?.name || "test-instance",
