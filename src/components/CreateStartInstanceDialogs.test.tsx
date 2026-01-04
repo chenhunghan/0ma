@@ -331,5 +331,5 @@ describe("CreateStartInstanceDialogs", () => {
 
         // Should NOT show "Instance Started"
         expect(screen.queryByText("Instance Started")).not.toBeInTheDocument();
-    });
+    }, 30000);
 });

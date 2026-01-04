@@ -1,4 +1,3 @@
-import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { PlayIcon } from "lucide-react";
@@ -7,22 +6,30 @@ interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onStart: () => void;
+    instanceName: string | null;
+    variant?: "created" | "stopped";
 }
 
-export function StartInstanceDialog({ open, onOpenChange, onStart }: Props) {
-    const { instanceName } = useCreateLimaInstanceDraft();
+export function StartInstanceDialog({ open, onOpenChange, onStart, instanceName, variant = "created" }: Props) {
+    if (!instanceName) return null;
+
+    const isCreated = variant === "created";
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Instance Created</DialogTitle>
+                    <DialogTitle>{isCreated ? "Instance Created" : "Start Instance"}</DialogTitle>
                     <DialogDescription>
-                        Lima instance <strong>{instanceName}</strong> has been created successfully.
+                        {isCreated
+                            ? <>Lima instance <strong>{instanceName}</strong> has been created successfully.</>
+                            : <>Are you sure you want to start instance <strong>{instanceName}</strong>?</>
+                        }
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-2">
-                    <p className="text-sm text-muted-foreground">
-                        Do you want to start it now?
+                    <p className="text-xs text-muted-foreground">
+                        {isCreated ? "Do you want to start it now?" : "It will take a few moments to boot up."}
                     </p>
                 </div>
                 <DialogFooter>

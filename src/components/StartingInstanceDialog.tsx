@@ -2,17 +2,18 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { LogViewer } from "./LogViewer";
 import { useOnLimaStartLogs } from "src/hooks/useOnLimaStartLogs";
-import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
+
 import { Loader2 } from "lucide-react";
 
 interface Props {
     open: boolean;
     onDialogOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
+    instanceName: string | null;
 }
 
-export function StartingInstanceDialog({ open, onDialogOpenChange, onSuccess }: Props) {
-    const { instanceName } = useCreateLimaInstanceDraft();
+export function StartingInstanceDialog({ open, onDialogOpenChange, onSuccess, instanceName }: Props) {
+    if (!instanceName) return null;
     const logState = useOnLimaStartLogs(instanceName, {
         onSuccess
     });

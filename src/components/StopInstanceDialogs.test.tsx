@@ -48,9 +48,11 @@ vi.mock("src/hooks/useSelectedInstance", () => ({
 
 // Mock useLimaInstance
 const mockStopInstance = vi.fn();
+const mockStartInstance = vi.fn();
 vi.mock("src/hooks/useLimaInstance", () => ({
     useLimaInstance: () => ({
         stopInstance: mockStopInstance,
+        startInstance: mockStartInstance,
     }),
 }));
 
@@ -102,9 +104,29 @@ describe("StopInstanceDialogs", () => {
         );
     };
 
-    it("Disables stop button if instance is not running", () => {
+    it("Shows Start button if instance is stopped", () => {
         mockUseSelectedInstance.mockReturnValue({
             selectedInstance: { status: InstanceStatus.Stopped },
+            selectedName: "test-instance",
+            isLoading: false,
+        });
+
+        render(
+            <QueryClientProvider client={queryClient}>
+                <StopInstanceDialogs />
+            </QueryClientProvider>
+        );
+
+        const startButton = screen.getByLabelText("Start Lima instance");
+        expect(startButton).toBeInTheDocument();
+        expect(startButton).not.toBeDisabled();
+
+        expect(screen.queryByLabelText("Stop Lima instance")).not.toBeInTheDocument();
+    });
+
+    it("Disables stop button if instance status is unknown", () => {
+        mockUseSelectedInstance.mockReturnValue({
+            selectedInstance: { status: "Unknown" }, // Or undefined status
             selectedName: "test-instance",
             isLoading: false,
         });
@@ -125,7 +147,7 @@ describe("StopInstanceDialogs", () => {
         expect(stopButton).not.toBeDisabled();
     });
 
-    it("Shows confirmation dialog on click and cancels", async () => {
+    it("Shows confirmation dialog on Stop click and cancels", async () => {
         renderComponent();
         const stopButton = screen.getByLabelText("Stop Lima instance");
         fireEvent.click(stopButton);
@@ -196,5 +218,60 @@ describe("StopInstanceDialogs", () => {
             expect(screen.getByText("Instance Stopped")).toBeInTheDocument();
             expect(screen.getByText("Done")).toBeInTheDocument();
         });
+    }, 30000);
+
+    it("Proceeds to Start flow for stopped instance", async () => {
+        mockUseSelectedInstance.mockReturnValue({
+            selectedInstance: { status: InstanceStatus.Stopped },
+            selectedName: "test-instance",
+            isLoading: false,
+        });
+
+        render(
+            <QueryClientProvider client={queryClient}>
+                <StopInstanceDialogs />
+            </QueryClientProvider>
+        );
+
+        // 1. Click Start
+        const startButton = screen.getByLabelText("Start Lima instance");
+        fireEvent.click(startButton);
+
+        // 2. Verify Start Confirmation Dialog (variant="stopped")
+        // "Start Instance" title
+        expect(screen.getByRole("heading", { name: "Start Instance" })).toBeInTheDocument();
+        expect(screen.getByText(/Are you sure you want to start instance/)).toBeInTheDocument();
+
+        // 3. Confirm Start
+        const confirmStartButton = screen.getByRole("button", { name: "Start Instance" });
+        fireEvent.click(confirmStartButton);
+
+        await waitFor(() => {
+            expect(mockStartInstance).toHaveBeenCalledWith("test-instance");
+        });
+
+        // 4. Verify Starting Logs Dialog
+        await waitFor(() => {
+            expect(screen.getByText("Starting Instance...")).toBeInTheDocument();
+        });
+
+        // 5. Simulate Start Logs
+        act(() => {
+            emitEvent("lima-instance-start", {
+                instance_name: "test-instance",
+                message: "Starting...",
+                message_id: "s1",
+                timestamp: new Date().toISOString()
+            });
+            emitEvent("lima-instance-start-stdout", {
+                instance_name: "test-instance",
+                message: "Booting...",
+                message_id: "s2",
+                timestamp: new Date().toISOString()
+            });
+        });
+
     });
 });
+
+

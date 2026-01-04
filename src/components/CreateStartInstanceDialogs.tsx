@@ -68,6 +68,8 @@ export function CreateStartInstanceDialogs() {
                 open={startInstanceDialogOpen}
                 onOpenChange={setStartInstanceDialogOpen}
                 onStart={handleStartInstance}
+                instanceName={instanceName}
+                variant="created"
             />
             <StartingInstanceDialog
                 open={startingInstanceDialogOpen}
@@ -76,6 +78,7 @@ export function CreateStartInstanceDialogs() {
                     setStartingInstanceDialogOpen(false);
                     setActiveTab("lima");
                 }}
+                instanceName={instanceName}
             />
         </>
     )
