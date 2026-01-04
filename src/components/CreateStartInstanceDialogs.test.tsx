@@ -239,18 +239,12 @@ describe("CreateStartInstanceDialogs", () => {
         });
 
         // 9. Verify success state and tab switch
+        // The dialog is configured to auto-close on success (via useOnLimaStartLogs calling onSuccess)
         await waitFor(() => {
-            expect(screen.getByText("Instance Started")).toBeInTheDocument();
+            expect(mockSetActiveTab).toHaveBeenCalledWith("lima");
+            expect(screen.queryByText("Starting Instance...")).not.toBeInTheDocument();
+            expect(screen.queryByText("Instance Started")).not.toBeInTheDocument();
         });
-
-        // Check for "Done" button which appears on success
-        const doneButton = screen.getByText("Done");
-        expect(doneButton).toBeInTheDocument();
-
-        // Closing the dialog should trigger tab switch
-        fireEvent.click(doneButton);
-
-        expect(mockSetActiveTab).toHaveBeenCalledWith("lima");
     });
 
     it("Handles creation failure gracefully", async () => {
