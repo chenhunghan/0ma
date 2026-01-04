@@ -399,8 +399,16 @@ pub async fn stop_lima_instance_cmd(
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stdout.emit(
                         "lima-instance-stop-stdout",
-                        create_log_payload(instance_name_stdout.clone(), line),
+                        create_log_payload(instance_name_stdout.clone(), line.clone()),
                     );
+
+                    // Detect when VM has shut down in case limactl doesn't exit
+                    if line.contains("The instance") && line.contains("has shut down") {
+                        let _ = app_handle_stdout.emit(
+                            "lima-instance-stop-success",
+                            create_log_payload(instance_name_stdout.clone(), "Stopped".to_string()),
+                        );
+                    }
                 }
             });
         }
@@ -414,8 +422,16 @@ pub async fn stop_lima_instance_cmd(
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stderr.emit(
                         "lima-instance-stop-stderr",
-                        create_log_payload(instance_name_stderr.clone(), line),
+                        create_log_payload(instance_name_stderr.clone(), line.clone()),
                     );
+
+                    // Detect when VM has shut down in case limactl doesn't exit
+                    if line.contains("The instance") && line.contains("has shut down") {
+                        let _ = app_handle_stderr.emit(
+                            "lima-instance-stop-success",
+                            create_log_payload(instance_name_stderr.clone(), "Stopped".to_string()),
+                        );
+                    }
                 }
             });
         }
