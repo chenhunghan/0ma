@@ -32,6 +32,7 @@ export function TopBar() {
 
             {/* Right side */}
             <div className="flex items-center justify-end flex-1">
+                {/** Stop instance button and dialogs it triggers */}
                 <StopInstanceDialogs />
                 <DeleteInstanceButton className="ml-[6px]" />
             </div>
