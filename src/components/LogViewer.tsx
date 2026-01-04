@@ -58,6 +58,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
     term.loadAddon(fitAddon);
 
     term.open(terminalContainerRef.current);
+    // ANSI escape sequence to hide the cursor (?25l)
     term.write('\x1b[?25l');
 
     terminalRef.current = term;

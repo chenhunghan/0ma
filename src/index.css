@@ -136,4 +136,24 @@
   html {
     @apply font-sans;
   }
+
+  .xterm .xterm-scrollable-element>.scrollbar {
+    width: 10px !important;
+    background: transparent !important;
+  }
+
+  .xterm .xterm-scrollable-element>.scrollbar>.slider {
+    background: var(--border) !important;
+    border-radius: 5px !important;
+    width: 10px !important;
+    border: 2px solid transparent !important;
+    background-clip: content-box !important;
+  }
+
+  .xterm .xterm-scrollable-element>.scrollbar>.slider:hover,
+  .xterm .xterm-scrollable-element>.scrollbar>.slider.active {
+    background: var(--muted-foreground) !important;
+    border: 2px solid transparent !important;
+    background-clip: content-box !important;
+  }
 }
