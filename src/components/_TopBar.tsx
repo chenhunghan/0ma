@@ -18,8 +18,10 @@ import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
 import { ErrorCreateInstanceDialog } from "./ErrorCreateInstanceDialog";
 import { StartInstanceDialog } from "./StartInstanceDialog";
+import { StartingInstanceDialog } from "./StartingInstanceDialog";
 import { useState } from "react";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
+import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 
 
 export function TopBar() {
@@ -48,8 +50,10 @@ function Dialogs() {
     const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
     const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
     const [startInstanceDialogOpen, setStartInstanceDialogOpen] = useState(false);
+    const [startingInstanceDialogOpen, setStartingInstanceDialogOpen] = useState(false);
 
     const { createInstance, startInstance } = useLimaInstance();
+    const { setActiveTab } = useLayoutStorage();
     const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
     const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
 
@@ -72,6 +76,8 @@ function Dialogs() {
     const handleStartInstance = () => {
         if (instanceName) {
             startInstance(instanceName);
+            setStartInstanceDialogOpen(false);
+            setStartingInstanceDialogOpen(true);
         }
     };
 
@@ -99,6 +105,14 @@ function Dialogs() {
                 open={startInstanceDialogOpen}
                 onOpenChange={setStartInstanceDialogOpen}
                 onStart={handleStartInstance}
+            />
+            <StartingInstanceDialog
+                open={startingInstanceDialogOpen}
+                onDialogOpenChange={setStartingInstanceDialogOpen}
+                onSuccess={() => {
+                    setStartingInstanceDialogOpen(false);
+                    setActiveTab("lima");
+                }}
             />
         </>
     )
