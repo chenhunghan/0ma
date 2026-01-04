@@ -1,5 +1,5 @@
 import { Button } from "./ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { LogViewer } from "./LogViewer";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
@@ -20,14 +20,14 @@ export function CreatingInstanceDialog({ open, onDialogOpenChange, onCreateInsta
 
     return (
         <Dialog open={open} onOpenChange={onDialogOpenChange}>
-            <CreatingInstanceDialogContent>
+            <CreatingInstanceDialogContent onClose={() => onDialogOpenChange(false)}>
                 <LogViewer logState={logState} />
             </CreatingInstanceDialogContent>
         </Dialog>
     )
 }
 
-function CreatingInstanceDialogContent({ children }: { children: React.ReactNode }) {
+function CreatingInstanceDialogContent({ children, onClose }: { children: React.ReactNode, onClose: () => void }) {
     return (
         <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
@@ -36,9 +36,7 @@ function CreatingInstanceDialogContent({ children }: { children: React.ReactNode
             </DialogHeader>
             {children}
             <DialogFooter>
-                <DialogClose>
-                    <Button variant="outline" title="Close the instance will not cancel the creation process">Close</Button>
-                </DialogClose>
+                <Button variant="outline" title="Close the instance will not cancel the creation process" onClick={onClose}>Close</Button>
             </DialogFooter>
         </DialogContent>
     )

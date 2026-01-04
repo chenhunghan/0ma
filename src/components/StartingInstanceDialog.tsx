@@ -1,5 +1,5 @@
 import { Button } from "./ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { LogViewer } from "./LogViewer";
 import { useOnLimaStartLogs } from "src/hooks/useOnLimaStartLogs";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
@@ -34,14 +34,14 @@ export function StartingInstanceDialog({ open, onDialogOpenChange, onSuccess }: 
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <StartingInstanceDialogContent isReady={logState.isReady} isSuccess={logState.isSuccess} isError={logState.error.length > 0}>
+            <StartingInstanceDialogContent isReady={logState.isReady} isSuccess={logState.isSuccess} isError={logState.error.length > 0} onClose={() => onDialogOpenChange(false)}>
                 <LogViewer logState={logState} />
             </StartingInstanceDialogContent>
         </Dialog>
     )
 }
 
-function StartingInstanceDialogContent({ children, isReady, isSuccess, isError }: { children: React.ReactNode, isReady?: boolean, isSuccess?: boolean, isError?: boolean }) {
+function StartingInstanceDialogContent({ children, isReady, isSuccess, isError, onClose }: { children: React.ReactNode, isReady?: boolean, isSuccess?: boolean, isError?: boolean, onClose: () => void }) {
 
     return (
         <DialogContent className="sm:max-w-2xl">
@@ -56,11 +56,13 @@ function StartingInstanceDialogContent({ children, isReady, isSuccess, isError }
             </DialogHeader>
             {children}
             <DialogFooter>
-                <DialogClose>
-                    <Button variant={isSuccess || isReady ? "default" : "outline"} title={isSuccess ? "Close the dialog" : "The instance is ready, you can close the dialog"}>
-                        {isSuccess ? "Done" : (isReady ? "Ready" : "Close")}
-                    </Button>
-                </DialogClose>
+                <Button
+                    variant={isSuccess || isReady ? "default" : "outline"}
+                    title={isSuccess ? "Close the dialog" : "The instance is ready, you can close the dialog"}
+                    onClick={onClose}
+                >
+                    {isSuccess ? "Done" : (isReady ? "Ready" : "Close")}
+                </Button>
             </DialogFooter>
         </DialogContent>
     )

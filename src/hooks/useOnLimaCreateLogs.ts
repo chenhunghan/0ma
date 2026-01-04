@@ -135,7 +135,11 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
         // 4. Success
         unlistenPromises.push(
             listen<LimaCreatePayload>('lima-instance-create-success', (event) => {
-                if (event.payload.instance_name !== instanceName) return;
+                console.log("Hook received success event", event);
+                if (event.payload.instance_name !== instanceName) {
+                    console.log(`Mismatch instanceName: ${event.payload.instance_name} vs ${instanceName}`);
+                    return;
+                }
                 updateCache((prev) => ({
                     ...prev,
                     stdout: [],

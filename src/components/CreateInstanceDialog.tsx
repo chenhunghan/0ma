@@ -1,8 +1,10 @@
 
 import { PlusIcon } from "lucide-react";
 import { Button } from "./ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { CreateInstanceConfigForm } from "./CreateInstanceConfigForm";
+
+
 
 
 
@@ -28,12 +30,13 @@ export function CreateInstanceDialog({ buttonClassName, open, onDialogOpenChange
                 </DialogHeader>
                 <CreateInstanceConfigForm />
                 <DialogFooter>
-                    <DialogClose render={<Button variant="outline">Cancel</Button>} />
-                    <DialogClose render={
-                        <Button variant="default" onClick={onClickCreate}>
-                            Create
-                        </Button>
-                    } />
+                    <Button variant="outline" onClick={() => onDialogOpenChange(false)}>Cancel</Button>
+                    <Button variant="default" onClick={() => {
+                        onClickCreate();
+                        onDialogOpenChange(false);
+                    }}>
+                        Create
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
