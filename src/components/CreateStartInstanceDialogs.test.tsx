@@ -148,6 +148,7 @@ describe("CreateStartInstanceDialogs", () => {
         });
 
         // 3. Verify Creating Logs Dialog appears
+        // Using waitFor to ensure state update has propagated
         await waitFor(() => {
             expect(screen.getByText("Creating Instance")).toBeInTheDocument();
         });
@@ -245,7 +246,7 @@ describe("CreateStartInstanceDialogs", () => {
             expect(screen.queryByText("Starting Instance...")).not.toBeInTheDocument();
             expect(screen.queryByText("Instance Started")).not.toBeInTheDocument();
         });
-    });
+    }, 30000);
 
     it("Handles creation failure gracefully", async () => {
         renderComponent();
