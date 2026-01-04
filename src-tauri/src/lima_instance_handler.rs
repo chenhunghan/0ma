@@ -344,7 +344,10 @@ pub async fn stop_lima_instance_cmd(
     // Emit stop event
     app.emit(
         "lima-instance-stop",
-        &format!("Stopping Lima instance '{}'...", instance_name),
+        create_log_payload(
+            instance_name.clone(),
+            format!("Stopping Lima instance '{}'...", instance_name),
+        ),
     )
     .map_err(|e| format!("Failed to emit stop event: {}", e))?;
 
@@ -356,7 +359,13 @@ pub async fn stop_lima_instance_cmd(
         let lima_cmd = match find_lima_executable() {
             Some(cmd) => cmd,
             None => {
-                let _ = app_handle.emit("lima-instance-stop-error", "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.");
+                let _ = app_handle.emit(
+                    "lima-instance-stop-error",
+                    create_log_payload(
+                        instance_name_clone.clone(),
+                        "Lima (limactl) not found. Please ensure lima is installed in /usr/local/bin, /opt/homebrew/bin, or is in your PATH.".to_string(),
+                    ),
+                );
                 return;
             }
         };
@@ -373,7 +382,10 @@ pub async fn stop_lima_instance_cmd(
         let mut child = match child {
             Ok(c) => c,
             Err(e) => {
-                let _ = app_handle.emit("lima-instance-stop-error", &e.to_string());
+                let _ = app_handle.emit(
+                    "lima-instance-stop-error",
+                    create_log_payload(instance_name_clone.clone(), e.to_string()),
+                );
                 return;
             }
         };
@@ -381,10 +393,14 @@ pub async fn stop_lima_instance_cmd(
         // Stream stdout
         if let Some(stdout) = child.stdout.take() {
             let app_handle_stdout = app_handle.clone();
+            let instance_name_stdout = instance_name_clone.clone();
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stdout).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stdout.emit("lima-instance-stop-stdout", &line);
+                    let _ = app_handle_stdout.emit(
+                        "lima-instance-stop-stdout",
+                        create_log_payload(instance_name_stdout.clone(), line),
+                    );
                 }
             });
         }
@@ -392,10 +408,14 @@ pub async fn stop_lima_instance_cmd(
         // Stream stderr
         if let Some(stderr) = child.stderr.take() {
             let app_handle_stderr = app_handle.clone();
+            let instance_name_stderr = instance_name_clone.clone();
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
-                    let _ = app_handle_stderr.emit("lima-instance-stop-stderr", &line);
+                    let _ = app_handle_stderr.emit(
+                        "lima-instance-stop-stderr",
+                        create_log_payload(instance_name_stderr.clone(), line),
+                    );
                 }
             });
         }
@@ -404,22 +424,27 @@ pub async fn stop_lima_instance_cmd(
         match child.wait().await {
             Ok(status) => {
                 if status.success() {
-                    let success_msg = format!(
-                        "Lima instance '{}' stopped successfully!",
-                        instance_name_clone
+                    let _ = app_handle.emit(
+                        "lima-instance-stop-success",
+                        create_log_payload(instance_name_clone, "Stopped".to_string()),
                     );
-                    let _ = app_handle.emit("lima-instance-stop-success", &success_msg);
                 } else {
                     let error_msg = format!(
                         "Failed to stop Lima instance. Exit code: {:?}",
                         status.code()
                     );
-                    let _ = app_handle.emit("lima-instance-stop-error", &error_msg);
+                    let _ = app_handle.emit(
+                        "lima-instance-stop-error",
+                        create_log_payload(instance_name_clone, error_msg),
+                    );
                 }
             }
             Err(e) => {
                 let error_msg = format!("Failed to wait for limactl stop process: {}", e);
-                let _ = app_handle.emit("lima-instance-stop-error", &error_msg);
+                let _ = app_handle.emit(
+                    "lima-instance-stop-error",
+                    create_log_payload(instance_name_clone, error_msg),
+                );
             }
         }
     });

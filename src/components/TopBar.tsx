@@ -1,4 +1,4 @@
-import { TrashIcon, StopCircleIcon } from "lucide-react"
+import { TrashIcon } from "lucide-react"
 import {
     Select,
     SelectContent,
@@ -13,7 +13,8 @@ import { Spinner } from "./ui/spinner";
 import { LimaInstance } from "src/types/LimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { CreateStartInstanceDialogs } from "./CreateStartInstanceDialogs";
-import { InstanceStatus } from "src/types/InstanceStatus";
+
+import { StopInstanceDialogs } from "./StopInstanceDialogs";
 
 
 export function TopBar() {
@@ -31,7 +32,7 @@ export function TopBar() {
 
             {/* Right side */}
             <div className="flex items-center justify-end flex-1">
-                <StopInstanceButton />
+                <StopInstanceDialogs />
                 <DeleteInstanceButton className="ml-[6px]" />
             </div>
         </div>
@@ -68,23 +69,6 @@ export function InstanceSelector() {
                 </SelectGroup>
             </SelectContent>
         </Select>
-    )
-}
-
-export function StopInstanceButton() {
-    const { selectedInstance, isLoading } = useSelectedInstance();
-    const disabled =
-        selectedInstance?.status !== InstanceStatus.Running ||
-        isLoading;
-    return (
-        <Button
-            variant="secondary"
-            aria-label="Stop Lima instance"
-            disabled={disabled}
-        >
-            <StopCircleIcon className="md:hidden" />
-            <span className="hidden md:inline">Stop</span>
-        </Button>
     )
 }
 
