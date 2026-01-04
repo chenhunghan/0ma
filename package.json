@@ -9,7 +9,8 @@
     "tauri-dev": "tauri dev",
     "build": "tsc && vite build",
     "lint": "eslint .",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "tauri": "tauri"
   },
   "dependencies": {
