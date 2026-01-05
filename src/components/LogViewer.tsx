@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
+import { debug, error } from '@tauri-apps/plugin-log';
 import { LogState } from 'src/types/Log';
 
 interface Props {
@@ -69,7 +70,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
       try {
         fitAddon.fit();
       } catch (e) {
-        console.debug('Terminal fit error:', e);
+        debug(`Terminal fit error: ${e}`);
       }
     });
 
@@ -79,7 +80,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
         try {
           fitAddon.fit();
         } catch (e) {
-          console.debug('Terminal fit error:', e);
+          debug(`Terminal fit error: ${e}`);
         }
       });
     });
@@ -109,7 +110,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
         // Auto-scroll to bottom
         term.scrollToBottom();
       } catch (e) {
-        console.error('Error writing to terminal:', e);
+        error(`Error writing to terminal: ${e}`);
       }
     });
   }, [logState.stdout]);
@@ -126,7 +127,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
         // Auto-scroll to bottom
         term.scrollToBottom();
       } catch (e) {
-        console.error('Error writing to terminal:', e);
+        error(`Error writing to terminal: ${e}`);
       }
     });
   }, [logState.stderr]);
