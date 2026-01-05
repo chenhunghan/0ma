@@ -16,6 +16,7 @@ mod lima_config;
 mod lima_config_handler;
 mod lima_config_service;
 mod lima_instance_handler;
+mod lima_instance_service;
 mod state;
 mod terminal_handler;
 mod terminal_service;
@@ -136,26 +137,22 @@ pub fn run() {
                                 log::debug!("Tray action: Starting instance '{}'", name);
                                 let handle = app.clone();
                                 tauri::async_runtime::spawn(async move {
-                                    let _ = lima_instance_handler::start_lima_instance_cmd(
+                                    let _ = lima_instance_service::start_lima_instance(
                                         handle.clone(),
                                         name,
                                     )
                                     .await;
-                                    log::debug!("Refreshing tray after 'start' action");
-                                    let _ = tray_handler::refresh_tray_menu(&handle).await;
                                 });
                             } else if let Some(name) = id.strip_prefix("stop:") {
                                 let name = name.to_string();
                                 log::debug!("Tray action: Stopping instance '{}'", name);
                                 let handle = app.clone();
                                 tauri::async_runtime::spawn(async move {
-                                    let _ = lima_instance_handler::stop_lima_instance_cmd(
+                                    let _ = lima_instance_service::stop_lima_instance(
                                         handle.clone(),
                                         name,
                                     )
                                     .await;
-                                    log::debug!("Refreshing tray after 'stop' action");
-                                    let _ = tray_handler::refresh_tray_menu(&handle).await;
                                 });
                             } else if let Some(name) = id.strip_prefix("delete:") {
                                 let name = name.to_string();
@@ -163,13 +160,11 @@ pub fn run() {
                                 let handle = app.clone();
                                 tauri::async_runtime::spawn(async move {
                                     // Note: Direct delete from tray might be risky, but following user request
-                                    let _ = lima_instance_handler::delete_lima_instance_cmd(
+                                    let _ = lima_instance_service::delete_lima_instance(
                                         handle.clone(),
                                         name,
                                     )
                                     .await;
-                                    log::debug!("Refreshing tray after 'delete' action");
-                                    let _ = tray_handler::refresh_tray_menu(&handle).await;
                                 });
                             }
                         }
