@@ -8,9 +8,10 @@ use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Listener, Manager};
 
 pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let dashboard_i = MenuItem::with_id(app, "dashboard", "Dashboard", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&dashboard_i, &quit_i])?;
+    let hide_i = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
+    let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&dashboard_i, &hide_i, &quit_i])?;
 
     let _tray = TrayIconBuilder::with_id("main")
         .icon(
@@ -29,6 +30,27 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                     if let Some(window) = app.get_webview_window("main") {
                         let _ = window.show();
                         let _ = window.set_focus();
+                        let handle = app.clone();
+                        let state = handle.state::<AppState>();
+                        state
+                            .is_window_visible
+                            .store(true, std::sync::atomic::Ordering::Relaxed);
+                        tauri::async_runtime::spawn(async move {
+                            let _ = refresh_tray_menu(&handle).await;
+                        });
+                    }
+                }
+                "hide" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.hide();
+                        let handle = app.clone();
+                        let state = handle.state::<AppState>();
+                        state
+                            .is_window_visible
+                            .store(false, std::sync::atomic::Ordering::Relaxed);
+                        tauri::async_runtime::spawn(async move {
+                            let _ = refresh_tray_menu(&handle).await;
+                        });
                     }
                 }
                 _ => {
@@ -134,10 +156,20 @@ pub async fn refresh_tray_menu(app: &AppHandle) -> Result<(), Box<dyn std::error
         .unwrap_or_default();
 
     let dashboard_i = MenuItem::with_id(app, "dashboard", "Dashboard", true, None::<&str>)?;
+    let hide_i = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
     let menu = Menu::new(app)?;
     menu.append(&dashboard_i)?;
+
+    // Only show "Hide" if the window is currently visible
+    let is_visible = state
+        .is_window_visible
+        .load(std::sync::atomic::Ordering::Relaxed);
+    if is_visible {
+        menu.append(&hide_i)?;
+    }
+
     menu.append(&PredefinedMenuItem::separator(app)?)?;
 
     for instance in instances {

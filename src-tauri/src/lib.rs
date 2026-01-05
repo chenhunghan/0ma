@@ -42,6 +42,7 @@ pub fn run() {
                 last_tray_menu_refresh: std::sync::Mutex::new(
                     std::time::Instant::now() - std::time::Duration::from_secs(60),
                 ),
+                is_window_visible: std::sync::atomic::AtomicBool::new(true),
             });
 
             tray_handler::setup_tray(app)?;
@@ -63,6 +64,35 @@ pub fn run() {
                 }
             });
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // click the red "Close" button $(x)$, intercepts CloseRequested,
+            // calls window.hide(), and cancels the app termination.
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let _ = window.hide();
+                api.prevent_close();
+                let handle = window.app_handle();
+                let state = handle.state::<state::AppState>();
+                state
+                    .is_window_visible
+                    .store(false, std::sync::atomic::Ordering::Relaxed);
+                log::debug!("Window close requested - hiding window and updating AppState");
+                let h = handle.clone();
+                tauri::async_runtime::spawn(async move {
+                    let _ = tray_handler::refresh_tray_menu(&h).await;
+                });
+            } else if let tauri::WindowEvent::Focused(focused) = event {
+                let handle = window.app_handle();
+                let state = handle.state::<state::AppState>();
+                state
+                    .is_window_visible
+                    .store(*focused, std::sync::atomic::Ordering::Relaxed);
+                log::debug!("Window focus changed: visible={}", focused);
+                let h = handle.clone();
+                tauri::async_runtime::spawn(async move {
+                    let _ = tray_handler::refresh_tray_menu(&h).await;
+                });
+            }
         })
         .invoke_handler(tauri::generate_handler![
             lima_handler::lima_version_cmd,
