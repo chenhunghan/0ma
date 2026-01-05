@@ -97,8 +97,8 @@ pub fn run() {
             k8s_log_handler::init();
 
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            let dashboard_i = MenuItem::with_id(app, "dashboard", "Dashboard", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&dashboard_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
                 .icon(
@@ -111,7 +111,7 @@ pub fn run() {
                     "quit" => {
                         std::process::exit(0);
                     }
-                    "show" => {
+                    "dashboard" => {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
