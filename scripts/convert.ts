@@ -3,8 +3,6 @@ import { fileURLToPath } from 'url';
 
 export interface RGB { r: number; g: number; b: number; }
 
-const BLACK: RGB = { r: 0, g: 0, b: 0 };
-const WHITE: RGB = { r: 255, g: 255, b: 255 };
 
 export async function extractAlphaTwoPass(
     imgOnWhitePath: string,
