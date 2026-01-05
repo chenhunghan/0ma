@@ -46,6 +46,20 @@ npm run tauri dev
 npm run tauri build
 ```
 
+### App Icon
+
+Generate the app icon using the following prompt:
+
+```markdown
+Use this prompt to generate a new icon png
+```
+A bold, ultra-minimalist, solid black 'om' logo on a pure solid white #FFFFFF background with monospace font. The design must be a vector-style flat shape with distinct, thick lines. No gradients, no gray, not in calligraphy style, just #000000 black and #FFFFFF white. The logo MUST be vertical and horizontal centered in the image. Highest resolution for a Mac system tray icon following macOS design guidelines. The file should be in PNG format.
+```
+Save the generated image at `./src-tauri/icons/tray-icon-white-path.png`
+
+Finally run this script `node scripts/convert.ts src-tauri/icons/tray-icon-white-path.png src-tauri/icons/tray-icon-black-path.png src-tauri/icons/tray-icon.png` to covert to `tray-icon.png`
+```
+
 ## License
 
 Copyright © 2025 Hung-Han Chen <chenhungh@gmail.com>.
