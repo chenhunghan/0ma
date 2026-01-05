@@ -74,12 +74,8 @@ pub fn run() {
                 api.prevent_close();
                 let handle = window.app_handle();
                 let state = handle.state::<state::AppState>();
-                state
-                    .is_window_visible
-                    .store(false, std::sync::atomic::Ordering::Relaxed);
-                state
-                    .is_window_focused
-                    .store(false, std::sync::atomic::Ordering::Relaxed);
+                state.on_window_close_requested();
+
                 log::debug!("Window close requested - hiding window and updating AppState");
                 let h = handle.clone();
                 tauri::async_runtime::spawn(async move {
@@ -88,16 +84,7 @@ pub fn run() {
             } else if let tauri::WindowEvent::Focused(focused) = event {
                 let handle = window.app_handle();
                 let state = handle.state::<state::AppState>();
-                state
-                    .is_window_focused
-                    .store(*focused, std::sync::atomic::Ordering::Relaxed);
-
-                // If window becomes focused, it is definitely visible
-                if *focused {
-                    state
-                        .is_window_visible
-                        .store(true, std::sync::atomic::Ordering::Relaxed);
-                }
+                state.on_window_focused(*focused);
 
                 log::debug!("Window focus changed: focused={}", focused);
                 let h = handle.clone();

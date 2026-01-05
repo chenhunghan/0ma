@@ -16,3 +16,154 @@ pub struct AppState {
     /// - Set to `false`: Window loses focus (OS event), "Hide" in tray menu clicked, or Close button clicked.
     pub is_window_focused: AtomicBool,
 }
+
+impl AppState {
+    /// Called when the user clicks the red "Close" (x) button on the window.
+    pub fn on_window_close_requested(&self) {
+        self.is_window_visible
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+        self.is_window_focused
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Called when the window focus changes (OS event).
+    pub fn on_window_focused(&self, focused: bool) {
+        self.is_window_focused
+            .store(focused, std::sync::atomic::Ordering::Relaxed);
+
+        // If window becomes focused, it is definitely visible
+        if focused {
+            self.is_window_visible
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// Called when "Dashboard" is clicked in the tray menu.
+    pub fn on_tray_dashboard_click(&self) {
+        self.is_window_visible
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+        self.is_window_focused
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Called when "Hide" is clicked in the tray menu.
+    pub fn on_tray_hide_click(&self) {
+        self.is_window_visible
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+        self.is_window_focused
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_state() -> AppState {
+        AppState {
+            last_tray_menu_refresh: Mutex::new(Instant::now()),
+            is_window_visible: AtomicBool::new(true),
+            is_window_focused: AtomicBool::new(true),
+        }
+    }
+
+    #[test]
+    fn test_on_window_close_requested() {
+        let state = create_test_state();
+        state.on_window_close_requested();
+        assert_eq!(
+            state
+                .is_window_visible
+                .load(std::sync::atomic::Ordering::Relaxed),
+            false
+        );
+        assert_eq!(
+            state
+                .is_window_focused
+                .load(std::sync::atomic::Ordering::Relaxed),
+            false
+        );
+    }
+
+    #[test]
+    fn test_on_window_focused() {
+        let state = create_test_state();
+
+        // Test: Lost focus
+        state.on_window_focused(false);
+        assert_eq!(
+            state
+                .is_window_focused
+                .load(std::sync::atomic::Ordering::Relaxed),
+            false
+        );
+        // Losing focus should NOT hide the window
+        assert_eq!(
+            state
+                .is_window_visible
+                .load(std::sync::atomic::Ordering::Relaxed),
+            true
+        );
+
+        // Test: Gained focus
+        state
+            .is_window_visible
+            .store(false, std::sync::atomic::Ordering::Relaxed); // Start hidden to verify it becomes visible
+        state.on_window_focused(true);
+        assert_eq!(
+            state
+                .is_window_focused
+                .load(std::sync::atomic::Ordering::Relaxed),
+            true
+        );
+        assert_eq!(
+            state
+                .is_window_visible
+                .load(std::sync::atomic::Ordering::Relaxed),
+            true
+        );
+    }
+
+    #[test]
+    fn test_on_tray_dashboard_click() {
+        let state = create_test_state();
+        state
+            .is_window_visible
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+        state
+            .is_window_focused
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+
+        state.on_tray_dashboard_click();
+        assert_eq!(
+            state
+                .is_window_visible
+                .load(std::sync::atomic::Ordering::Relaxed),
+            true
+        );
+        assert_eq!(
+            state
+                .is_window_focused
+                .load(std::sync::atomic::Ordering::Relaxed),
+            true
+        );
+    }
+
+    #[test]
+    fn test_on_tray_hide_click() {
+        let state = create_test_state();
+        state.on_tray_hide_click();
+        assert_eq!(
+            state
+                .is_window_visible
+                .load(std::sync::atomic::Ordering::Relaxed),
+            false
+        );
+        assert_eq!(
+            state
+                .is_window_focused
+                .load(std::sync::atomic::Ordering::Relaxed),
+            false
+        );
+    }
+}

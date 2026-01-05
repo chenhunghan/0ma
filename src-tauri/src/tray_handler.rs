@@ -32,12 +32,8 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                         let _ = window.set_focus();
                         let handle = app.clone();
                         let state = handle.state::<AppState>();
-                        state
-                            .is_window_visible
-                            .store(true, std::sync::atomic::Ordering::Relaxed);
-                        state
-                            .is_window_focused
-                            .store(true, std::sync::atomic::Ordering::Relaxed);
+                        state.on_tray_dashboard_click();
+
                         tauri::async_runtime::spawn(async move {
                             let _ = refresh_tray_menu(&handle).await;
                         });
@@ -48,12 +44,8 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                         let _ = window.hide();
                         let handle = app.clone();
                         let state = handle.state::<AppState>();
-                        state
-                            .is_window_visible
-                            .store(false, std::sync::atomic::Ordering::Relaxed);
-                        state
-                            .is_window_focused
-                            .store(false, std::sync::atomic::Ordering::Relaxed);
+                        state.on_tray_hide_click();
+
                         tauri::async_runtime::spawn(async move {
                             let _ = refresh_tray_menu(&handle).await;
                         });
