@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 use std::sync::Mutex;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub struct AppState {
     /// Timestamp of the last tray menu rebuild. Used to debounce hover-triggered (on tray icon) refreshes.
@@ -52,6 +52,23 @@ impl AppState {
             .store(false, std::sync::atomic::Ordering::Relaxed);
         self.is_window_focused
             .store(false, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Checks if we should refresh the tray menu based on the debounce timer.
+    /// If returns true, it updates the timestamp to now.
+    pub fn should_refresh_tray(&self) -> bool {
+        if let Ok(mut last_refresh) = self.last_tray_menu_refresh.lock() {
+            let elapsed = last_refresh.elapsed();
+            if elapsed > Duration::from_secs(5) {
+                // log::info! is not available in unit tests by default without init,
+                // but we can assume this logic holds true.
+                *last_refresh = Instant::now();
+                return true;
+            } else {
+                return false;
+            }
+        }
+        false
     }
 }
 
@@ -165,5 +182,27 @@ mod tests {
                 .load(std::sync::atomic::Ordering::Relaxed),
             false
         );
+    }
+
+    #[test]
+    fn test_should_refresh_tray() {
+        let state = create_test_state();
+
+        // 1. Force last refresh to be long ago (10 seconds ago)
+        if let Ok(mut last) = state.last_tray_menu_refresh.lock() {
+            *last = Instant::now() - Duration::from_secs(10);
+        }
+        // Should refresh
+        assert_eq!(state.should_refresh_tray(), true);
+
+        // 2. Now call it again immediately. The previous call checks updated the timestamp to Now.
+        // Should be debounced (false)
+        assert_eq!(state.should_refresh_tray(), false);
+
+        // 3. Force last refresh to be ALMOST ready (4 seconds ago)
+        if let Ok(mut last) = state.last_tray_menu_refresh.lock() {
+            *last = Instant::now() - Duration::from_secs(4);
+        }
+        assert_eq!(state.should_refresh_tray(), false);
     }
 }

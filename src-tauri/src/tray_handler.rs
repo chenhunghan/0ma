@@ -87,24 +87,7 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                 let handle = _tray.app_handle();
                 let should_refresh = {
                     let state = handle.state::<AppState>();
-                    let mut _should_refresh = false;
-                    if let Ok(mut last_refresh) = state.last_tray_menu_refresh.lock() {
-                        let elapsed = last_refresh.elapsed();
-                        if elapsed > std::time::Duration::from_secs(5) {
-                            log::info!(
-                                "Triggering tray refresh (last refresh was {:?} ago)",
-                                elapsed
-                            );
-                            *last_refresh = std::time::Instant::now();
-                            _should_refresh = true;
-                        } else {
-                            log::debug!(
-                                "Tray refresh skipped (debounce: last refresh was {:?} ago)",
-                                elapsed
-                            );
-                        }
-                    }
-                    _should_refresh
+                    state.should_refresh_tray()
                 };
 
                 if should_refresh {
