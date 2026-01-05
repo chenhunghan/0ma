@@ -1,9 +1,10 @@
 use std::path::Path;
 use std::process::Command;
+
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::TrayIconBuilder;
-use tauri::Manager;
+use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::{Listener, Manager};
 
 mod instance_registry_handler;
 mod instance_registry_service;
@@ -15,11 +16,12 @@ mod lima_config;
 mod lima_config_handler;
 mod lima_config_service;
 mod lima_instance_handler;
+mod state;
 mod terminal_handler;
 mod terminal_service;
+mod tray_handler;
 mod yaml_handler;
 
-// Common paths where limactl might be installed
 // Note: We use limactl directly instead of lima wrapper script
 const COMMON_LIMA_EXEC_PATHS: &[&str] = &[
     "/opt/homebrew/bin/limactl",
@@ -86,13 +88,22 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
-                .level(tauri_plugin_log::log::LevelFilter::Info)
+                .level(if cfg!(debug_assertions) {
+                    tauri_plugin_log::log::LevelFilter::Debug
+                } else {
+                    tauri_plugin_log::log::LevelFilter::Info
+                })
                 .build(),
         )
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            app.manage(state::AppState {
+                // Initialize last_tray_menu_refresh to 60 seconds ago to ensure the first refresh happens immediately
+                last_tray_menu_refresh: std::sync::Mutex::new(std::time::Instant::now() - std::time::Duration::from_secs(60)),
+            });
+
             let handle = app.handle().clone();
             k8s_log_handler::init();
 
@@ -100,27 +111,134 @@ pub fn run() {
             let dashboard_i = MenuItem::with_id(app, "dashboard", "Dashboard", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&dashboard_i, &quit_i])?;
 
-            let _tray = TrayIconBuilder::new()
+            let _tray = TrayIconBuilder::with_id("main")
                 .icon(
                     Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
                         .expect("tray icon not found"),
                 )
                 .menu(&menu)
                 .show_menu_on_left_click(true)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => {
-                        std::process::exit(0);
-                    }
-                    "dashboard" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                .on_menu_event(|app, event| {
+                    let id = event.id.as_ref();
+                    match id {
+                        "quit" => {
+                            std::process::exit(0);
+                        }
+                        "dashboard" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        _ => {
+                            if let Some(name) = id.strip_prefix("start:") {
+                                let name = name.to_string();
+                                log::debug!("Tray action: Starting instance '{}'", name);
+                                let handle = app.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    let _ = lima_instance_handler::start_lima_instance_cmd(
+                                        handle.clone(),
+                                        name,
+                                    )
+                                    .await;
+                                    log::debug!("Refreshing tray after 'start' action");
+                                    let _ = tray_handler::refresh_tray_menu(&handle).await;
+                                });
+                            } else if let Some(name) = id.strip_prefix("stop:") {
+                                let name = name.to_string();
+                                log::debug!("Tray action: Stopping instance '{}'", name);
+                                let handle = app.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    let _ = lima_instance_handler::stop_lima_instance_cmd(
+                                        handle.clone(),
+                                        name,
+                                    )
+                                    .await;
+                                    log::debug!("Refreshing tray after 'stop' action");
+                                    let _ = tray_handler::refresh_tray_menu(&handle).await;
+                                });
+                            } else if let Some(name) = id.strip_prefix("delete:") {
+                                let name = name.to_string();
+                                log::debug!("Tray action: Deleting instance '{}'", name);
+                                let handle = app.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    // Note: Direct delete from tray might be risky, but following user request
+                                    let _ = lima_instance_handler::delete_lima_instance_cmd(
+                                        handle.clone(),
+                                        name,
+                                    )
+                                    .await;
+                                    log::debug!("Refreshing tray after 'delete' action");
+                                    let _ = tray_handler::refresh_tray_menu(&handle).await;
+                                });
+                            }
                         }
                     }
-                    _ => {}
+                })
+                .on_tray_icon_event(|_tray, event| {
+                    // "Hover" event on the tray icon
+                    if let TrayIconEvent::Enter { .. } = event {
+                        let handle = _tray.app_handle();
+                        let should_refresh = {
+                            let state = handle.state::<state::AppState>();
+                            let mut _should_refresh = false;
+                            if let Ok(mut last_refresh) = state.last_tray_menu_refresh.lock() {
+                                let elapsed = last_refresh.elapsed();
+                                if elapsed > std::time::Duration::from_secs(5) {
+                                    log::info!("Triggering tray refresh (last refresh was {:?} ago)", elapsed);
+                                    *last_refresh = std::time::Instant::now();
+                                    _should_refresh = true;
+                                } else {
+                                    log::debug!("Tray refresh skipped (debounce: last refresh was {:?} ago)", elapsed);
+                                }
+                            }
+                            _should_refresh
+                        };
+
+                        if should_refresh {
+                            let task_handle = handle.clone();
+                            tauri::async_runtime::spawn(async move {
+                                let _ = tray_handler::refresh_tray_menu(&task_handle).await;
+                            });
+                        }
+                    }
                 })
                 .icon_as_template(true)
                 .build(app)?;
+
+            // Listen for any instance changes in the frontend to keep tray menu in sync
+            let h = app.handle().clone();
+            app.listen("lima-instance-create-success", move |_| {
+                let h = h.clone();
+                tauri::async_runtime::spawn(async move {
+                    log::debug!("Event 'lima-instance-create-success' received, refreshing tray");
+                    let _ = tray_handler::refresh_tray_menu(&h).await;
+                });
+            });
+            let h = app.handle().clone();
+            app.listen("lima-instance-start-success", move |_| {
+                let h = h.clone();
+                tauri::async_runtime::spawn(async move {
+                    log::debug!("Event 'lima-instance-start-success' received, refreshing tray");
+                    let _ = tray_handler::refresh_tray_menu(&h).await;
+                });
+            });
+            let h = app.handle().clone();
+            app.listen("lima-instance-stop-success", move |_| {
+                let h = h.clone();
+                tauri::async_runtime::spawn(async move {
+                    log::debug!("Event 'lima-instance-stop-success' received, refreshing tray");
+                    let _ = tray_handler::refresh_tray_menu(&h).await;
+                });
+            });
+            let h = app.handle().clone();
+            app.listen("lima-instance-delete-success", move |_| {
+                let h = h.clone();
+                tauri::async_runtime::spawn(async move {
+                    log::debug!("Event 'lima-instance-delete-success' received, refreshing tray");
+                    let _ = tray_handler::refresh_tray_menu(&h).await;
+                });
+            });
 
             tauri::async_runtime::spawn(async move {
                 match terminal_service::TerminalService::start().await {
@@ -154,7 +272,6 @@ pub fn run() {
             instance_registry_handler::get_instance_guest_diagnostics_cmd,
             lima_instance_handler::create_lima_instance_cmd,
             lima_instance_handler::start_lima_instance_cmd,
-            lima_instance_handler::stop_lima_instance_cmd,
             lima_instance_handler::stop_lima_instance_cmd,
             lima_instance_handler::delete_lima_instance_cmd,
             k8s_handler::get_k8s_pods_cmd,
