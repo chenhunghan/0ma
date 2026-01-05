@@ -101,7 +101,7 @@ pub fn run() {
                         });
                     }
                     Err(e) => {
-                        eprintln!("Failed to start terminal service: {}", e);
+                        log::error!("Failed to start terminal service: {}", e);
                     }
                 }
             });

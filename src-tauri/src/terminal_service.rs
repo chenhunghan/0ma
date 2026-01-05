@@ -23,7 +23,7 @@ impl TerminalService {
             .map_err(|e| format!("Failed to bind to port: {}", e))?;
         let port = listener.local_addr().unwrap().port();
 
-        println!("Terminal service listening on 127.0.0.1:{}", port);
+        log::info!("Terminal service listening on 127.0.0.1:{}", port);
 
         let handle = tokio::spawn(async move {
             while let Ok((stream, _)) = listener.accept().await {
@@ -48,11 +48,11 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
         _ => return,
     };
 
-    println!("Terminal connection handshake: {}", handshake_text);
+    log::info!("Terminal connection handshake: {}", handshake_text);
 
     let instance_name = handshake_text.to_string();
 
-    println!("Starting terminal for instance: {}", instance_name);
+    log::info!("Starting terminal for instance: {}", instance_name);
 
     let pty_system = NativePtySystem::default();
     let pty_pair = match pty_system.openpty(PtySize {
@@ -158,5 +158,5 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
     }
 
     ws_to_pty_task.abort();
-    println!("Terminal session for {} ended", instance_name);
+    log::info!("Terminal session for {} ended", instance_name);
 }

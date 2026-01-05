@@ -30,7 +30,7 @@ impl K8sLogService {
             .map_err(|e| format!("Failed to bind to port: {}", e))?;
         let port = listener.local_addr().unwrap().port();
 
-        println!("K8s Log service listening on 127.0.0.1:{}", port);
+        log::info!("K8s Log service listening on 127.0.0.1:{}", port);
 
         let handle = tokio::spawn(async move {
             while let Ok((stream, _)) = listener.accept().await {
@@ -55,7 +55,7 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
         _ => return,
     };
 
-    println!("Log connection handshake: {}", handshake_text);
+    log::info!("Log connection handshake: {}", handshake_text);
 
     let request = match serde_json::from_str::<K8sLogRequest>(&handshake_text) {
         Ok(req) => req,
@@ -69,9 +69,11 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
         }
     };
 
-    println!(
+    log::info!(
         "Starting logs for pod {} in {} on instance {}",
-        request.pod, request.namespace, request.instance
+        request.pod,
+        request.namespace,
+        request.instance
     );
 
     let pty_system = NativePtySystem::default();
@@ -182,5 +184,5 @@ async fn handle_connection(ws_stream: tokio_tungstenite::WebSocketStream<tokio::
     }
 
     ws_to_pty_task.abort();
-    println!("Log session ended");
+    log::info!("Log session ended");
 }

@@ -544,7 +544,7 @@ pub async fn delete_lima_instance_cmd(
                         let instance_dir = lima_home.join(&instance_name_clone);
                         if instance_dir.exists() {
                             if let Err(e) = tokio::fs::remove_dir_all(&instance_dir).await {
-                                eprintln!("Warning: Failed to remove instance directory: {}", e);
+                                log::warn!("Failed to remove instance directory: {}", e);
                             }
                         }
                     }

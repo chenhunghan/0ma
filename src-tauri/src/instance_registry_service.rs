@@ -147,7 +147,7 @@ async fn get_lima_instances() -> Result<Vec<LimaInstance>, String> {
                 instances.push(instance);
             }
             Err(e) => {
-                eprintln!("Warning: Failed to parse Lima instance JSON: {}", e);
+                log::warn!("Failed to parse Lima instance JSON: {}", e);
                 continue;
             }
         }
