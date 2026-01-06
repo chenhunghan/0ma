@@ -91,9 +91,8 @@ export function App() {
         setMaxTermId(nextTermId)
     }
 
-    const removeTerminal = (
+    const removeTab = (
         tabId: string,
-        termId: number,
         currentTabs: TabGroup[],
         setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
         activeTab: string,
@@ -103,32 +102,25 @@ export function App() {
         if (tabIdx === -1) return
 
         const tab = currentTabs[tabIdx]
-        const termToRemove = tab.terminals.find(t => t.id === termId)
 
-        // Explicitly close the PTY session if it exists
-        if (termToRemove?.sessionId) {
-            invoke('close_pty_cmd', { sessionId: termToRemove.sessionId })
-                .catch(error => log.error("Failed to close PTY:", error));
-        }
+        // Close all PTY sessions in the tab
+        tab.terminals.forEach(term => {
+            if (term.sessionId) {
+                invoke('close_pty_cmd', { sessionId: term.sessionId })
+                    .catch(error => log.error("Failed to close PTY:", error));
+            }
+        });
 
-        const nextTerminals = tab.terminals.filter(t => t.id !== termId)
-        let nextTabs: TabGroup[];
+        const nextTabs = currentTabs.filter(t => t.id !== tabId)
+        setTabs(nextTabs)
 
-        if (nextTerminals.length > 0) {
-            nextTabs = currentTabs.map(t => t.id === tabId ? { ...t, terminals: nextTerminals } : t)
-            setTabs(nextTabs)
-        } else {
-            // Last terminal in tab, remove the whole tab
-            nextTabs = currentTabs.filter(t => t.id !== tabId)
-            setTabs(nextTabs)
-
-            if (activeTab === tabId) {
-                if (nextTabs.length > 0) {
-                    const nextTab = nextTabs[Math.max(0, tabIdx - 1)]
-                    setActiveTab(nextTab.id)
-                } else {
-                    setActiveTab("")
-                }
+        if (activeTab === tabId) {
+            if (nextTabs.length > 0) {
+                // Try to select the previous tab, or the next one if it was the first
+                const nextActiveIdx = Math.max(0, tabIdx - 1)
+                setActiveTab(nextTabs[nextActiveIdx].id)
+            } else {
+                setActiveTab("")
             }
         }
     }
@@ -193,7 +185,7 @@ export function App() {
                                     onTabChange={setLimaActive}
                                     onAddTab={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)}
                                     onAddSideBySide={(id) => addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)}
-                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, limaTabs, setLimaTabs, limaActive, setLimaActive)}
+                                    onRemoveTab={(tabId) => removeTab(tabId, limaTabs, setLimaTabs, limaActive, setLimaActive)}
                                     emptyState={<EmptyTerminalState onAdd={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)} />}
                                 />
                             }
@@ -221,7 +213,7 @@ export function App() {
                                     onTabChange={setK8sActive}
                                     onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
                                     onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}
-                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, k8sTabs, setK8sTabs, k8sActive, setK8sActive)}
+                                    onRemoveTab={(tabId) => removeTab(tabId, k8sTabs, setK8sTabs, k8sActive, setK8sActive)}
                                     emptyState={<EmptyTerminalState onAdd={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)} />}
                                 />
                             }

@@ -2,7 +2,7 @@ import { ReactNode } from "react"
 import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs"
 import { Separator } from "src/components/ui/separator"
 import { Button } from "src/components/ui/button"
-import { Terminal as TerminalIcon, Columns2Icon, SquarePlusIcon } from "lucide-react"
+import { Terminal as TerminalIcon, Columns2Icon, SquarePlusIcon, XIcon } from "lucide-react"
 import { useIsMobile } from "src/hooks/useMediaQuery"
 import {
     ResizablePanelGroup,
@@ -26,7 +26,7 @@ interface Props {
     onTabChange: (id: string) => void
     onAddTab: () => void
     onAddSideBySide: (tabId: string) => void
-    onRemoveTerminal: (tabId: string, terminalId: number) => void
+    onRemoveTab: (tabId: string) => void
     onSessionCreated: (tabId: string, termId: number, sessionId: string) => void
     emptyState: ReactNode
 }
@@ -37,7 +37,7 @@ export function TermTabs({
     onTabChange,
     onAddTab,
     onAddSideBySide,
-    onRemoveTerminal,
+    onRemoveTab,
     onSessionCreated,
     emptyState
 }: Props) {
@@ -55,12 +55,23 @@ export function TermTabs({
                                 key={tab.id}
                                 value={tab.id}
                                 title={tab.name}
-                                className="gap-1.5 px-2.5 h-7"
+                                className="gap-1.5 px-2.5 h-7 group relative pr-1"
                             >
                                 <TerminalIcon className="size-3.5" />
                                 {!isMobile && (
                                     <span className="text-[10px]">{tab.name}</span>
                                 )}
+                                <div
+                                    role="button"
+                                    className="rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted-foreground/20 p-0.5 transition-all ml-1"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onRemoveTab(tab.id)
+                                    }}
+                                    title="Close Tab"
+                                >
+                                    <XIcon className="size-3" />
+                                </div>
                             </TabsTrigger>
                         ))}
                     </TabsList>
@@ -113,7 +124,6 @@ export function TermTabs({
                                     <TerminalRow
                                         tabId={tab.id}
                                         terminals={row1}
-                                        onRemove={onRemoveTerminal}
                                         onSessionCreated={onSessionCreated}
                                     />
                                 ) : (
@@ -122,7 +132,6 @@ export function TermTabs({
                                             <TerminalRow
                                                 tabId={tab.id}
                                                 terminals={row1}
-                                                onRemove={onRemoveTerminal}
                                                 onSessionCreated={onSessionCreated}
                                             />
                                         </ResizablePanel>
@@ -131,7 +140,6 @@ export function TermTabs({
                                             <TerminalRow
                                                 tabId={tab.id}
                                                 terminals={row2}
-                                                onRemove={onRemoveTerminal}
                                                 onSessionCreated={onSessionCreated}
                                             />
                                         </ResizablePanel>

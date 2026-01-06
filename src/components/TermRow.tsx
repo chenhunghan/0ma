@@ -13,14 +13,12 @@ import { TerminalComponent } from "./TerminalComponent"
 interface Props {
     tabId: string,
     terminals: Terminal[],
-    onRemove: (tabId: string, terminalId: number) => void
     onSessionCreated: (tabId: string, termId: number, sessionId: string) => void
 }
 
 export function TerminalRow({
     tabId,
     terminals,
-    onRemove,
     onSessionCreated
 }: Props) {
     const isMobile = useIsMobile()
@@ -33,9 +31,6 @@ export function TerminalRow({
                         <div
                             className="h-full w-full relative group"
                         >
-                            <div className="absolute top-1.5 right-1.5 z-20 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                                <CloseTerminalButton onRemove={() => onRemove(tabId, term.id)} />
-                            </div>
                             <div className="h-full w-full overflow-hidden">
                                 <TerminalComponent
                                     initialCommand="zsh"
@@ -54,19 +49,4 @@ export function TerminalRow({
     )
 }
 
-function CloseTerminalButton({ onRemove }: { onRemove: () => void }) {
-    return (
-        <Button
-            variant="secondary"
-            size="icon-xs"
-            className="size-5 bg-background/60 backdrop-blur-xs border border-border/50 shadow-xs hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30"
-            onClick={(e) => {
-                e.stopPropagation()
-                onRemove()
-            }}
-            title="Close Terminal"
-        >
-            <XIcon className="size-3" />
-        </Button>
-    )
-}
+
