@@ -57,6 +57,7 @@ impl PtySession {
     }
 }
 
+#[derive(Clone)]
 pub struct PtyManager {
     sessions: Arc<Mutex<HashMap<String, PtySession>>>,
 }

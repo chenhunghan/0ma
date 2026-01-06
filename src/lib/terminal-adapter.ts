@@ -1,5 +1,6 @@
 
 import { invoke, Channel } from '@tauri-apps/api/core';
+import { emit } from '@tauri-apps/api/event';
 import { Terminal } from '@xterm/xterm';
 import * as log from "@tauri-apps/plugin-log"
 
@@ -15,13 +16,14 @@ export class TerminalAdapter {
 
     constructor(terminal: Terminal) {
         this.terminal = terminal;
-        // Hook up input
+        // Hook up input using events
         const onDataDisposer = this.terminal.onData((data) => {
             if (this.sessionId) {
-                invoke('write_pty_cmd', {
+                // Use emit instead of invoke for lower latency
+                emit('pty-input', {
                     sessionId: this.sessionId,
                     data
-                }).catch(error => log.error("Failed to write_pty:", error));
+                }).catch(error => log.error("Failed to emit pty-input:", error));
             }
         });
         this.disposables.push(onDataDisposer);

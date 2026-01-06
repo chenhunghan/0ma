@@ -33,6 +33,7 @@ export function TerminalComponent({
             cursorBlink: true,
             fontFamily: '"Fira Code", monospace',
             fontSize: 14,
+            scrollOnUserInput: true, // Ensure viewport scrolls to cursor when typing
             theme: {
                 background: '#09090b', // zinc-950
                 foreground: '#fafafa', // zinc-50

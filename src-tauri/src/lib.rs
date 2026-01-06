@@ -1,4 +1,4 @@
-use tauri::Manager;
+use tauri::{Listener, Manager};
 
 mod instance_registry_handler;
 mod instance_registry_service;
@@ -46,7 +46,28 @@ pub fn run() {
                 is_window_visible: std::sync::atomic::AtomicBool::new(true),
                 is_window_focused: std::sync::atomic::AtomicBool::new(true),
             });
-            app.manage(terminal_manager::PtyManager::new());
+            let pty_manager = terminal_manager::PtyManager::new();
+            app.manage(pty_manager);
+
+            // Listen for pty-input events
+            let pty_manager = app.state::<terminal_manager::PtyManager>().inner().clone();
+            let handle = app.handle().clone();
+            handle.listen("pty-input", move |event| {
+                #[derive(serde::Deserialize)]
+                struct PtyInputPayload {
+                    #[serde(rename = "sessionId")]
+                    session_id: String,
+                    data: String,
+                }
+
+                if let Ok(payload) = serde_json::from_str::<PtyInputPayload>(event.payload()) {
+                    if let Err(e) = pty_manager.write(&payload.session_id, &payload.data) {
+                        log::error!("Failed to write to PTY: {}", e);
+                    }
+                } else {
+                    log::error!("Failed to parse pty-input payload: {}", event.payload());
+                }
+            });
 
             tray_handler::setup_tray(app)?;
             tray_handler::setup_listeners(app);
