@@ -8,17 +8,20 @@ import {
     ResizableHandle
 } from "src/components/ui/resizable"
 import { type Terminal } from "src/services/Terminal"
+import { TerminalComponent } from "./TerminalComponent"
 
 interface Props {
     tabId: string,
     terminals: Terminal[],
     onRemove: (tabId: string, terminalId: number) => void
+    onSessionCreated: (tabId: string, termId: number, sessionId: string) => void
 }
 
 export function TerminalRow({
     tabId,
     terminals,
-    onRemove
+    onRemove,
+    onSessionCreated
 }: Props) {
     const isMobile = useIsMobile()
 
@@ -34,7 +37,13 @@ export function TerminalRow({
                                 <CloseTerminalButton onRemove={() => onRemove(tabId, term.id)} />
                             </div>
                             <div className="h-full w-full overflow-hidden">
-                                {term.content}
+                                <TerminalComponent
+                                    initialCommand="zsh"
+                                    initialArgs={[]}
+                                    cwd="~"
+                                    sessionId={term.sessionId}
+                                    onSessionCreated={(sid) => onSessionCreated(tabId, term.id, sid)}
+                                />
                             </div>
                         </div>
                     </ResizablePanel>

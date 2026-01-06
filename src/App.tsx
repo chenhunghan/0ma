@@ -9,6 +9,8 @@ import { LimaConfigTabContent } from "src/components/LimaConfigTabContent"
 import { useLayoutStorage } from "src/hooks/useLayoutStorage"
 import { Skeleton } from "./components/ui/skeleton"
 import { Spinner } from "./components/ui/spinner"
+import { invoke } from "@tauri-apps/api/core"
+import * as log from "@tauri-apps/plugin-log"
 
 export function App() {
     const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
@@ -20,12 +22,7 @@ export function App() {
         terminals: [
             {
                 id: 1,
-                name: `${prefix} Terminal 1`,
-                content: (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <span className="text-muted-foreground text-xs">{prefix} Terminal 1 Content</span>
-                    </div>
-                )
+                name: `${prefix} Terminal 1`
             }
         ]
     })
@@ -58,12 +55,7 @@ export function App() {
             terminals: [
                 {
                     id: nextTermId,
-                    name: `${prefix} Terminal ${nextTermId}`,
-                    content: (
-                        <div className="flex h-full w-full items-center justify-center">
-                            <span className="text-muted-foreground text-xs">{prefix} Terminal ${nextTermId} Content</span>
-                        </div>
-                    )
+                    name: `${prefix} Terminal ${nextTermId}`
                 }
             ]
         }
@@ -89,12 +81,7 @@ export function App() {
                         ...tab.terminals,
                         {
                             id: nextTermId,
-                            name: `${prefix} Terminal ${nextTermId}`,
-                            content: (
-                                <div className="flex h-full w-full items-center justify-center">
-                                    <span className="text-muted-foreground text-xs">{prefix} Terminal ${nextTermId} Content</span>
-                                </div>
-                            )
+                            name: `${prefix} Terminal ${nextTermId}`
                         }
                     ]
                 }
@@ -116,10 +103,17 @@ export function App() {
             if (tabIdx === -1) return prev
 
             const tab = prev[tabIdx]
+            const termToRemove = tab.terminals.find(t => t.id === termId)
+
+            // Explicitly close the PTY session if it exists
+            if (termToRemove?.sessionId) {
+                invoke('close_pty_cmd', { sessionId: termToRemove.sessionId })
+                    .catch(error => log.error("Failed to close PTY:", error));
+            }
+
             const nextTerminals = tab.terminals.filter(t => t.id !== termId)
 
             if (nextTerminals.length > 0) {
-                // Just remove the terminal from the tab
                 return prev.map(t => t.id === tabId ? { ...t, terminals: nextTerminals } : t)
             } else {
                 // Last terminal in tab, remove the whole tab
@@ -136,6 +130,19 @@ export function App() {
             }
         })
     }
+
+    const handleTerminalSessionCreated = (tabId: string, termId: number, sessionId: string, setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>) => {
+        setTabs(prev => prev.map(tab => {
+            if (tab.id !== tabId) return tab;
+            return {
+                ...tab,
+                terminals: tab.terminals.map(term => {
+                    if (term.id !== termId) return term;
+                    return { ...term, sessionId };
+                })
+            }
+        }));
+    };
 
     return (
         <div className="h-full w-full overflow-hidden">
@@ -180,6 +187,7 @@ export function App() {
                                 <TermTabs
                                     tabs={limaTabs}
                                     activeTabId={limaActive}
+                                    onSessionCreated={(tabId, termId, sid) => handleTerminalSessionCreated(tabId, termId, sid, setLimaTabs)}
                                     onTabChange={setLimaActive}
                                     onAddTab={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)}
                                     onAddSideBySide={(id) => addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)}
@@ -207,6 +215,7 @@ export function App() {
                                 <TermTabs
                                     tabs={k8sTabs}
                                     activeTabId={k8sActive}
+                                    onSessionCreated={(tabId, termId, sid) => handleTerminalSessionCreated(tabId, termId, sid, setK8sTabs)}
                                     onTabChange={setK8sActive}
                                     onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
                                     onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}

@@ -27,6 +27,7 @@ interface Props {
     onAddTab: () => void
     onAddSideBySide: (tabId: string) => void
     onRemoveTerminal: (tabId: string, terminalId: number) => void
+    onSessionCreated: (tabId: string, termId: number, sessionId: string) => void
     emptyState: ReactNode
 }
 
@@ -37,6 +38,7 @@ export function TermTabs({
     onAddTab,
     onAddSideBySide,
     onRemoveTerminal,
+    onSessionCreated,
     emptyState
 }: Props) {
     const isMobile = useIsMobile()
@@ -112,6 +114,7 @@ export function TermTabs({
                                         tabId={tab.id}
                                         terminals={row1}
                                         onRemove={onRemoveTerminal}
+                                        onSessionCreated={onSessionCreated}
                                     />
                                 ) : (
                                     <ResizablePanelGroup direction="vertical">
@@ -120,6 +123,7 @@ export function TermTabs({
                                                 tabId={tab.id}
                                                 terminals={row1}
                                                 onRemove={onRemoveTerminal}
+                                                onSessionCreated={onSessionCreated}
                                             />
                                         </ResizablePanel>
                                         <ResizableHandle withHandle />
@@ -128,6 +132,7 @@ export function TermTabs({
                                                 tabId={tab.id}
                                                 terminals={row2}
                                                 onRemove={onRemoveTerminal}
+                                                onSessionCreated={onSessionCreated}
                                             />
                                         </ResizablePanel>
                                     </ResizablePanelGroup>

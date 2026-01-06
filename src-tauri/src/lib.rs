@@ -15,6 +15,7 @@ mod lima_instance_service;
 mod lima_service;
 mod state;
 mod terminal_handler;
+mod terminal_manager;
 mod terminal_service;
 mod tray_handler;
 mod yaml_handler;
@@ -45,6 +46,7 @@ pub fn run() {
                 is_window_visible: std::sync::atomic::AtomicBool::new(true),
                 is_window_focused: std::sync::atomic::AtomicBool::new(true),
             });
+            app.manage(terminal_manager::PtyManager::new());
 
             tray_handler::setup_tray(app)?;
             tray_handler::setup_listeners(app);
@@ -115,7 +117,12 @@ pub fn run() {
             lima_instance_handler::delete_lima_instance_cmd,
             k8s_handler::get_k8s_pods_cmd,
             k8s_handler::get_k8s_services_cmd,
-            k8s_log_handler::get_k8s_log_port
+            k8s_log_handler::get_k8s_log_port,
+            terminal_manager::spawn_pty_cmd,
+            terminal_manager::attach_pty_cmd,
+            terminal_manager::write_pty_cmd,
+            terminal_manager::resize_pty_cmd,
+            terminal_manager::close_pty_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
