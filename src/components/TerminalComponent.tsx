@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { TerminalAdapter } from 'src/lib/terminal-adapter';
+import { WebglAddon } from '@xterm/addon-webgl';
 import '@xterm/xterm/css/xterm.css';
 
 const TERM_CONFIG = {
@@ -65,6 +66,17 @@ export function TerminalComponent({
         term.loadAddon(fitAddon);
 
         term.open(containerRef.current);
+
+        // Load WebGL addon after opening the terminal
+        try {
+            const webglAddon = new WebglAddon();
+            webglAddon.onContextLoss(() => {
+                webglAddon.dispose();
+            });
+            term.loadAddon(webglAddon);
+        } catch (e) {
+            console.warn('WebGL Addon failed to load, falling back to DOM renderer', e);
+        }
 
         const fitTerminal = () => {
             const dims = fitAddon.proposeDimensions();
