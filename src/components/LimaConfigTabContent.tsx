@@ -7,7 +7,7 @@ import { LimaConfigEditor } from "./LimaConfigEditor";
 
 export function LimaConfigTabContent({ tabValue }: { tabValue: string }) {
     return (
-        <TabsContent value={tabValue} className="h-full">
+        <TabsContent value={tabValue} className="h-full" keepMounted>
             <ResizableLayout
                 autoSaveId="lima-config-tabs-content"
                 columns={[<ColunmWrapper key="1">

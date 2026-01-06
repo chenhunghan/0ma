@@ -1,6 +1,4 @@
 import { Fragment } from "react"
-import { Button } from "src/components/ui/button"
-import { XIcon } from "lucide-react"
 import { useIsMobile } from "src/hooks/useMediaQuery"
 import {
     ResizablePanelGroup,

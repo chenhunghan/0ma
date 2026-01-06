@@ -159,11 +159,10 @@ export function App() {
                         <TabsTrigger value="lima">Lima</TabsTrigger>
                         <TabsTrigger value="k8s">K8s</TabsTrigger>
                     </TabsList>
-
                     <Separator />
 
                     <LimaConfigTabContent tabValue="config" />
-                    <TabsContent value="lima">
+                    <TabsContent value="lima" keepMounted>
                         <ResizableLayout
                             autoSaveId="lima-tabs-content"
                             columns={[
@@ -191,7 +190,8 @@ export function App() {
                             }
                         />
                     </TabsContent>
-                    <TabsContent value="k8s">
+
+                    <TabsContent value="k8s" keepMounted>
                         <ResizableLayout
                             autoSaveId="k8s-tabs-content"
                             columns={[
