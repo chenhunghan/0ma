@@ -4,6 +4,38 @@ import { FitAddon } from '@xterm/addon-fit';
 import { TerminalAdapter } from 'src/lib/terminal-adapter';
 import '@xterm/xterm/css/xterm.css';
 
+const TERM_CONFIG = {
+    cursorBlink: false,
+    cursorStyle: 'bar' as const,
+    fontFamily: '"JetBrains Mono Variable", monospace',
+    fontSize: 12,
+    lineHeight: 1.15,
+    scrollOnUserInput: true,
+    theme: {
+        background: '#000000',
+        foreground: '#d4d4d8', // zinc-300
+        cursor: 'transparent',
+        selectionBackground: '#27272a', // zinc-800
+        black: '#000000',
+        red: '#ef4444',
+        green: '#10b981',
+        yellow: '#f59e0b',
+        blue: '#3b82f6',
+        magenta: '#d946ef',
+        cyan: '#06b6d4',
+        white: '#e4e4e7',
+        brightBlack: '#71717a',
+        brightRed: '#f87171',
+        brightGreen: '#34d399',
+        brightYellow: '#fbbf24',
+        brightBlue: '#60a5fa',
+        brightMagenta: '#e879f9',
+        brightCyan: '#22d3ee',
+        brightWhite: '#ffffff',
+    },
+    allowProposedApi: true,
+};
+
 interface Props {
     sessionId?: string;
     onSessionCreated?: (sessionId: string) => void;
@@ -27,18 +59,7 @@ export function TerminalComponent({
     useEffect(() => {
         if (!containerRef.current) return;
 
-        const term = new Terminal({
-            cursorBlink: true,
-            fontFamily: '"Fira Code Variable", "Fira Code", monospace',
-            fontSize: 14,
-            lineHeight: 1.15,
-            scrollOnUserInput: true,
-            theme: {
-                background: '#09090b', // zinc-950
-                foreground: '#fafafa', // zinc-50
-            },
-            allowProposedApi: true,
-        });
+        const term = new Terminal(TERM_CONFIG);
 
         const fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
@@ -95,8 +116,6 @@ export function TerminalComponent({
 
     // Outer div for padding, Inner div for xterm (no padding, so FitAddon measures correctly)
     return (
-        <div className={`h-full w-full overflow-hidden`}>
-            <div ref={containerRef} className="h-full w-full" />
-        </div>
+        <div ref={containerRef} className={`h-full w-full overflow-hidden`} />
     );
 }

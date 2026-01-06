@@ -10,7 +10,7 @@ interface Props {
 }
 
 const LOG_VIEW_TERM_CONFIG = {
-  fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
+  fontFamily: '"JetBrains Mono Variable", monospace',
   fontSize: 11,
   lineHeight: 1.15,
   theme: {
