@@ -87,10 +87,10 @@ export function TerminalComponent({
             }
         };
 
-        // Initial fit with rAF
-        requestAnimationFrame(() => {
-            fitTerminal();
-        });
+        // Initial fit to ensure correct dimensions before spawning
+        // This prevents the "spawn large -> resize small" issue that causes % artifacts
+        // Do not wrap in a requestAnimationFrame, as it will cause the terminal to be resized after the spawn
+        fitTerminal();
 
         const newAdapter = new TerminalAdapter(term);
         const { initialCommand, initialArgs, cwd, sessionId: currentSessionId, onSessionCreated } = settingsRef.current;
@@ -104,6 +104,7 @@ export function TerminalComponent({
                     onSessionCreated(newAdapter.sessionId);
                 }
             }
+            // Re-fit after spawn/connect just in case, though the initial fit should have covered it
             requestAnimationFrame(() => {
                 fitTerminal();
             });
