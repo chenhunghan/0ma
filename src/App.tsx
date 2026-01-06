@@ -94,41 +94,43 @@ export function App() {
     const removeTerminal = (
         tabId: string,
         termId: number,
+        currentTabs: TabGroup[],
         setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
         activeTab: string,
         setActiveTab: React.Dispatch<React.SetStateAction<string>>
     ) => {
-        setTabs(prev => {
-            const tabIdx = prev.findIndex(t => t.id === tabId)
-            if (tabIdx === -1) return prev
+        const tabIdx = currentTabs.findIndex(t => t.id === tabId)
+        if (tabIdx === -1) return
 
-            const tab = prev[tabIdx]
-            const termToRemove = tab.terminals.find(t => t.id === termId)
+        const tab = currentTabs[tabIdx]
+        const termToRemove = tab.terminals.find(t => t.id === termId)
 
-            // Explicitly close the PTY session if it exists
-            if (termToRemove?.sessionId) {
-                invoke('close_pty_cmd', { sessionId: termToRemove.sessionId })
-                    .catch(error => log.error("Failed to close PTY:", error));
-            }
+        // Explicitly close the PTY session if it exists
+        if (termToRemove?.sessionId) {
+            invoke('close_pty_cmd', { sessionId: termToRemove.sessionId })
+                .catch(error => log.error("Failed to close PTY:", error));
+        }
 
-            const nextTerminals = tab.terminals.filter(t => t.id !== termId)
+        const nextTerminals = tab.terminals.filter(t => t.id !== termId)
+        let nextTabs: TabGroup[];
 
-            if (nextTerminals.length > 0) {
-                return prev.map(t => t.id === tabId ? { ...t, terminals: nextTerminals } : t)
-            } else {
-                // Last terminal in tab, remove the whole tab
-                const nextTabs = prev.filter(t => t.id !== tabId)
-                if (activeTab === tabId) {
-                    if (nextTabs.length > 0) {
-                        const nextTab = nextTabs[Math.max(0, tabIdx - 1)]
-                        setActiveTab(nextTab.id)
-                    } else {
-                        setActiveTab("")
-                    }
+        if (nextTerminals.length > 0) {
+            nextTabs = currentTabs.map(t => t.id === tabId ? { ...t, terminals: nextTerminals } : t)
+            setTabs(nextTabs)
+        } else {
+            // Last terminal in tab, remove the whole tab
+            nextTabs = currentTabs.filter(t => t.id !== tabId)
+            setTabs(nextTabs)
+
+            if (activeTab === tabId) {
+                if (nextTabs.length > 0) {
+                    const nextTab = nextTabs[Math.max(0, tabIdx - 1)]
+                    setActiveTab(nextTab.id)
+                } else {
+                    setActiveTab("")
                 }
-                return nextTabs
             }
-        })
+        }
     }
 
     const handleTerminalSessionCreated = (tabId: string, termId: number, sessionId: string, setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>) => {
@@ -191,7 +193,7 @@ export function App() {
                                     onTabChange={setLimaActive}
                                     onAddTab={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)}
                                     onAddSideBySide={(id) => addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)}
-                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setLimaTabs, limaActive, setLimaActive)}
+                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, limaTabs, setLimaTabs, limaActive, setLimaActive)}
                                     emptyState={<EmptyTerminalState onAdd={() => addTab("Lima", setLimaTabs, limaMaxTabId, setLimaMaxTabId, limaMaxTermId, setLimaMaxTermId, setLimaActive)} />}
                                 />
                             }
@@ -219,7 +221,7 @@ export function App() {
                                     onTabChange={setK8sActive}
                                     onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
                                     onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}
-                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, setK8sTabs, k8sActive, setK8sActive)}
+                                    onRemoveTerminal={(tabId, termId) => removeTerminal(tabId, termId, k8sTabs, setK8sTabs, k8sActive, setK8sActive)}
                                     emptyState={<EmptyTerminalState onAdd={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)} />}
                                 />
                             }

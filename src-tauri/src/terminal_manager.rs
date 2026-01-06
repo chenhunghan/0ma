@@ -151,6 +151,7 @@ impl PtyManager {
     pub fn close(&self, session_id: &str) -> Result<(), String> {
         let mut sessions = self.sessions.lock().map_err(|e| e.to_string())?;
         if sessions.remove(session_id).is_some() {
+            log::info!("Terminal session closed: {}", session_id);
             Ok(())
         } else {
             Err("Session not found".to_string())
