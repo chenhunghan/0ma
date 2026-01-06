@@ -8,7 +8,7 @@ import '@xterm/xterm/css/xterm.css';
 const TERM_CONFIG = {
     cursorBlink: false,
     cursorStyle: 'bar' as const,
-    fontFamily: '"JetBrains Mono Variable", monospace',
+    fontFamily: '"FiraCode Nerd Font", monospace',
     fontSize: 12,
     lineHeight: 1.15,
     scrollOnUserInput: true,
