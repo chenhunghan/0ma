@@ -57,119 +57,95 @@ export function TerminalComponent({
     // Capture initial props in a ref to satisfy linter stability checks
     const settingsRef = useRef({ initialCommand, initialArgs, cwd, sessionId, onSessionCreated });
     const adapterRef = useRef<TerminalAdapter | null>(null);
-    // Internal adapter reference tracked via closure in useEffect
+    const isMountedRef = useRef(false);
+    const isInitializingRef = useRef(false);
 
     useEffect(() => {
+        isMountedRef.current = true;
         if (!containerRef.current) return;
 
         const term = new Terminal(TERM_CONFIG);
-
         const fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
-
         term.open(containerRef.current);
 
-        // Load WebGL addon after opening the terminal
+        // Load WebGL addon
         try {
             const webglAddon = new WebglAddon();
-            webglAddon.onContextLoss(() => {
-                webglAddon.dispose();
-            });
+            webglAddon.onContextLoss(() => webglAddon.dispose());
             term.loadAddon(webglAddon);
         } catch (e) {
-            log.warn(`WebGL Addon failed to load, falling back to DOM renderer: ${e}`);
+            log.warn(`WebGL Addon failed to load: ${e}`);
         }
 
         const fitTerminal = (): { cols: number, rows: number } | null => {
-            if (!containerRef.current) return null;
-            const dims = fitAddon.proposeDimensions();
-            // Stricter check: ignore tiny dimensions that likely occur during transitions/animations
-            if (dims && dims.cols && dims.rows && dims.cols >= 20 && dims.rows >= 5) {
-                term.resize(dims.cols, dims.rows - 2);
-                return { cols: dims.cols, rows: dims.rows };
+            if (!containerRef.current || !isMountedRef.current) return null;
+            try {
+                const dims = fitAddon.proposeDimensions();
+                if (dims && dims.cols && dims.rows && dims.cols >= 2 && dims.rows >= 2) {
+                    term.resize(dims.cols, dims.rows);
+                    return { cols: dims.cols, rows: dims.rows };
+                }
+            } catch (e) {
+                // Ignore fit errors on unmounted/hidden elements
             }
             return null;
         };
 
-        const waitForFit = async (): Promise<void> => {
-            let lastDims = null;
-            let stableCount = 0;
+        const attemptInitSession = async () => {
+            if (adapterRef.current || isInitializingRef.current || !isMountedRef.current) return;
 
-            // Poll for stability
-            // We want dimensions to be non-null and STABLE for at least 2 consecutive checks
-            // to ensure layout has settled (handling flexbox/resize observer variance).
-            // Increased to 300 retries (~5s) to handle slow initial layout/tab switching.
-            for (let i = 0; i < 300; i++) {
-                if (!containerRef.current) return;
+            // Only initialize if we can fit the terminal (implies visibility)
+            const dims = fitTerminal();
+            if (!dims) return;
 
-                const currentDims = fitTerminal();
+            isInitializingRef.current = true;
+            const { initialCommand, initialArgs, cwd, sessionId: currentSessionId, onSessionCreated } = settingsRef.current;
 
-                if (currentDims) {
-                    if (lastDims && lastDims.cols === currentDims.cols && lastDims.rows === currentDims.rows) {
-                        stableCount++;
-                    } else {
-                        stableCount = 0;
-                    }
-                    lastDims = currentDims;
+            try {
+                const newAdapter = new TerminalAdapter(term);
+
+                if (currentSessionId) {
+                    log.debug(`[Terminal] connecting to session ${currentSessionId}`);
+                    await newAdapter.connect(currentSessionId);
                 } else {
-                    stableCount = 0;
-                    lastDims = null;
+                    log.debug(`[Terminal] spawning session ${initialCommand}`);
+                    await newAdapter.spawn(initialCommand, initialArgs, cwd);
+                    // Only invoke callback if we are still mounted
+                    if (isMountedRef.current && newAdapter.sessionId && onSessionCreated) {
+                        onSessionCreated(newAdapter.sessionId);
+                    }
                 }
 
-                if (stableCount >= 2) {
-                    // Stable for 2+ frames (approx 32ms), proceed
-                    return;
+                if (isMountedRef.current) {
+                    adapterRef.current = newAdapter;
+                    // Final fit after content might have loaded
+                    requestAnimationFrame(() => fitTerminal());
+                } else {
+                    newAdapter.dispose();
                 }
-
-                await new Promise(resolve => requestAnimationFrame(() => resolve(undefined)));
+            } catch (error) {
+                log.error(`[Terminal] Failed to init session: ${error}`);
+            } finally {
+                isInitializingRef.current = false;
             }
-            log.warn('[Terminal] fitTerminal failed to stabilize dimensions after 5s');
         };
 
-        const { initialCommand, initialArgs, cwd, sessionId: currentSessionId, onSessionCreated } = settingsRef.current;
-
-        const initSession = async () => {
-            log.debug('[Terminal] waiting for fit...');
-            // Wait for valid dimensions before doing anything with PTY
-            // This is critical to prevent "spawn large -> resize small" or "write to wrong width" issues
-            await waitForFit();
-
-            const newAdapter = new TerminalAdapter(term);
-
-            if (currentSessionId) {
-                log.debug(`[Terminal] connecting to session ${currentSessionId}`);
-                await newAdapter.connect(currentSessionId);
-            } else {
-                log.debug(`[Terminal] spawning session ${initialCommand}`);
-                await newAdapter.spawn(initialCommand, initialArgs, cwd);
-                if (newAdapter.sessionId && onSessionCreated) {
-                    onSessionCreated(newAdapter.sessionId);
-                }
-            }
-
-            // Re-fit after spawn/connect just in case
-            requestAnimationFrame(() => {
-                fitTerminal();
-            });
-
-            // Register adapter for cleanup (we can't do this in the effect return easily if we don't store it)
-            // But we can store it in a ref or just rely on the fact that we need to clean it up.
-            // Wait, we need to access `newAdapter` in cleanup. 
-            // We should use a ref for the adapter to ensure cleanup works even if initSession is async.
-            adapterRef.current = newAdapter;
-        };
-        initSession();
-
-        // Observer to refit on resize
+        // Observer to refit on resize and trigger init when visible
         const resizeObserver = new ResizeObserver(() => {
             requestAnimationFrame(() => {
                 fitTerminal();
+                attemptInitSession();
             });
         });
 
         resizeObserver.observe(containerRef.current);
 
+        // Initial check
+        requestAnimationFrame(attemptInitSession);
+
         return () => {
+            isMountedRef.current = false;
             resizeObserver.disconnect();
             if (adapterRef.current) {
                 adapterRef.current.dispose();
