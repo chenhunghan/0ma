@@ -31,7 +31,7 @@ export function TerminalRow({
                 <Fragment key={term.id}>
                     <ResizablePanel defaultSize={100 / terminals.length} minSize={10}>
                         <div
-                            className="h-full w-full relative group border border-transparent transition-all duration-200 hover:border-zinc-800"
+                            className="h-full w-full relative group"
                         >
                             <div className="absolute top-1.5 right-1.5 z-20 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                                 <CloseTerminalButton onRemove={() => onRemove(tabId, term.id)} />

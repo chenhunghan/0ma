@@ -66,6 +66,8 @@ export class TerminalAdapter {
 
         this.channel.onmessage = (message) => {
             this.terminal.write(message.data);
+            // Ensure the cursor stays visible when output fills the viewport
+            this.terminal.scrollToBottom();
         };
 
         await invoke('attach_pty_cmd', {
