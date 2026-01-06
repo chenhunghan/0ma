@@ -183,6 +183,10 @@ impl PtyManager {
         if let Some(session) = sessions.get(session_id) {
             let mut writer = session.writer.lock().map_err(|e| e.to_string())?;
             write!(writer, "{}", data).map_err(|e| e.to_string())?;
+            // Flush immediately to avoid buffering delays. Without this, keystrokes
+            // may accumulate in the buffer before being sent to the PTY, causing
+            // noticeable input lag when typing quickly as the shell echo is delayed.
+            writer.flush().map_err(|e| e.to_string())?;
             Ok(())
         } else {
             Err("Session not found".to_string())
