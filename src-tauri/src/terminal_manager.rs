@@ -179,18 +179,24 @@ impl PtyManager {
     }
 
     pub fn write(&self, session_id: &str, data: &str) -> Result<(), String> {
-        let sessions = self.sessions.lock().map_err(|e| e.to_string())?;
-        if let Some(session) = sessions.get(session_id) {
-            let mut writer = session.writer.lock().map_err(|e| e.to_string())?;
-            write!(writer, "{}", data).map_err(|e| e.to_string())?;
-            // Flush immediately to avoid buffering delays. Without this, keystrokes
-            // may accumulate in the buffer before being sent to the PTY, causing
-            // noticeable input lag when typing quickly as the shell echo is delayed.
-            writer.flush().map_err(|e| e.to_string())?;
-            Ok(())
-        } else {
-            Err("Session not found".to_string())
-        }
+        // Clone the writer Arc and release the sessions lock immediately.
+        // This minimizes lock contention by not holding the sessions lock during I/O.
+        let writer = {
+            let sessions = self.sessions.lock().map_err(|e| e.to_string())?;
+            sessions
+                .get(session_id)
+                .ok_or_else(|| "Session not found".to_string())?
+                .writer
+                .clone()
+        };
+        // Now only the writer lock is held during the actual I/O
+        let mut writer = writer.lock().map_err(|e| e.to_string())?;
+        write!(writer, "{}", data).map_err(|e| e.to_string())?;
+        // Flush immediately to avoid buffering delays. Without this, keystrokes
+        // may accumulate in the buffer before being sent to the PTY, causing
+        // noticeable input lag when typing quickly as the shell echo is delayed.
+        writer.flush().map_err(|e| e.to_string())?;
+        Ok(())
     }
 
     pub fn resize(&self, session_id: &str, rows: u16, cols: u16) -> Result<(), String> {
