@@ -69,15 +69,6 @@ export function TerminalComponent({
         term.loadAddon(fitAddon);
         term.open(containerRef.current);
 
-        // Load WebGL addon
-        try {
-            const webglAddon = new WebglAddon();
-            webglAddon.onContextLoss(() => webglAddon.dispose());
-            term.loadAddon(webglAddon);
-        } catch (e) {
-            log.warn(`WebGL Addon failed to load: ${e}`);
-        }
-
         const fitTerminal = (): { cols: number, rows: number } | null => {
             if (!containerRef.current || !isMountedRef.current) return null;
             try {
