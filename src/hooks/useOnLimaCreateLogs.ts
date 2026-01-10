@@ -46,6 +46,9 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
     });
 
     useEffect(() => {
+        // Skip listener setup when instanceName is empty
+        if (!instanceName) return;
+
         let active = true;
         const unlistenPromises: Promise<() => void>[] = [];
 
@@ -151,7 +154,15 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
 
         return () => {
             active = false;
-            unlistenPromises.forEach(p => p.then(u => u()));
+            Promise.all(unlistenPromises).then(unlistenFns => {
+                unlistenFns.forEach(unlisten => {
+                    try {
+                        unlisten();
+                    } catch {
+                        // Listener may have already been cleaned up
+                    }
+                });
+            });
         };
     }, [instanceName, queryClient, queryKey]);
 
