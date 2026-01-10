@@ -206,16 +206,7 @@ export function App() {
                                 </div>,
                             ]}
                             bottom={
-                                <TermTabs
-                                    tabs={k8sTabs}
-                                    activeTabId={k8sActive}
-                                    onSessionCreated={(tabId, termId, sid) => handleTerminalSessionCreated(tabId, termId, sid, setK8sTabs)}
-                                    onTabChange={setK8sActive}
-                                    onAddTab={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)}
-                                    onAddSideBySide={(id) => addSideBySide("K8s", id, setK8sTabs, k8sMaxTermId, setK8sMaxTermId)}
-                                    onRemoveTab={(tabId) => removeTab(tabId, k8sTabs, setK8sTabs, k8sActive, setK8sActive)}
-                                    emptyState={<EmptyTerminalState onAdd={() => addTab("K8s", setK8sTabs, k8sMaxTabId, setK8sMaxTabId, k8sMaxTermId, setK8sMaxTermId, setK8sActive)} />}
-                                />
+                                null
                             }
                         />
                     </TabsContent>
