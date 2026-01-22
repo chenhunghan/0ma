@@ -19,18 +19,18 @@ export function TerminalComponent({
     cwd
 }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const { terminalRef } = useXterm(containerRef);
+    const { terminal } = useXterm(containerRef);
     const {
         sessionId: hookSessionId,
         spawn,
         connect,
         isReady
-    } = useTerminal(terminalRef);
+    } = useTerminal(terminal);
 
     const isInitializingRef = useRef(false);
 
     useEffect(() => {
-        if (isReady || isInitializingRef.current) return;
+        if (!terminal || isReady || isInitializingRef.current) return;
 
         const initSession = async () => {
             isInitializingRef.current = true;
@@ -56,7 +56,7 @@ export function TerminalComponent({
         // Delay slightly to ensure terminal is opened and resized
         const timeout = setTimeout(initSession, 100);
         return () => clearTimeout(timeout);
-    }, [propsSessionId, initialCommand, initialArgs, cwd, connect, spawn, isReady]);
+    }, [terminal, propsSessionId, initialCommand, initialArgs, cwd, connect, spawn, isReady]);
 
     // Lift sessionId up when created
     useEffect(() => {

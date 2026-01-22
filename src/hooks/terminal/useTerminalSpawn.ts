@@ -1,4 +1,4 @@
-import { useRef, RefObject } from 'react';
+import { useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { Terminal } from '@xterm/xterm';
@@ -9,12 +9,11 @@ import { PtyEvent, SpawnOptions } from './types';
 /**
  * Hook for spawning a new terminal session
  */
-export function useTerminalSpawn(terminalRef: RefObject<Terminal | null>) {
+export function useTerminalSpawn(terminal: Terminal | null) {
     const channelRef = useRef<Channel<PtyEvent> | null>(null);
 
     const mutation = useMutation({
         mutationFn: async (options: SpawnOptions): Promise<string> => {
-            const terminal = terminalRef.current;
             if (!terminal) throw new Error("Terminal not initialized");
 
             // 1. Spawn PTY process
@@ -40,14 +39,14 @@ export function useTerminalSpawn(terminalRef: RefObject<Terminal | null>) {
             return sid;
         },
         onError: (error) => {
-            terminalRef.current?.write(`\r\nError spawning shell: ${error}\r\n`);
+            terminal?.write(`\r\nError spawning shell: ${error}\r\n`);
         },
     });
 
     // Setup I/O listeners
     const sessionId = mutation.data ?? null;
-    useTerminalData(terminalRef, sessionId);
-    useTerminalResize(terminalRef, sessionId);
+    useTerminalData(terminal, sessionId);
+    useTerminalResize(terminal, sessionId);
 
     return {
         sessionId,

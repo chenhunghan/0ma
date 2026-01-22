@@ -1,4 +1,4 @@
-import { useRef, RefObject } from 'react';
+import { useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { Terminal } from '@xterm/xterm';
@@ -9,12 +9,11 @@ import { PtyEvent } from './types';
 /**
  * Hook for connecting to an existing terminal session
  */
-export function useTerminalConnect(terminalRef: RefObject<Terminal | null>) {
+export function useTerminalConnect(terminal: Terminal | null) {
     const channelRef = useRef<Channel<PtyEvent> | null>(null);
 
     const mutation = useMutation({
         mutationFn: async (targetSessionId: string): Promise<string> => {
-            const terminal = terminalRef.current;
             if (!terminal) throw new Error("Terminal not initialized");
 
             // Create channel for output
@@ -31,14 +30,14 @@ export function useTerminalConnect(terminalRef: RefObject<Terminal | null>) {
             return targetSessionId;
         },
         onError: (error) => {
-            terminalRef.current?.write(`\r\nError connecting to session: ${error}\r\n`);
+            terminal?.write(`\r\nError connecting to session: ${error}\r\n`);
         },
     });
 
     // Setup I/O listeners
     const sessionId = mutation.data ?? null;
-    useTerminalData(terminalRef, sessionId);
-    useTerminalResize(terminalRef, sessionId);
+    useTerminalData(terminal, sessionId);
+    useTerminalResize(terminal, sessionId);
 
     return {
         sessionId,

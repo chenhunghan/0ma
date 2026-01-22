@@ -1,4 +1,4 @@
-import { useEffect, RefObject } from 'react';
+import { useEffect } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { invoke } from '@tauri-apps/api/core';
 import * as log from "@tauri-apps/plugin-log";
@@ -7,11 +7,10 @@ import * as log from "@tauri-apps/plugin-log";
  * Hook for handling terminal resize events (terminal -> PTY)
  */
 export function useTerminalResize(
-    terminalRef: RefObject<Terminal | null>,
+    terminal: Terminal | null,
     sessionId: string | null
 ) {
     useEffect(() => {
-        const terminal = terminalRef.current;
         if (!terminal || !sessionId) return;
 
         const disposable = terminal.onResize((size) => {
@@ -20,5 +19,5 @@ export function useTerminalResize(
         });
 
         return () => disposable.dispose();
-    }, [terminalRef, sessionId]);
+    }, [terminal, sessionId]);
 }

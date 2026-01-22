@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, RefObject } from 'react';
+import { useEffect, useRef, useMemo, useState, RefObject } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { useXtermAddons } from './useXtermAddons';
 import { useXtermFit } from './useXtermFit';
@@ -12,6 +12,7 @@ export function useXterm(
     containerRef: RefObject<HTMLDivElement | null>,
     options: UseXtermOptions = {}
 ) {
+    const [terminal, setTerminal] = useState<Terminal | null>(null);
     const terminalRef = useRef<Terminal | null>(null);
 
     // Merge options with defaults
@@ -20,7 +21,10 @@ export function useXterm(
         ...options
     }), [JSON.stringify(options)]);
 
-    const { hideCursor, useWebgl, ...terminalOptions } = memoOptions;
+    const terminalOptions = useMemo(() => {
+        const { hideCursor: _, useWebgl: __, ...rest } = memoOptions;
+        return rest;
+    }, [memoOptions]);
 
     // Initialize terminal
     useEffect(() => {
@@ -34,19 +38,21 @@ export function useXterm(
             term.write('\x1b[?25l');
         }
 
+        setTerminal(term);
         terminalRef.current = term;
 
         return () => {
             term.dispose();
+            setTerminal(null);
             terminalRef.current = null;
         };
-    }, [containerRef, hideCursor, memoOptions]); // Re-initialize if container or critical options change
+    }, [containerRef, hideCursor, terminalOptions]); // Stabilized via useMemo
 
     // Manage addons
-    const { fitAddonRef } = useXtermAddons(terminalRef, useWebgl);
+    const { fitAddonRef } = useXtermAddons(terminal, useWebgl);
 
     // Manage automatic fitting
-    useXtermFit(containerRef, terminalRef, fitAddonRef);
+    useXtermFit(containerRef, terminal, fitAddonRef);
 
-    return { terminalRef, fitAddonRef };
+    return { terminal, terminalRef, fitAddonRef };
 }

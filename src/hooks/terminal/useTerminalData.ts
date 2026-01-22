@@ -1,4 +1,4 @@
-import { useEffect, RefObject } from 'react';
+import { useEffect } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { emit } from '@tauri-apps/api/event';
 import * as log from "@tauri-apps/plugin-log";
@@ -7,11 +7,10 @@ import * as log from "@tauri-apps/plugin-log";
  * Hook for handling terminal input data (terminal -> PTY)
  */
 export function useTerminalData(
-    terminalRef: RefObject<Terminal | null>,
+    terminal: Terminal | null,
     sessionId: string | null
 ) {
     useEffect(() => {
-        const terminal = terminalRef.current;
         if (!terminal || !sessionId) return;
 
         const disposable = terminal.onData((data) => {
@@ -20,5 +19,5 @@ export function useTerminalData(
         });
 
         return () => disposable.dispose();
-    }, [terminalRef, sessionId]);
+    }, [terminal, sessionId]);
 }

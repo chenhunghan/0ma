@@ -8,11 +8,11 @@ import * as log from "@tauri-apps/plugin-log";
  */
 export function useXtermFit(
     containerRef: RefObject<HTMLDivElement | null>,
-    terminalRef: RefObject<Terminal | null>,
+    terminal: Terminal | null,
     fitAddonRef: RefObject<FitAddon | null>
 ) {
     useEffect(() => {
-        if (!containerRef.current || !terminalRef.current || !fitAddonRef.current) return;
+        if (!containerRef.current || !terminal || !fitAddonRef.current) return;
 
         const fitAddon = fitAddonRef.current;
         const element = containerRef.current;
@@ -38,5 +38,5 @@ export function useXtermFit(
         return () => {
             resizeObserver.disconnect();
         };
-    }, [containerRef, terminalRef, fitAddonRef]);
+    }, [containerRef, terminal, fitAddonRef]);
 }
