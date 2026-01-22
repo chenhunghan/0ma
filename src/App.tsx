@@ -32,10 +32,10 @@ export function App() {
     const [limaMaxTabId, setLimaMaxTabId] = useState(1)
     const [limaMaxTermId, setLimaMaxTermId] = useState(1)
 
-    const [k8sTabs, setK8sTabs] = useState<TabGroup[]>(() => [createInitialTab("K8s", "tab-1")])
-    const [k8sActive, setK8sActive] = useState("tab-1")
-    const [k8sMaxTabId, setK8sMaxTabId] = useState(1)
-    const [k8sMaxTermId, setK8sMaxTermId] = useState(1)
+    const [_k8sTabs, _setK8sTabs] = useState<TabGroup[]>(() => [createInitialTab("K8s", "tab-1")])
+    const [_k8sActive, _setK8sActive] = useState("tab-1")
+    const [_k8sMaxTabId, _setK8sMaxTabId] = useState(1)
+    const [_k8sMaxTermId, _setK8sMaxTermId] = useState(1)
 
     // Handlers
     const addTab = (
