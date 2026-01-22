@@ -15,18 +15,19 @@ export function useXterm(
     const [terminal, setTerminal] = useState<Terminal | null>(null);
     const terminalRef = useRef<Terminal | null>(null);
 
-    // Merge options with defaults
+    // Memoize options correctly to avoid dependency array warnings
     const memoOptions = useMemo(() => ({
         ...TERM_CONFIG,
         ...options
-    }), [JSON.stringify(options)]);
+    }), [options]); // Depend on options directly
 
     const { hideCursor, useWebgl } = memoOptions;
 
+    // Separate the part of options that actually goes into the xterm constructor
     const terminalOptions = useMemo(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { hideCursor: _, useWebgl: __, ...rest } = memoOptions;
         return rest;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [memoOptions]);
 
     // Initialize terminal
@@ -41,6 +42,9 @@ export function useXterm(
             term.write('\x1b[?25l');
         }
 
+        // We set state in an effect to allow sibling hooks to reactively
+        // receive the terminal instance once it's initialized and opened.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTerminal(term);
         terminalRef.current = term;
 
