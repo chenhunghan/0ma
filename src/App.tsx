@@ -32,9 +32,13 @@ export function App() {
     const [limaMaxTabId, setLimaMaxTabId] = useState(1)
     const [limaMaxTermId, setLimaMaxTermId] = useState(1)
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_k8sTabs, _setK8sTabs] = useState<TabGroup[]>(() => [createInitialTab("K8s", "tab-1")])
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_k8sActive, _setK8sActive] = useState("tab-1")
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_k8sMaxTabId, _setK8sMaxTabId] = useState(1)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_k8sMaxTermId, _setK8sMaxTermId] = useState(1)
 
     // Handlers
