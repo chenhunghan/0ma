@@ -2,8 +2,6 @@ import { useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { Terminal } from '@xterm/xterm';
-import { useTerminalSessionData } from './useTerminalSessionData';
-import { useTerminalSessionResize } from './useTerminalSessionResize';
 import { PtyEvent, SpawnOptions } from './types';
 
 /**
@@ -33,7 +31,7 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
                 channelRef.current.onmessage = () => { };
             }
 
-            // 2. Spawn PTY process
+            // 1. Spawn PTY process
             const sid = await invoke<string>('spawn_pty_cmd', {
                 command: options.command,
                 args: options.args,
@@ -42,14 +40,14 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
                 cols: terminal.cols,
             });
 
-            // 3. Create channel for output
+            // 2. Create channel for output
             const channel = new Channel<PtyEvent>();
             channel.onmessage = (msg) => {
                 terminal.write(msg.data);
                 terminal.scrollToBottom();
             };
 
-            // 4. Attach channel to session
+            // 3. Attach channel to session
             await invoke('attach_pty_cmd', { sessionId: sid, channel });
             channelRef.current = channel;
 
@@ -60,13 +58,8 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
         },
     });
 
-    // Setup I/O listeners
-    const sessionId = mutation.data ?? null;
-    useTerminalSessionData(terminal, sessionId);
-    useTerminalSessionResize(terminal, sessionId);
-
     return {
-        sessionId,
+        sessionId: mutation.data ?? null,
         spawn: mutation.mutate,
         spawnAsync: mutation.mutateAsync,
         isSpawning: mutation.isPending,

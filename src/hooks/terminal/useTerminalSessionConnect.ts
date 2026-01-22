@@ -2,8 +2,6 @@ import { useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { Terminal } from '@xterm/xterm';
-import { useTerminalSessionData } from './useTerminalSessionData';
-import { useTerminalSessionResize } from './useTerminalSessionResize';
 import { PtyEvent } from './types';
 
 /**
@@ -33,14 +31,14 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
                 channelRef.current.onmessage = () => { };
             }
 
-            // 2. Create channel for output
+            // 1. Create channel for output
             const channel = new Channel<PtyEvent>();
             channel.onmessage = (msg) => {
                 terminal.write(msg.data);
                 terminal.scrollToBottom();
             };
 
-            // 3. Attach channel to existing session
+            // 2. Attach channel to existing session
             await invoke('attach_pty_cmd', { sessionId: targetSessionId, channel });
             channelRef.current = channel;
 
@@ -51,13 +49,8 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
         },
     });
 
-    // Setup I/O listeners
-    const sessionId = mutation.data ?? null;
-    useTerminalSessionData(terminal, sessionId);
-    useTerminalSessionResize(terminal, sessionId);
-
     return {
-        sessionId,
+        sessionId: mutation.data ?? null,
         connect: mutation.mutate,
         isConnecting: mutation.isPending,
         connectError: mutation.error,
