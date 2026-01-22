@@ -1,20 +1,19 @@
 import { useEffect, RefObject } from 'react';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
 import * as log from "@tauri-apps/plugin-log";
+import { ExtendedTerminal } from './types';
 
 /**
  * Hook for managing terminal fitting and resize observation.
+ * Retrieves the FitAddon directly from the ExtendedTerminal instance.
  */
 export function useXtermFit(
     containerRef: RefObject<HTMLDivElement | null>,
-    terminal: Terminal | null,
-    fitAddonRef: RefObject<FitAddon | null>
+    terminal: ExtendedTerminal | null
 ) {
     useEffect(() => {
-        if (!containerRef.current || !terminal || !fitAddonRef.current) return;
+        if (!containerRef.current || !terminal || !terminal.fitAddon) return;
 
-        const fitAddon = fitAddonRef.current;
+        const fitAddon = terminal.fitAddon;
         const element = containerRef.current;
 
         const fitTerminal = () => {
@@ -38,5 +37,5 @@ export function useXtermFit(
         return () => {
             resizeObserver.disconnect();
         };
-    }, [containerRef, terminal, fitAddonRef]);
+    }, [containerRef, terminal]);
 }

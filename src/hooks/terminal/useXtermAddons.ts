@@ -1,25 +1,18 @@
-import { useEffect, useRef } from 'react';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
+import { useEffect } from 'react';
 import { WebglAddon } from '@xterm/addon-webgl';
 import * as log from "@tauri-apps/plugin-log";
+import { ExtendedTerminal } from './types';
 
 /**
- * Hook for managing xterm.js addons (Fit and optionally WebGL).
+ * Hook for managing secondary/optional xterm.js addons.
+ * Primary addons (like FitAddon) are initialized directly in useXterm.
  */
 export function useXtermAddons(
-    terminal: Terminal | null,
+    terminal: ExtendedTerminal | null,
     useWebgl?: boolean
 ) {
-    const fitAddonRef = useRef<FitAddon | null>(null);
-
     useEffect(() => {
         if (!terminal) return;
-
-        // Initialize FitAddon
-        const fitAddon = new FitAddon();
-        terminal.loadAddon(fitAddon);
-        fitAddonRef.current = fitAddon;
 
         // Optionally initialize WebGL
         if (useWebgl) {
@@ -30,12 +23,5 @@ export function useXtermAddons(
                 log.warn(`WebGL addon failed to load: ${e}`);
             }
         }
-
-        return () => {
-            // Addons are disposed when the terminal is disposed
-            fitAddonRef.current = null;
-        };
     }, [terminal, useWebgl]);
-
-    return { fitAddonRef };
 }

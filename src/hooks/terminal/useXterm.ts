@@ -1,8 +1,10 @@
 import { useEffect, useRef, useMemo, useState, RefObject } from 'react';
 import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
 import { useXtermAddons } from './useXtermAddons';
 import { useXtermFit } from './useXtermFit';
 import { UseXtermOptions, TERM_CONFIG } from './config';
+import { ExtendedTerminal } from './types';
 
 /**
  * Modernized useXterm hook that orchestrates terminal initialization,
@@ -12,8 +14,8 @@ export function useXterm(
     containerRef: RefObject<HTMLDivElement | null>,
     options: UseXtermOptions = {}
 ) {
-    const [terminal, setTerminal] = useState<Terminal | null>(null);
-    const terminalRef = useRef<Terminal | null>(null);
+    const [terminal, setTerminal] = useState<ExtendedTerminal | null>(null);
+    const terminalRef = useRef<ExtendedTerminal | null>(null);
 
     // Memoize options correctly to avoid dependency array warnings
     const memoOptions = useMemo(() => ({
@@ -34,7 +36,17 @@ export function useXterm(
     useEffect(() => {
         if (!containerRef.current) return;
 
-        const term = new Terminal(terminalOptions);
+        // 1. Create the terminal instance
+        const term = new Terminal(terminalOptions) as ExtendedTerminal;
+
+        // 2. Pre-attach the FitAddon before the instance enters React state/refs.
+        // This avoids "immutability" lint errors because we are initializing
+        // a local variable rather than mutating a hook argument.
+        const fitAddon = new FitAddon();
+        term.loadAddon(fitAddon);
+        term.fitAddon = fitAddon;
+
+        // 3. Open terminal in container
         term.open(containerRef.current);
 
         if (hideCursor) {
@@ -42,8 +54,7 @@ export function useXterm(
             term.write('\x1b[?25l');
         }
 
-        // We set state in an effect to allow sibling hooks to reactively
-        // receive the terminal instance once it's initialized and opened.
+        // 4. Expose the fully-prepared instance
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setTerminal(term);
         terminalRef.current = term;
@@ -55,11 +66,11 @@ export function useXterm(
         };
     }, [containerRef, hideCursor, terminalOptions]);
 
-    // Manage addons
-    const { fitAddonRef } = useXtermAddons(terminal, useWebgl);
+    // Manage secondary/dynamic addons (like WebGL)
+    useXtermAddons(terminal, useWebgl);
 
     // Manage automatic fitting
-    useXtermFit(containerRef, terminal, fitAddonRef);
+    useXtermFit(containerRef, terminal);
 
-    return { terminal, terminalRef, fitAddonRef };
+    return { terminal, terminalRef };
 }
