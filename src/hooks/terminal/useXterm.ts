@@ -21,7 +21,7 @@ export function useXterm(
     const memoOptions = useMemo(() => ({
         ...TERM_CONFIG,
         ...options
-    }), [options]); // Depend on options directly
+    }), [options]);
 
     const { hideCursor, useWebgl } = memoOptions;
 
@@ -39,9 +39,7 @@ export function useXterm(
         // 1. Create the terminal instance
         const term = new Terminal(terminalOptions) as ExtendedTerminal;
 
-        // 2. Pre-attach the FitAddon before the instance enters React state/refs.
-        // This avoids "immutability" lint errors because we are initializing
-        // a local variable rather than mutating a hook argument.
+        // 2. Pre-attach the FitAddon
         const fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
         term.fitAddon = fitAddon;
@@ -54,7 +52,13 @@ export function useXterm(
             term.write('\x1b[?25l');
         }
 
-        // 4. Expose the fully-prepared instance
+        /**
+         * We MUST set state here so that other reactive hooks (like useTerminalSession)
+         * can receive the terminal instance and start their work. 
+         * 
+         * The 'set-state-in-effect' warning is expected here because xterm.js is an 
+         * imperative library that MUST wait for the DOM (useEffect) to be initialized.
+         */
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setTerminal(term);
         terminalRef.current = term;
@@ -64,6 +68,8 @@ export function useXterm(
             setTerminal(null);
             terminalRef.current = null;
         };
+        // We only want to recreate the terminal if terminalOptions change fundamentally.
+        // For minor option changes, xterm.js allows updating terminal.options directly.
     }, [containerRef, hideCursor, terminalOptions]);
 
     // Manage secondary/dynamic addons (like WebGL)
