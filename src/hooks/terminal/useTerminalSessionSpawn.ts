@@ -61,7 +61,6 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
     return {
         sessionId: mutation.data ?? null,
         spawn: mutation.mutate,
-        spawnAsync: mutation.mutateAsync,
         isSpawning: mutation.isPending,
         spawnError: mutation.error,
         isSpawned: mutation.isSuccess,
