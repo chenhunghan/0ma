@@ -6,7 +6,7 @@ import * as log from "@tauri-apps/plugin-log";
 /**
  * Hook for handling terminal resize events (terminal -> PTY)
  */
-export function useTerminalResize(
+export function useTerminalSessionResize(
     terminal: Terminal | null,
     sessionId: string | null
 ) {

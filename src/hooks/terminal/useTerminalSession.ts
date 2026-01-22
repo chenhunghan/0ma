@@ -1,15 +1,15 @@
 import { Terminal } from '@xterm/xterm';
-import { useTerminalSpawn } from './useTerminalSpawn';
-import { useTerminalConnect } from './useTerminalConnect';
-import { useTerminalClose } from './useTerminalClose';
+import { useTerminalSessionSpawn } from './useTerminalSessionSpawn';
+import { useTerminalSessionConnect } from './useTerminalSessionConnect';
+import { useTerminalSessionClose } from './useTerminalSessionClose';
 
 /**
  * Combined hook for convenience, providing spawn, connect, and close functionality.
  */
-export function useTerminal(terminal: Terminal | null) {
-    const spawnHook = useTerminalSpawn(terminal);
-    const connectHook = useTerminalConnect(terminal);
-    const closeHook = useTerminalClose();
+export function useTerminalSession(terminal: Terminal | null) {
+    const spawnHook = useTerminalSessionSpawn(terminal);
+    const connectHook = useTerminalSessionConnect(terminal);
+    const closeHook = useTerminalSessionClose();
 
     // Derive sessionId from whichever action succeeded
     const sessionId = spawnHook.sessionId ?? connectHook.sessionId;

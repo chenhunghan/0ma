@@ -2,14 +2,14 @@ import { useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { Terminal } from '@xterm/xterm';
-import { useTerminalData } from './useTerminalData';
-import { useTerminalResize } from './useTerminalResize';
+import { useTerminalSessionData } from './useTerminalSessionData';
+import { useTerminalSessionResize } from './useTerminalSessionResize';
 import { PtyEvent, SpawnOptions } from './types';
 
 /**
  * Hook for spawning a new terminal session
  */
-export function useTerminalSpawn(terminal: Terminal | null) {
+export function useTerminalSessionSpawn(terminal: Terminal | null) {
     const channelRef = useRef<Channel<PtyEvent> | null>(null);
 
     const mutation = useMutation({
@@ -45,8 +45,8 @@ export function useTerminalSpawn(terminal: Terminal | null) {
 
     // Setup I/O listeners
     const sessionId = mutation.data ?? null;
-    useTerminalData(terminal, sessionId);
-    useTerminalResize(terminal, sessionId);
+    useTerminalSessionData(terminal, sessionId);
+    useTerminalSessionResize(terminal, sessionId);
 
     return {
         sessionId,

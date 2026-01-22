@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useXterm, useTerminal } from '../hooks/terminal';
+import { useXterm, useTerminalSession } from '../hooks/terminal';
 import '@xterm/xterm/css/xterm.css';
 import * as log from "@tauri-apps/plugin-log";
 
@@ -25,7 +25,7 @@ export function TerminalComponent({
         spawn,
         connect,
         isReady
-    } = useTerminal(terminal);
+    } = useTerminalSession(terminal);
 
     const isInitializingRef = useRef(false);
 

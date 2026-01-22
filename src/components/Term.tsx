@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import '@xterm/xterm/css/xterm.css';
-import { useXterm, useTerminal } from '../hooks/terminal';
+import { useXterm, useTerminalSession } from '../hooks/terminal';
 
 export function Term() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -8,8 +8,8 @@ export function Term() {
         hideCursor: true,
     });
 
-    // Hook up useTerminal to ensure it has I/O capabilities if a session is attached.
-    useTerminal(terminal);
+    // Hook up useTerminalSession to ensure it has I/O capabilities if a session is attached.
+    useTerminalSession(terminal);
 
     return <div ref={containerRef} className="h-full w-full" />;
 }

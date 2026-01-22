@@ -6,7 +6,7 @@ import * as log from "@tauri-apps/plugin-log";
 /**
  * Hook for handling terminal input data (terminal -> PTY)
  */
-export function useTerminalData(
+export function useTerminalSessionData(
     terminal: Terminal | null,
     sessionId: string | null
 ) {

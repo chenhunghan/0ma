@@ -21,9 +21,12 @@ export function useXterm(
         ...options
     }), [JSON.stringify(options)]);
 
+    const { hideCursor, useWebgl } = memoOptions;
+
     const terminalOptions = useMemo(() => {
         const { hideCursor: _, useWebgl: __, ...rest } = memoOptions;
         return rest;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [memoOptions]);
 
     // Initialize terminal
@@ -46,7 +49,7 @@ export function useXterm(
             setTerminal(null);
             terminalRef.current = null;
         };
-    }, [containerRef, hideCursor, terminalOptions]); // Stabilized via useMemo
+    }, [containerRef, hideCursor, terminalOptions]);
 
     // Manage addons
     const { fitAddonRef } = useXtermAddons(terminal, useWebgl);
