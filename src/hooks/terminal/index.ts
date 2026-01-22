@@ -1,7 +1,6 @@
 export * from './types';
 export * from './config';
 export * from './useXterm';
-export * from './useXtermAddons';
 export * from './useXtermFit';
 export * from './useTerminalSessionInput';
 export * from './useTerminalSessionResize';

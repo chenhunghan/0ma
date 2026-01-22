@@ -2,7 +2,6 @@ import { ITerminalOptions } from '@xterm/xterm';
 
 export interface UseXtermOptions extends ITerminalOptions {
     hideCursor?: boolean;
-    useWebgl?: boolean;
 }
 
 export const TERM_CONFIG: ITerminalOptions = {

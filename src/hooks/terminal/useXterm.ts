@@ -1,7 +1,6 @@
 import { useEffect, useRef, useMemo, useState, RefObject } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { useXtermAddons } from './useXtermAddons';
 import { useXtermFit } from './useXtermFit';
 import { UseXtermOptions, TERM_CONFIG } from './config';
 import { ExtendedTerminal } from './types';
@@ -23,12 +22,12 @@ export function useXterm(
         ...options
     }), [options]);
 
-    const { hideCursor, useWebgl } = memoOptions;
+    const { hideCursor } = memoOptions;
 
     // Separate the part of options that actually goes into the xterm constructor
     const terminalOptions = useMemo(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { hideCursor: _, useWebgl: __, ...rest } = memoOptions;
+        const { hideCursor: _, ...rest } = memoOptions;
         return rest;
     }, [memoOptions]);
 
@@ -71,9 +70,6 @@ export function useXterm(
         // We only want to recreate the terminal if terminalOptions change fundamentally.
         // For minor option changes, xterm.js allows updating terminal.options directly.
     }, [containerRef, hideCursor, terminalOptions]);
-
-    // Manage secondary/dynamic addons (like WebGL)
-    useXtermAddons(terminal, useWebgl);
 
     // Manage automatic fitting
     useXtermFit(containerRef, terminal);
