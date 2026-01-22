@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import '@xterm/xterm/css/xterm.css';
-import { useXterm } from '../hooks/useXterm';
-import { useTerminal } from '../hooks/terminal';
+import { useXterm, useTerminal } from '../hooks/terminal';
 
 export function Term() {
     const containerRef = useRef<HTMLDivElement>(null);
