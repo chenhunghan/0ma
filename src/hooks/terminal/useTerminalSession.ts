@@ -2,7 +2,7 @@ import { Terminal } from '@xterm/xterm';
 import { useTerminalSessionSpawn } from './useTerminalSessionSpawn';
 import { useTerminalSessionConnect } from './useTerminalSessionConnect';
 import { useTerminalSessionClose } from './useTerminalSessionClose';
-import { useTerminalSessionData } from './useTerminalSessionData';
+import { useTerminalSessionInput } from './useTerminalSessionInput';
 import { useTerminalSessionResize } from './useTerminalSessionResize';
 
 /**
@@ -17,7 +17,7 @@ export function useTerminalSession(terminal: Terminal | null) {
     const sessionId = spawnHook.sessionId ?? connectHook.sessionId;
 
     // Orchestrate I/O listeners here at the top level
-    useTerminalSessionData(terminal, sessionId);
+    useTerminalSessionInput(terminal, sessionId);
     useTerminalSessionResize(terminal, sessionId);
 
     return {
