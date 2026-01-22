@@ -1,9 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
-import { debug, error } from '@tauri-apps/plugin-log';
+import { error } from '@tauri-apps/plugin-log';
 import { LogState } from 'src/types/Log';
+import { useXterm } from '../hooks/useXterm';
 
 interface Props {
   logState: LogState;
@@ -39,64 +38,14 @@ const LOG_VIEW_TERM_CONFIG = {
 
 export const LogViewer: React.FC<Props> = ({ logState }) => {
   const terminalContainerRef = useRef<HTMLDivElement>(null);
-  const terminalRef = useRef<Terminal | null>(null);
-  const fitAddonRef = useRef<FitAddon | null>(null);
-  const processedLogsRef = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!terminalContainerRef.current) return;
-
-    // Create terminal instance
-    const term = new Terminal({
-      ...LOG_VIEW_TERM_CONFIG,
-      cursorBlink: false,
-      cursorStyle: 'underline',
-      disableStdin: true,
-      allowProposedApi: true,
-    });
-
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-
-    term.open(terminalContainerRef.current);
-    // ANSI escape sequence to hide the cursor (?25l)
-    term.write('\x1b[?25l');
-
-    terminalRef.current = term;
-    fitAddonRef.current = fitAddon;
-
-    // Initial fit
-    requestAnimationFrame(() => {
-      try {
-        fitAddon.fit();
-      } catch (e) {
-        debug(`Terminal fit error: ${e}`);
-      }
-    });
-
-    // Handle resize
-    const resizeObserver = new ResizeObserver(() => {
-      requestAnimationFrame(() => {
-        try {
-          fitAddon.fit();
-        } catch (e) {
-          debug(`Terminal fit error: ${e}`);
-        }
-      });
-    });
-
-    resizeObserver.observe(terminalContainerRef.current);
-
-    const processedLogs = processedLogsRef.current;
-
-    return () => {
-      resizeObserver.disconnect();
-      term.dispose();
-      terminalRef.current = null;
-      fitAddonRef.current = null;
-      processedLogs.clear();
-    };
-  }, []);
+  const { terminalRef } = useXterm(terminalContainerRef, {
+    ...LOG_VIEW_TERM_CONFIG,
+    cursorBlink: false,
+    cursorStyle: 'underline',
+    disableStdin: true,
+    allowProposedApi: true,
+    hideCursor: true,
+  });
 
   // Write stdout to terminal
   useEffect(() => {
@@ -106,14 +55,13 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
     logState.stdout.forEach((log) => {
       try {
         term.writeln(log.message);
-
         // Auto-scroll to bottom
         term.scrollToBottom();
       } catch (e) {
         error(`Error writing to terminal: ${e}`);
       }
     });
-  }, [logState.stdout]);
+  }, [logState.stdout, terminalRef]);
 
   // Write stderr to terminal
   useEffect(() => {
@@ -123,14 +71,13 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
     logState.stderr.forEach((log) => {
       try {
         term.writeln(log.message);
-
         // Auto-scroll to bottom
         term.scrollToBottom();
       } catch (e) {
         error(`Error writing to terminal: ${e}`);
       }
     });
-  }, [logState.stderr]);
+  }, [logState.stderr, terminalRef]);
 
   return (
     <div className="h-full w-full overflow-hidden bg-black" ref={terminalContainerRef} />
