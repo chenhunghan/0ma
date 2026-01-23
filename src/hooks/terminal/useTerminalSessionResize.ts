@@ -18,6 +18,7 @@ export function useTerminalSessionResize(
         // 100ms is a good balance between responsiveness and PTY stability.
         const debouncedResize = debounce((size: { rows: number, cols: number }) => {
             invoke('resize_pty_cmd', { sessionId, rows: size.rows, cols: size.cols })
+                .then(() => log.debug(`Resized PTY to ${size.rows}x${size.cols}`))
                 .catch((e) => log.error("Failed to resize_pty:", e));
         }, 100);
 
