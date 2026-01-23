@@ -11,8 +11,7 @@ import { ExtendedTerminal } from './types';
  */
 export function useXterm(
     containerRef: RefObject<HTMLDivElement | null>,
-    hideCursor: boolean = false,
-    options: ITerminalOptions = TERM_CONFIG,
+    options: ITerminalOptions = TERM_CONFIG
 ) {
     const [terminal, setTerminal] = useState<ExtendedTerminal | null>(null);
     const terminalRef = useRef<ExtendedTerminal | null>(null);
@@ -32,11 +31,6 @@ export function useXterm(
         // 3. Open terminal in container
         term.open(containerRef.current);
 
-        if (hideCursor) {
-            // ANSI escape sequence to hide current cursor (?25l)
-            term.write('\x1b[?25l');
-        }
-
         /**
          * We MUST set state here so that other reactive hooks (like useTerminalSession)
          * can receive the terminal instance and start their work. 
@@ -53,8 +47,8 @@ export function useXterm(
             setTerminal(null);
             terminalRef.current = null;
         };
-        // We recreate the terminal if options or hideCursor change fundamentally.
-    }, [containerRef, options, hideCursor]);
+        // We recreate the terminal if options change.
+    }, [containerRef, options]);
 
     // Manage automatic fitting
     useXtermFit(containerRef, terminal);

@@ -14,6 +14,7 @@ const LOG_VIEW_TERM_CONFIG = {
   lineHeight: 1.15,
   cursorBlink: false,
   cursorStyle: 'underline' as const,
+  cursorInactiveStyle: 'none' as const,
   disableStdin: true,
   allowProposedApi: true,
   theme: {
@@ -42,7 +43,7 @@ const LOG_VIEW_TERM_CONFIG = {
 
 export const LogViewer: React.FC<Props> = ({ logState }) => {
   const terminalContainerRef = useRef<HTMLDivElement>(null);
-  const { terminal } = useXterm(terminalContainerRef, true, LOG_VIEW_TERM_CONFIG);
+  const { terminal } = useXterm(terminalContainerRef, LOG_VIEW_TERM_CONFIG);
 
   // Write stdout to terminal
   useEffect(() => {
