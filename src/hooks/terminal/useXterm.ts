@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, RefObject } from 'react';
+import { useEffect, useState, RefObject } from 'react';
 import { Terminal, ITerminalOptions } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { useXtermFit } from './useXtermFit';
@@ -14,7 +14,6 @@ export function useXterm(
     options: ITerminalOptions = TERM_CONFIG
 ) {
     const [terminal, setTerminal] = useState<ExtendedTerminal | null>(null);
-    const terminalRef = useRef<ExtendedTerminal | null>(null);
 
     // Initialize terminal
     useEffect(() => {
@@ -40,12 +39,10 @@ export function useXterm(
          */
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setTerminal(term);
-        terminalRef.current = term;
 
         return () => {
             term.dispose();
             setTerminal(null);
-            terminalRef.current = null;
         };
         // We recreate the terminal if options change.
     }, [containerRef, options]);
@@ -53,5 +50,5 @@ export function useXterm(
     // Manage automatic fitting
     useXtermFit(containerRef, terminal);
 
-    return { terminal, terminalRef };
+    return { terminal };
 }
