@@ -27,35 +27,20 @@ export function TerminalComponent({
         isReady
     } = useTerminalSession(terminal);
 
-    const isInitializingRef = useRef(false);
-
     useEffect(() => {
-        if (!terminal || isReady || isInitializingRef.current) return;
+        if (!terminal || isReady) return;
 
-        const initSession = async () => {
-            isInitializingRef.current = true;
-            try {
-                if (propsSessionId) {
-                    log.debug(`[Terminal] connecting to session ${propsSessionId}`);
-                    connect(propsSessionId);
-                } else {
-                    log.debug(`[Terminal] spawning session ${initialCommand}`);
-                    spawn({
-                        command: initialCommand,
-                        args: initialArgs,
-                        cwd
-                    });
-                }
-            } catch (error) {
-                log.error(`[Terminal] Failed to init session: ${error}`);
-            } finally {
-                isInitializingRef.current = false;
-            }
-        };
-
-        // Delay slightly to ensure terminal is opened and resized
-        const timeout = setTimeout(initSession, 100);
-        return () => clearTimeout(timeout);
+        if (propsSessionId) {
+            log.debug(`[Terminal] connecting to session ${propsSessionId}`);
+            connect(propsSessionId);
+        } else {
+            log.debug(`[Terminal] spawning session ${initialCommand}`);
+            spawn({
+                command: initialCommand,
+                args: initialArgs,
+                cwd
+            });
+        }
     }, [terminal, propsSessionId, initialCommand, initialArgs, cwd, connect, spawn, isReady]);
 
     // Lift sessionId up when created
