@@ -4,9 +4,7 @@ import { useXterm, useTerminalSession } from '../hooks/terminal';
 
 export function Term() {
     const containerRef = useRef<HTMLDivElement>(null);
-    const { terminal } = useXterm(containerRef, {
-        hideCursor: true,
-    });
+    const { terminal } = useXterm(containerRef, true);
 
     // Hook up useTerminalSession to ensure it has I/O capabilities if a session is attached.
     useTerminalSession(terminal);

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useMemo, useState, RefObject } from 'react';
-import { Terminal } from '@xterm/xterm';
+import { useEffect, useRef, useState, RefObject } from 'react';
+import { Terminal, ITerminalOptions } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { useXtermFit } from './useXtermFit';
-import { UseXtermOptions, TERM_CONFIG } from './config';
+import { TERM_CONFIG } from './config';
 import { ExtendedTerminal } from './types';
 
 /**
@@ -11,32 +11,18 @@ import { ExtendedTerminal } from './types';
  */
 export function useXterm(
     containerRef: RefObject<HTMLDivElement | null>,
-    options: UseXtermOptions = {}
+    hideCursor: boolean = false,
+    options: ITerminalOptions = TERM_CONFIG,
 ) {
     const [terminal, setTerminal] = useState<ExtendedTerminal | null>(null);
     const terminalRef = useRef<ExtendedTerminal | null>(null);
-
-    // Memoize options correctly to avoid dependency array warnings
-    const memoOptions = useMemo(() => ({
-        ...TERM_CONFIG,
-        ...options
-    }), [options]);
-
-    const { hideCursor } = memoOptions;
-
-    // Separate the part of options that actually goes into the xterm constructor
-    const terminalOptions = useMemo(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { hideCursor: _, ...rest } = memoOptions;
-        return rest;
-    }, [memoOptions]);
 
     // Initialize terminal
     useEffect(() => {
         if (!containerRef.current) return;
 
         // 1. Create the terminal instance
-        const term = new Terminal(terminalOptions) as ExtendedTerminal;
+        const term = new Terminal(options) as ExtendedTerminal;
 
         // 2. Pre-attach the FitAddon
         const fitAddon = new FitAddon();
@@ -67,9 +53,8 @@ export function useXterm(
             setTerminal(null);
             terminalRef.current = null;
         };
-        // We only want to recreate the terminal if terminalOptions change fundamentally.
-        // For minor option changes, xterm.js allows updating terminal.options directly.
-    }, [containerRef, hideCursor, terminalOptions]);
+        // We recreate the terminal if options or hideCursor change fundamentally.
+    }, [containerRef, options, hideCursor]);
 
     // Manage automatic fitting
     useXtermFit(containerRef, terminal);
