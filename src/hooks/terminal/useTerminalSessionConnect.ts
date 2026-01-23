@@ -34,8 +34,12 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
             // 1. Create channel for output
             const channel = new Channel<PtyEvent>();
             channel.onmessage = (msg) => {
+                // Sticky scroll: only scroll if the user is already at the bottom
+                const isAtBottom = terminal.buffer.active.viewportY >= terminal.buffer.active.baseY;
                 terminal.write(msg.data);
-                terminal.scrollToBottom();
+                if (isAtBottom) {
+                    terminal.scrollToBottom();
+                }
             };
 
             // 2. Attach channel to existing session
@@ -44,9 +48,7 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
 
             return targetSessionId;
         },
-        onError: (error) => {
-            terminal?.write(`\r\nError connecting to session: ${error}\r\n`);
-        },
+
     });
 
     return {
