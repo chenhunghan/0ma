@@ -4,7 +4,7 @@ import { ExtendedTerminal } from './types';
 
 /**
  * Hook for managing terminal fitting and resize observation.
- * Optimized for smooth dragging and animations of unknown duration.
+ * Optimized for smooth dragging and animations using GPU-synced pulses.
  */
 export function useXtermFit(
     containerRef: RefObject<HTMLDivElement | null>,
@@ -16,7 +16,8 @@ export function useXtermFit(
         const fitAddon = terminal.fitAddon;
         const element = containerRef.current;
         let lastDimensions = { cols: 0, rows: 0 };
-        let pulseTimer: ReturnType<typeof setInterval> | null = null;
+        let animationFrameId: number | null = null;
+        let stableCount = 0;
 
         const fitTerminal = () => {
             try {
@@ -36,18 +37,29 @@ export function useXtermFit(
             }
         };
 
-        // A "pulse" check ensures we follow animations even if ResizeObserver misses frames
         const triggerPulse = (durationMs = 500) => {
-            if (pulseTimer) clearInterval(pulseTimer);
-
-            // Check every 16ms (~60fps) for the duration of the expected animation
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            stableCount = 0;
             const start = Date.now();
-            pulseTimer = setInterval(() => {
-                fitTerminal();
-                if (Date.now() - start > durationMs) {
-                    if (pulseTimer) clearInterval(pulseTimer);
+
+            const pulse = () => {
+                const changed = fitTerminal();
+                if (changed) {
+                    stableCount = 0;
+                } else {
+                    stableCount++;
                 }
-            }, 16);
+
+                // Stop if stable for 10 frames (~160ms) OR duration exceeded
+                if (stableCount > 10 || Date.now() - start > durationMs) {
+                    animationFrameId = null;
+                    return;
+                }
+
+                animationFrameId = requestAnimationFrame(pulse);
+            };
+
+            animationFrameId = requestAnimationFrame(pulse);
         };
 
         // 1. Initial fit
@@ -68,7 +80,7 @@ export function useXtermFit(
         resizeObserver.observe(element);
 
         return () => {
-            if (pulseTimer) clearInterval(pulseTimer);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
             resizeObserver.disconnect();
             element.removeEventListener('transitionend', onTransitionEnd);
             element.removeEventListener('animationend', onTransitionEnd);
