@@ -105,7 +105,7 @@ export function TermTabs({
             <Separator />
 
             {/* Content Area: Tabs Content */}
-            <div className="flex-1 overflow-hidden relative">
+            <div className="flex-1 min-h-0 min-w-0 overflow-hidden relative">
                 {tabs.length === 0 ? (
                     emptyState
                 ) : (

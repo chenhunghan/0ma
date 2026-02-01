@@ -19,15 +19,25 @@ export function useXtermFit(
         let animationFrameId: number | null = null;
         let stableCount = 0;
 
-        const fitTerminal = () => {
+        const fitTerminal = (forceRefresh = false) => {
             try {
                 if (element.clientWidth <= 0 || element.clientHeight <= 0) return;
+
+                const buffer = terminal.buffer?.active;
+                const wasAtBottom = buffer ? buffer.viewportY >= buffer.baseY : true;
 
                 fitAddon.fit();
 
                 const currentDimensions = { cols: terminal.cols, rows: terminal.rows };
                 const changed = currentDimensions.cols !== lastDimensions.cols ||
                     currentDimensions.rows !== lastDimensions.rows;
+
+                if ((forceRefresh || changed) && terminal.rows > 0) {
+                    terminal.refresh(0, terminal.rows - 1);
+                    if (wasAtBottom) {
+                        terminal.scrollToBottom();
+                    }
+                }
 
                 lastDimensions = currentDimensions;
                 return changed;
@@ -63,21 +73,26 @@ export function useXtermFit(
         };
 
         // 1. Initial fit
-        requestAnimationFrame(() => fitTerminal());
+        requestAnimationFrame(() => fitTerminal(true));
 
         // 2. Continuous resize observation (handles most drags)
         const resizeObserver = new ResizeObserver(() => {
-            fitTerminal();
+            fitTerminal(true);
             // Start a short pulse to catch the end of the layout shift
             triggerPulse(200);
         });
 
         // 3. Fallback for CSS transitions/animations
-        const onTransitionEnd = () => fitTerminal();
+        const onTransitionEnd = () => fitTerminal(true);
 
         element.addEventListener('transitionend', onTransitionEnd);
         element.addEventListener('animationend', onTransitionEnd);
-        resizeObserver.observe(element);
+        const panelElement = element.closest('[data-panel]') as HTMLElement | null;
+        const observedElements = new Set<HTMLElement>([element]);
+        if (panelElement && panelElement !== element) {
+            observedElements.add(panelElement);
+        }
+        observedElements.forEach((target) => resizeObserver.observe(target));
 
         return () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);

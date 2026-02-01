@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { Terminal } from '@xterm/xterm';
-import { PtyEvent, SpawnOptions } from './types';
+import { ExtendedTerminal, PtyEvent, SpawnOptions } from './types';
 
 /**
  * Hook for spawning a new terminal session
@@ -24,6 +24,9 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
     const mutation = useMutation({
         mutationFn: async (options: SpawnOptions): Promise<string> => {
             if (!terminal) throw new Error("Terminal not initialized");
+
+            // Ensure terminal dimensions are up to date before spawning the PTY.
+            (terminal as ExtendedTerminal).fitAddon?.fit();
 
             // Silence the old listener before attaching a new session to this terminal instance.
             // This prevents "ghost output" from previous sessions appearing in the view.

@@ -29,6 +29,8 @@ export function useXterm(
 
         // 3. Open terminal in container
         term.open(containerRef.current);
+        // Prime the terminal size before session spawn/resize hooks run.
+        fitAddon.fit();
 
         /**
          * We MUST set state here so that other reactive hooks (like useTerminalSession)

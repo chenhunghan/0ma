@@ -27,9 +27,9 @@ export function TerminalRow({
                 <Fragment key={term.id}>
                     <ResizablePanel defaultSize={100 / terminals.length} minSize={10}>
                         <div
-                            className="h-full w-full relative group"
+                            className="h-full w-full min-h-0 min-w-0 relative group"
                         >
-                            <div className="h-full w-full overflow-hidden">
+                            <div className="h-full w-full min-h-0 min-w-0 overflow-hidden">
                                 <TerminalComponent
                                     initialCommand="zsh"
                                     initialArgs={[]}
@@ -46,5 +46,4 @@ export function TerminalRow({
         </ResizablePanelGroup>
     )
 }
-
 
