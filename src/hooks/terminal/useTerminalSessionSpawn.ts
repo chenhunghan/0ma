@@ -1,8 +1,8 @@
-import { useRef, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { invoke, Channel } from '@tauri-apps/api/core';
-import { Terminal } from '@xterm/xterm';
-import { ExtendedTerminal, PtyEvent, SpawnOptions } from './types';
+import { useRef, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { invoke, Channel } from "@tauri-apps/api/core";
+import { Terminal } from "@xterm/xterm";
+import { PtyEvent, SpawnOptions } from "./types";
 
 /**
  * Hook for spawning a new terminal session
@@ -10,7 +10,7 @@ import { ExtendedTerminal, PtyEvent, SpawnOptions } from './types';
 export function useTerminalSessionSpawn(terminal: Terminal | null) {
     const channelRef = useRef<Channel<PtyEvent> | null>(null);
 
-    // Cleanup listener on unmount. We use a "soft unplug" (empty function) 
+    // Cleanup listener on unmount. We use a "soft unplug" (empty function)
     // because Tauri v2 Channels don't have an explicit unlisten/close on the frontend.
     // This stops the UI from processing data while letting the PTY stay alive.
     useEffect(() => {
@@ -25,14 +25,6 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
         mutationFn: async (options: SpawnOptions): Promise<string> => {
             if (!terminal) throw new Error("Terminal not initialized");
 
-            // Ensure terminal dimensions are up to date before spawning the PTY.
-            const extended = terminal as ExtendedTerminal;
-            if (extended.fit) {
-                extended.fit(true);
-            } else {
-                extended.fitAddon?.fit();
-            }
-
             // Silence the old listener before attaching a new session to this terminal instance.
             // This prevents "ghost output" from previous sessions appearing in the view.
             if (channelRef.current) {
@@ -40,7 +32,7 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
             }
 
             // 1. Spawn PTY process
-            const sid = await invoke<string>('spawn_pty_cmd', {
+            const sid = await invoke<string>("spawn_pty_cmd", {
                 command: options.command,
                 args: options.args,
                 cwd: options.cwd,
@@ -60,11 +52,11 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
             };
 
             // 3. Attach channel to session
-            await invoke('attach_pty_cmd', { sessionId: sid, channel });
+            await invoke("attach_pty_cmd", { sessionId: sid, channel });
             channelRef.current = channel;
 
             return sid;
-        }
+        },
     });
 
     return {
