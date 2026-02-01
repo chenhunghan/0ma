@@ -27,7 +27,7 @@ export function TerminalComponent({
   const { sessionId: hookSessionId, spawn, connect, isReady } = useTerminalSession(terminal);
   const { subscribeDragEnd } = useTerminalResizeContext();
 
-  const { fitTerminal, onDragEnd } = useTerminalResize({
+  const { onDragEnd, waitForReady } = useTerminalResize({
     containerRef,
     terminal,
     isActive,
@@ -38,23 +38,35 @@ export function TerminalComponent({
     return subscribeDragEnd(onDragEnd);
   }, [subscribeDragEnd, onDragEnd]);
 
+  // Wait for terminal dimensions to be ready, then spawn/connect
   useEffect(() => {
+    log.debug(`[Terminal] useEffect: terminal=${!!terminal} isReady=${isReady}`);
     if (!terminal || isReady) return;
 
-    // Fit terminal before spawning/connecting
-    fitTerminal(true);
+    let cancelled = false;
 
-    if (propsSessionId) {
-      log.debug(`[Terminal] connecting to session ${propsSessionId}`);
-      connect(propsSessionId);
-    } else {
-      log.debug(`[Terminal] spawning session ${initialCommand}`);
-      spawn({
-        command: initialCommand,
-        args: initialArgs,
-        cwd,
-      });
-    }
+    log.debug("[Terminal] Calling waitForReady...");
+    // Wait for xterm to initialize dimensions before spawning
+    waitForReady().then((ready) => {
+      log.debug(`[Terminal] waitForReady resolved: ready=${ready} cancelled=${cancelled}`);
+      if (cancelled || !ready) return;
+
+      if (propsSessionId) {
+        log.debug(`[Terminal] connecting to session ${propsSessionId}`);
+        connect(propsSessionId);
+      } else {
+        log.debug(`[Terminal] spawning session ${initialCommand}`);
+        spawn({
+          command: initialCommand,
+          args: initialArgs,
+          cwd,
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     terminal,
     propsSessionId,
@@ -64,7 +76,7 @@ export function TerminalComponent({
     connect,
     spawn,
     isReady,
-    fitTerminal,
+    waitForReady,
   ]);
 
   // Lift sessionId up when created
@@ -74,5 +86,5 @@ export function TerminalComponent({
     }
   }, [hookSessionId, propsSessionId, onSessionCreated]);
 
-  return <div ref={containerRef} className="h-full w-full min-h-0 min-w-0 overflow-hidden" />;
+  return <div ref={containerRef} className="h-full w-full min-h-0 min-w-0" />;
 }

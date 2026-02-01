@@ -39,8 +39,8 @@ export const TERMINAL_METRICS = {
   fontSize: TERM_CONFIG.fontSize!,
   lineHeight: TERM_CONFIG.lineHeight!,
 
-  // Layout constants
-  scrollbarWidth: 14,
+  // Layout constants (scrollbar width matches CSS in index.css)
+  scrollbarWidth: 10,
   minimumCols: 2,
   minimumRows: 1,
 } as const;

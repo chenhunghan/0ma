@@ -27,71 +27,81 @@ export function useTerminalResize({
   const isDraggingRef = useRef(false);
 
   /**
-   * Get cell dimensions from xterm's internal render service.
-   * This is more accurate than measuring a separate element.
+   * Get xterm core internals for dimension calculations.
+   * This matches FitAddon's approach.
    */
-  const getCellDimensions = useCallback(() => {
+  const getXtermCore = useCallback(() => {
     if (!terminal?.element) return null;
 
     const core = (
       terminal as unknown as {
         _core?: {
-          _renderService?: { dimensions?: { css?: { cell?: { width: number; height: number } } } };
+          _renderService?: {
+            dimensions?: { css?: { cell?: { width: number; height: number } } };
+          };
+          viewport?: { scrollBarWidth: number };
         };
       }
     )._core;
-    const cell = core?._renderService?.dimensions?.css?.cell;
 
-    if (cell?.width && cell.width > 0 && cell?.height && cell.height > 0) {
-      return { width: cell.width, height: cell.height };
-    }
-
-    return null;
+    return core ?? null;
   }, [terminal]);
 
   /**
    * Calculate cols/rows from container dimensions.
-   * Ported from useXtermFit.ts fitUsingClientSize().
+   * Matches FitAddon's proposeDimensions() exactly.
    */
   const calculateDimensions = useCallback(() => {
-    const container = containerRef.current;
     const termElement = terminal?.element;
-    if (!container || !termElement) return null;
+    const parentElement = termElement?.parentElement;
+    if (!termElement || !parentElement) return null;
 
-    const cell = getCellDimensions();
-    if (!cell) return null;
+    const core = getXtermCore();
+    const dims = core?._renderService?.dimensions;
+    if (!dims?.css?.cell?.width || !dims?.css?.cell?.height) return null;
+    if (dims.css.cell.width === 0 || dims.css.cell.height === 0) return null;
 
-    // Get padding from computed style
-    const termStyle = window.getComputedStyle(termElement);
-    const parsePixels = (value: string) => {
-      const parsed = parseInt(value, 10);
-      return Number.isFinite(parsed) ? parsed : 0;
-    };
-    const paddingH = parsePixels(termStyle.paddingLeft) + parsePixels(termStyle.paddingRight);
-    const paddingV = parsePixels(termStyle.paddingTop) + parsePixels(termStyle.paddingBottom);
-
-    // Get scrollbar width
-    const terminalOptions = terminal.options as {
-      overviewRuler?: { width?: number };
-      scrollback?: number;
-    };
+    // Get scrollbar width from xterm's viewport
+    // Always use at least TERMINAL_METRICS.scrollbarWidth if scrollback is enabled,
+    // since viewport.scrollBarWidth may not be initialized yet
     const scrollbarWidth =
       terminal.options.scrollback === 0
         ? 0
-        : (terminalOptions.overviewRuler?.width ?? TERMINAL_METRICS.scrollbarWidth);
+        : Math.max(core?.viewport?.scrollBarWidth ?? 0, TERMINAL_METRICS.scrollbarWidth);
 
-    // Calculate available space
-    const availableWidth = Math.max(0, container.clientWidth - paddingH - scrollbarWidth);
-    const availableHeight = Math.max(0, container.clientHeight - paddingV);
+    // Use containerRef dimensions directly (more reliable than parentElement)
+    const container = containerRef.current;
+    if (!container) return null;
+    const parentHeight = container.clientHeight;
+    const parentWidth = container.clientWidth;
+
+    // FitAddon uses getComputedStyle on terminal element for padding
+    const elementStyle = window.getComputedStyle(termElement);
+    const paddingTop = parseInt(elementStyle.getPropertyValue("padding-top"));
+    const paddingBottom = parseInt(elementStyle.getPropertyValue("padding-bottom"));
+    const paddingLeft = parseInt(elementStyle.getPropertyValue("padding-left"));
+    const paddingRight = parseInt(elementStyle.getPropertyValue("padding-right"));
+
+    const availableHeight = parentHeight - paddingTop - paddingBottom;
+    const availableWidth = parentWidth - paddingLeft - paddingRight - scrollbarWidth;
+
+    // Debug logging
+    log.debug(
+      `[useTerminalResize] parent=${parentWidth}x${parentHeight} padding=${paddingLeft},${paddingRight},${paddingTop},${paddingBottom} scrollbar=${scrollbarWidth} cell=${dims.css.cell.width}x${dims.css.cell.height} => ${Math.floor(availableWidth / dims.css.cell.width)}x${Math.floor(availableHeight / dims.css.cell.height)}`,
+    );
 
     if (availableWidth <= 0 || availableHeight <= 0) return null;
 
-    // Calculate cols and rows
-    const cols = Math.max(TERMINAL_METRICS.minimumCols, Math.floor(availableWidth / cell.width));
-    const rows = Math.max(TERMINAL_METRICS.minimumRows, Math.floor(availableHeight / cell.height));
+    const cols = Math.max(
+      TERMINAL_METRICS.minimumCols,
+      Math.floor(availableWidth / dims.css.cell.width),
+    );
+    // Subtract 3 rows to ensure last line is always visible
+    const rawRows = Math.floor(availableHeight / dims.css.cell.height);
+    const rows = Math.max(TERMINAL_METRICS.minimumRows, rawRows - 3);
 
     return { cols, rows };
-  }, [containerRef, terminal, getCellDimensions]);
+  }, [terminal, getXtermCore]);
 
   /**
    * Fit terminal to container.
@@ -145,6 +155,18 @@ export function useTerminalResize({
 
         if (colsChanged || rowsChanged) {
           lastDimensionsRef.current = { cols, rows };
+
+          // Log actual element dimensions after resize
+          const termEl = terminal.element;
+          if (termEl) {
+            const termRect = termEl.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const viewport = termEl.querySelector(".xterm-viewport") as HTMLElement | null;
+            const screen = termEl.querySelector(".xterm-screen") as HTMLElement | null;
+            log.debug(
+              `[useTerminalResize] AFTER resize: rows=${terminal.rows} termEl=${Math.round(termRect.height)}px container=${Math.round(containerRect.height)}px viewport=${viewport?.clientHeight ?? "?"}px screen=${screen?.clientHeight ?? "?"}px`,
+            );
+          }
         }
 
         // Refresh display (prevents content cutoff)
@@ -266,9 +288,45 @@ export function useTerminalResize({
     return () => cancelAnimationFrame(rafId);
   }, [terminal, isActive, fitTerminal, triggerPulse]);
 
+  /**
+   * Wait for xterm to be ready with valid dimensions.
+   * Returns a promise that resolves when dimensions are available.
+   */
+  const waitForReady = useCallback((): Promise<boolean> => {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 50; // ~500ms max wait
+
+      const check = () => {
+        attempts++;
+        const dims = calculateDimensions();
+        log.debug(
+          `[useTerminalResize] waitForReady check #${attempts}: dims=${dims ? `${dims.cols}x${dims.rows}` : "null"}`,
+        );
+        if (dims && dims.cols > 0 && dims.rows > 0) {
+          log.debug(
+            `[useTerminalResize] Ready after ${attempts} attempts: ${dims.cols}x${dims.rows}`,
+          );
+          fitTerminal(true);
+          resolve(true);
+          return;
+        }
+        if (attempts >= maxAttempts) {
+          log.warn("[useTerminalResize] Timed out waiting for dimensions");
+          resolve(false);
+          return;
+        }
+        requestAnimationFrame(check);
+      };
+
+      requestAnimationFrame(check);
+    });
+  }, [calculateDimensions, fitTerminal]);
+
   return {
     fitTerminal,
     onDragStart,
     onDragEnd,
+    waitForReady,
   };
 }
