@@ -18,4 +18,5 @@ export interface SpawnOptions {
  */
 export interface ExtendedTerminal extends Terminal {
     fitAddon?: FitAddon;
+    fit?: (forceRefresh?: boolean) => void;
 }

@@ -115,15 +115,18 @@ export function TermTabs({
                         const row1 = needsTwoRows ? terminals.slice(0, Math.ceil(terminals.length / 2)) : terminals
                         const row2 = needsTwoRows ? terminals.slice(Math.ceil(terminals.length / 2)) : []
 
+                        const isActive = activeTabId === tab.id
+
                         return (
                             <div
                                 key={tab.id}
-                                className={`h-full w-full ${activeTabId === tab.id ? 'block' : 'hidden'}`}
+                                className={`h-full w-full ${isActive ? 'block' : 'hidden'}`}
                             >
                                 {!needsTwoRows ? (
                                     <TerminalRow
                                         tabId={tab.id}
                                         terminals={row1}
+                                        isActive={isActive}
                                         onSessionCreated={onSessionCreated}
                                     />
                                 ) : (
@@ -132,6 +135,7 @@ export function TermTabs({
                                             <TerminalRow
                                                 tabId={tab.id}
                                                 terminals={row1}
+                                                isActive={isActive}
                                                 onSessionCreated={onSessionCreated}
                                             />
                                         </ResizablePanel>
@@ -140,6 +144,7 @@ export function TermTabs({
                                             <TerminalRow
                                                 tabId={tab.id}
                                                 terminals={row2}
+                                                isActive={isActive}
                                                 onSessionCreated={onSessionCreated}
                                             />
                                         </ResizablePanel>

@@ -12,12 +12,14 @@ interface Props {
     tabId: string,
     terminals: Terminal[],
     onSessionCreated: (tabId: string, termId: number, sessionId: string) => void
+    isActive?: boolean
 }
 
 export function TerminalRow({
     tabId,
     terminals,
-    onSessionCreated
+    onSessionCreated,
+    isActive = true
 }: Props) {
     const isMobile = useIsMobile()
 
@@ -35,6 +37,7 @@ export function TerminalRow({
                                     initialArgs={[]}
                                     cwd="~"
                                     sessionId={term.sessionId}
+                                    isActive={isActive}
                                     onSessionCreated={(sid) => onSessionCreated(tabId, term.id, sid)}
                                 />
                             </div>
@@ -46,4 +49,3 @@ export function TerminalRow({
         </ResizablePanelGroup>
     )
 }
-

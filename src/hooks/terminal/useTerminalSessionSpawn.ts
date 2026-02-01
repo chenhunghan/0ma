@@ -26,7 +26,12 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
             if (!terminal) throw new Error("Terminal not initialized");
 
             // Ensure terminal dimensions are up to date before spawning the PTY.
-            (terminal as ExtendedTerminal).fitAddon?.fit();
+            const extended = terminal as ExtendedTerminal;
+            if (extended.fit) {
+                extended.fit(true);
+            } else {
+                extended.fitAddon?.fit();
+            }
 
             // Silence the old listener before attaching a new session to this terminal instance.
             // This prevents "ghost output" from previous sessions appearing in the view.

@@ -9,6 +9,7 @@ interface Props {
     initialCommand: string;
     initialArgs: string[];
     cwd: string;
+    isActive?: boolean;
 }
 
 export function TerminalComponent({
@@ -16,7 +17,8 @@ export function TerminalComponent({
     onSessionCreated,
     initialCommand,
     initialArgs,
-    cwd
+    cwd,
+    isActive = true
 }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { terminal } = useXterm(containerRef);
@@ -49,6 +51,31 @@ export function TerminalComponent({
             onSessionCreated(hookSessionId);
         }
     }, [hookSessionId, propsSessionId, onSessionCreated]);
+
+    useEffect(() => {
+        if (!terminal || !isActive) return;
+
+        const performFit = () => {
+            if (terminal.fit) {
+                terminal.fit(true);
+                return;
+            }
+
+            terminal.fitAddon?.fit();
+            if (terminal.rows > 0) {
+                terminal.refresh(0, terminal.rows - 1);
+                terminal.scrollToBottom();
+            }
+        };
+
+        const rafId = requestAnimationFrame(performFit);
+        const timeoutId = window.setTimeout(performFit, 80);
+
+        return () => {
+            cancelAnimationFrame(rafId);
+            window.clearTimeout(timeoutId);
+        };
+    }, [terminal, isActive]);
 
     return (
         <div ref={containerRef} className="h-full w-full min-h-0 min-w-0 overflow-hidden" />
