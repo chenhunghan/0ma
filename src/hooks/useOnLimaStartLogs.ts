@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Log, LogState } from "src/types/Log";
+import type { Log, LogState } from "src/types/Log";
 import { insertLog } from "src/services/insertLog";
 
 interface LimaLogPayload {
@@ -15,18 +15,18 @@ type StartLogState = LogState & {
   isReady?: boolean;
 };
 const DEFAULT_LIMA_START_STATE: StartLogState = {
-  stdout: [],
-  stderr: [],
   error: [],
   isLoading: false,
-  isSuccess: undefined,
   isReady: undefined,
+  isSuccess: undefined,
+  stderr: [],
+  stdout: [],
 };
 
 const getStartLogsQueryKey = (instanceName: string) => ["lima", "start-logs", instanceName];
 
 /**
- * useOnLimaStartLogs
+ * UseOnLimaStartLogs
  *
  * Tracks the logs for the "start instance" operation.
  * Similar to useOnLimaCreateLogs but for the start command.
@@ -41,24 +41,24 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
   }, [options?.onSuccess]);
 
   const { data } = useQuery({
-    queryKey,
-    queryFn: () => queryClient.getQueryData<StartLogState>(queryKey),
-    staleTime: Infinity,
     gcTime: Infinity,
     initialData: DEFAULT_LIMA_START_STATE,
+    queryFn: () => queryClient.getQueryData<StartLogState>(queryKey),
+    queryKey,
+    staleTime: Infinity,
   });
 
   useEffect(() => {
     // Skip listener setup when instanceName is empty
-    if (!instanceName) return;
+    if (!instanceName) {return;}
 
     let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
     const updateCache = (updater: (prev: StartLogState) => StartLogState) => {
-      if (!active) return;
+      if (!active) {return;}
       queryClient.setQueryData<StartLogState>(queryKey, (prev) => {
-        if (!prev) return DEFAULT_LIMA_START_STATE;
+        if (!prev) {return DEFAULT_LIMA_START_STATE;}
         return updater(prev);
       });
     };
@@ -66,7 +66,7 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     // 1. Start Started
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start", (event) => {
-        if (event.payload.instance_name !== instanceName) return;
+        if (event.payload.instance_name !== instanceName) {return;}
         updateCache(() => ({
           // Reset all logs
           ...DEFAULT_LIMA_START_STATE,
@@ -79,7 +79,7 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-stdout", (event) => {
         const { instance_name, message, message_id, timestamp } = event.payload;
-        if (instance_name !== instanceName) return;
+        if (instance_name !== instanceName) {return;}
 
         updateCache((prev) => {
           if (prev.stdout.some((l) => l.id === message_id)) {
@@ -99,14 +99,12 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-ready", (event) => {
         const { instance_name } = event.payload;
-        if (instance_name !== instanceName) return;
+        if (instance_name !== instanceName) {return;}
 
-        updateCache((prev) => {
-          return {
+        updateCache((prev) => ({
             ...prev,
             isReady: true,
-          };
-        });
+          }));
       }),
     );
 
@@ -114,7 +112,7 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-stderr", (event) => {
         const { instance_name, message, message_id, timestamp } = event.payload;
-        if (instance_name !== instanceName) return;
+        if (instance_name !== instanceName) {return;}
 
         updateCache((prev) => {
           if (prev.stderr.some((l) => l.id === message_id)) {
@@ -133,7 +131,7 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     // 4. Error
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-error", (event) => {
-        if (event.payload.instance_name !== instanceName) return;
+        if (event.payload.instance_name !== instanceName) {return;}
         const { message, message_id, timestamp } = event.payload;
 
         updateCache((prev) => {
@@ -154,7 +152,7 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     // 5. Success
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-success", (event) => {
-        if (event.payload.instance_name !== instanceName) return;
+        if (event.payload.instance_name !== instanceName) {return;}
         updateCache((prev) => ({
           ...prev,
           isLoading: false,
@@ -181,12 +179,12 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
   }, [instanceName, queryClient, queryKey]);
 
   return {
-    stdout: data?.stdout ?? [],
-    stderr: data?.stderr ?? [],
     error: data?.error ?? [],
     isLoading: data?.isLoading ?? false,
-    isSuccess: data?.isSuccess,
     isReady: data?.isReady,
+    isSuccess: data?.isSuccess,
     reset: () => queryClient.setQueryData(queryKey, DEFAULT_LIMA_START_STATE),
+    stderr: data?.stderr ?? [],
+    stdout: data?.stdout ?? [],
   };
 }

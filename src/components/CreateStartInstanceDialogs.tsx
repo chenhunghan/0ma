@@ -21,7 +21,7 @@ export function CreateStartInstanceDialogs() {
   const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
 
   const handleCreateInstance = () => {
-    if (!draftConfig || !instanceName) return;
+    if (!draftConfig || !instanceName) {return;}
 
     setCreatingInstanceDialogOpen(true);
     createInstance({ config: draftConfig, instanceName });

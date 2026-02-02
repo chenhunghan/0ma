@@ -10,7 +10,7 @@ import {
 import { Button } from "src/components/ui/button";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { Spinner } from "./ui/spinner";
-import { LimaInstance } from "src/types/LimaInstance";
+import type { LimaInstance } from "src/types/LimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { CreateStartInstanceDialogs } from "./CreateStartInstanceDialogs";
 

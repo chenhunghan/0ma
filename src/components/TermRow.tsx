@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { useIsMobile } from "src/hooks/useMediaQuery";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "src/components/ui/resizable";
-import { type Terminal } from "src/services/Terminal";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "src/components/ui/resizable";
+import type { Terminal } from 'src/services/Terminal';
 import { TerminalComponent } from "./TerminalComponent";
 import { useTerminalResizeContext } from "src/contexts/useTerminalResizeContext";
 

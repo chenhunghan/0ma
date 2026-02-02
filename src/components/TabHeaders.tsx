@@ -1,13 +1,12 @@
 import React from "react";
-import { Settings, Terminal as TerminalIcon, ShipWheel } from "lucide-react";
+import { Settings, ShipWheel, Terminal as TerminalIcon } from "lucide-react";
 
 interface TabHeadersProps {
   activeTab: "lima" | "k8s" | "config";
   setActiveTab: (tab: "lima" | "k8s" | "config") => void;
 }
 
-export const TabHeaders: React.FC<TabHeadersProps> = ({ activeTab, setActiveTab }) => {
-  return (
+export const TabHeaders: React.FC<TabHeadersProps> = ({ activeTab, setActiveTab }) => (
     <div className="flex">
       <button
         onClick={() => setActiveTab("config")}
@@ -44,4 +43,3 @@ export const TabHeaders: React.FC<TabHeadersProps> = ({ activeTab, setActiveTab 
       </button>
     </div>
   );
-};

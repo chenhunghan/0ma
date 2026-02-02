@@ -1,6 +1,7 @@
-import { ITerminalOptions } from "@xterm/xterm";
+import type { ITerminalOptions } from "@xterm/xterm";
 
 export const TERM_CONFIG: ITerminalOptions = {
+  allowProposedApi: true,
   cursorBlink: false,
   cursorStyle: "bar" as const,
   fontFamily: '"FiraCode Nerd Font", monospace',
@@ -29,7 +30,6 @@ export const TERM_CONFIG: ITerminalOptions = {
     brightCyan: "#22d3ee",
     brightWhite: "#ffffff",
   },
-  allowProposedApi: true,
 };
 
 // NEW: Metrics for dimension calculation

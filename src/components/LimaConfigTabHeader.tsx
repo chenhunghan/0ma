@@ -9,8 +9,7 @@ interface LimaConfigTabHeaderProps {
 export const LimaConfigTabHeader: React.FC<LimaConfigTabHeaderProps> = ({
   showConfigPanel,
   toggleConfigPanel,
-}) => {
-  return (
+}) => (
     <>
       <button
         onClick={toggleConfigPanel}
@@ -26,4 +25,3 @@ export const LimaConfigTabHeader: React.FC<LimaConfigTabHeaderProps> = ({
       <span className="text-zinc-500 uppercase text-[10px]">YAML Editor Mode</span>
     </>
   );
-};

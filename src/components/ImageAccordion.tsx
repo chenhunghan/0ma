@@ -1,4 +1,4 @@
-import { Image } from "src/types/LimaConfig";
+import type { Image } from "src/types/LimaConfig";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 export function ImageAccordion({ value: images }: { value: Image[] }) {

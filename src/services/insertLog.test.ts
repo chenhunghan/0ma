@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { insertLog } from "./insertLog";
-import { Log } from "src/types/Log";
+import type { Log } from "src/types/Log";
 
-describe("insertLog", () => {
+describe(insertLog, () => {
   const makeLog = (ts: string, id: string): Log => ({
     id,
     message: `msg ${id}`,
@@ -22,7 +22,7 @@ describe("insertLog", () => {
     const logs = [makeLog("10", "1"), makeLog("30", "3")];
     const newLog = makeLog("20", "2");
     const result = insertLog(logs, newLog);
-    expect(result.map((l) => l.id)).toEqual(["1", "2", "3"]);
+    expect(result.map((l) => l.id)).toStrictEqual(["1", "2", "3"]);
   });
 
   it("should insert at start", () => {
@@ -37,7 +37,7 @@ describe("insertLog", () => {
     const logs = [makeLog("10", "1")];
     const newLog = makeLog("10", "2");
     const result = insertLog(logs, newLog);
-    expect(result.map((l) => l.id)).toEqual(["1", "2"]);
+    expect(result.map((l) => l.id)).toStrictEqual(["1", "2"]);
   });
 
   it("should handle empty logs", () => {

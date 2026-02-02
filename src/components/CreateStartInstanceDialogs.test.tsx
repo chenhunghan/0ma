@@ -1,14 +1,14 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateStartInstanceDialogs } from "./CreateStartInstanceDialogs";
-import { LimaConfig } from "src/types/LimaConfig";
+import type { LimaConfig } from "src/types/LimaConfig";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // --- Mocks ---
 
 // Mock @tauri-apps/api/core
 const mockInvoke = vi.fn();
-vi.mock("@tauri-apps/api/core", () => ({
+vi.mock<typeof import('@tauri-apps/api/core')>("@tauri-apps/api/core", () => ({
   invoke: (cmd: string, args: unknown) => Promise.resolve(mockInvoke(cmd, args)),
 }));
 
@@ -28,7 +28,7 @@ const mockListen = vi.fn((event: string, handler: (event: unknown) => void) => {
   });
 });
 
-vi.mock("@tauri-apps/api/event", () => ({
+vi.mock<typeof import('@tauri-apps/api/event')>("@tauri-apps/api/event", () => ({
   listen: (event: string, handler: (event: unknown) => void) => mockListen(event, handler),
 }));
 
@@ -42,7 +42,7 @@ const emitEvent = (eventName: string, payload: unknown) => {
 
 // Mock useLayoutStorage
 const mockSetActiveTab = vi.fn();
-vi.mock("src/hooks/useLayoutStorage", () => ({
+vi.mock<typeof import('src/hooks/useLayoutStorage')>("src/hooks/useLayoutStorage", () => ({
   useLayoutStorage: () => ({
     setActiveTab: mockSetActiveTab,
   }),
@@ -51,26 +51,26 @@ vi.mock("src/hooks/useLayoutStorage", () => ({
 // Mock useCreateLimaInstanceDraft
 const mockDraftConfig: LimaConfig = {
   arch: "aarch64",
-  images: [{ location: "https://example.com/image.img", arch: "aarch64" }],
-  cpus: 4,
-  memory: "4GiB",
-  disk: "100GiB",
-  mounts: [],
-  networks: [],
-  env: {},
-  portForwards: [],
-  message: "",
-  probes: [],
-  ssh: { localPort: 60022, loadDotSSHPubKeys: true, forwardAgent: false },
-  firmware: { legacyBIOS: false },
-  video: { display: "cocoa" },
   audio: { device: "coreaudio" },
-  hostResolver: { enabled: true, ipv6: false, hosts: {} },
-  propagateProxyEnv: false,
   caCerts: { removeDefaults: false, files: [], certs: [] },
   containerd: { system: false, user: false },
+  cpus: 4,
+  disk: "100GiB",
+  env: {},
+  firmware: { legacyBIOS: false },
+  hostResolver: { enabled: true, ipv6: false, hosts: {} },
+  images: [{ location: "https://example.com/image.img", arch: "aarch64" }],
+  memory: "4GiB",
+  message: "",
+  mounts: [],
+  networks: [],
   os: "Linux",
+  portForwards: [],
+  probes: [],
+  propagateProxyEnv: false,
   rosetta: { enabled: false, bin: true },
+  ssh: { localPort: 60022, loadDotSSHPubKeys: true, forwardAgent: false },
+  video: { display: "cocoa" },
 };
 
 const mockUseCreateLimaInstanceDraft = vi.fn(() => ({
@@ -78,7 +78,7 @@ const mockUseCreateLimaInstanceDraft = vi.fn(() => ({
   instanceName: "test-instance",
 }));
 
-vi.mock("src/hooks/useCreateLimaInstanceDraft", () => ({
+vi.mock<typeof import('src/hooks/useCreateLimaInstanceDraft')>("src/hooks/useCreateLimaInstanceDraft", () => ({
   useCreateLimaInstanceDraft: () => mockUseCreateLimaInstanceDraft(),
 }));
 
@@ -101,7 +101,7 @@ const createTestQueryClient = () =>
     },
   });
 
-describe("CreateStartInstanceDialogs", () => {
+describe(CreateStartInstanceDialogs, () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -125,7 +125,7 @@ describe("CreateStartInstanceDialogs", () => {
     );
   };
 
-  it("Successfully (happy flow) creates and starts an instance, showing logs and switching tabs", async () => {
+  it("successfully (happy flow) creates and starts an instance, showing logs and switching tabs", async () => {
     renderComponent();
 
     const createButton = screen.getByLabelText("Create new Lima instance");
@@ -246,9 +246,9 @@ describe("CreateStartInstanceDialogs", () => {
       expect(screen.queryByText("Starting Instance...")).not.toBeInTheDocument();
       expect(screen.queryByText("Instance Started")).not.toBeInTheDocument();
     });
-  }, 30000);
+  }, 30_000);
 
-  it("Handles creation failure gracefully", async () => {
+  it("handles creation failure gracefully", async () => {
     renderComponent();
 
     // 1. Open Create Dialog
@@ -282,7 +282,7 @@ describe("CreateStartInstanceDialogs", () => {
     expect(screen.getByText("Creating Instance")).toBeInTheDocument();
   });
 
-  it("Handles start failure gracefully", async () => {
+  it("handles start failure gracefully", async () => {
     renderComponent();
 
     // 1. Create
@@ -331,5 +331,5 @@ describe("CreateStartInstanceDialogs", () => {
 
     // Should NOT show "Instance Started"
     expect(screen.queryByText("Instance Started")).not.toBeInTheDocument();
-  }, 30000);
+  }, 30_000);
 });

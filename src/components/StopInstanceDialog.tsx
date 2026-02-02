@@ -16,7 +16,7 @@ interface Props {
 }
 
 export function StopInstanceDialog({ open, onOpenChange, instanceName, onConfirm }: Props) {
-  if (!instanceName) return null;
+  if (!instanceName) {return null;}
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -1,4 +1,4 @@
-import { Provision } from "src/types/LimaConfig";
+import type { Provision } from "src/types/LimaConfig";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import Editor from "@monaco-editor/react";
@@ -25,24 +25,24 @@ export function ProvisionStepsAccordion({ value: provision }: { value: Provision
                   theme="vs-dark"
                   value={p.script}
                   options={{
-                    minimap: { enabled: false },
-                    fontSize: 10,
-                    lineNumbers: "off",
-                    scrollBeyondLastLine: false,
                     automaticLayout: true,
-                    padding: { top: 1, bottom: 1 },
-                    glyphMargin: false,
                     folding: false,
-                    lineDecorationsWidth: 0,
-                    lineNumbersMinChars: 0,
-                    overviewRulerLanes: 0,
+                    fontSize: 10,
+                    glyphMargin: false,
                     hideCursorInOverviewRuler: true,
-                    wordWrap: "on",
+                    lineDecorationsWidth: 0,
+                    lineNumbers: "off",
+                    lineNumbersMinChars: 0,
+                    minimap: { enabled: false },
+                    overviewRulerLanes: 0,
+                    padding: { top: 1, bottom: 1 },
                     readOnly: true,
+                    scrollBeyondLastLine: false,
                     scrollbar: {
                       verticalScrollbarSize: 4,
                       horizontalScrollbarSize: 4,
                     },
+                    wordWrap: "on",
                   }}
                 />
               </div>

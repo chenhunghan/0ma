@@ -1,6 +1,6 @@
 import React from "react";
-import { Info, Cpu, Activity, HardDrive } from "lucide-react";
-import { LimaInstance } from "../types/LimaInstance";
+import { Activity, Cpu, HardDrive, Info } from "lucide-react";
+import type { LimaInstance } from "../types/LimaInstance";
 
 interface LimaTabHeaderProps {
   instance: LimaInstance;
@@ -12,8 +12,7 @@ export const LimaTabHeader: React.FC<LimaTabHeaderProps> = ({
   instance,
   showLimaPanel,
   toggleLimaPanel,
-}) => {
-  return (
+}) => (
     <>
       <button
         onClick={toggleLimaPanel}
@@ -43,4 +42,3 @@ export const LimaTabHeader: React.FC<LimaTabHeaderProps> = ({
       <div className="text-zinc-600 uppercase text-[10px] font-bold">{instance.arch}</div>
     </>
   );
-};

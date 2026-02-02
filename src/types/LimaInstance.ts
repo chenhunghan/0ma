@@ -1,5 +1,5 @@
-import { InstanceStatus } from "./InstanceStatus";
-import { K8sInfo } from "./K8sInfo";
+import type { InstanceStatus } from "./InstanceStatus";
+import type { K8sInfo } from "./K8sInfo";
 
 export type Arch = "x86_64" | "aarch64";
 

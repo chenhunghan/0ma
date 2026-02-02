@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Terminal } from "@xterm/xterm";
+import type { Terminal } from "@xterm/xterm";
 import { emit } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 
@@ -8,11 +8,11 @@ import * as log from "@tauri-apps/plugin-log";
  */
 export function useTerminalSessionInput(terminal: Terminal | null, sessionId: string | null) {
   useEffect(() => {
-    if (!terminal || !sessionId) return;
+    if (!terminal || !sessionId) {return;}
 
     const disposable = terminal.onData((data) => {
-      emit("pty-input", { sessionId, data }).catch((e) =>
-        log.error("Failed to emit pty-input:", e),
+      emit("pty-input", { data, sessionId }).catch((error) =>
+        log.error("Failed to emit pty-input:", error),
       );
     });
 

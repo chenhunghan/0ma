@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { PortForward } from "src/types/LimaConfig";
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import type { PortForward } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -36,11 +36,11 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
     onChange([
       ...portForwards,
       {
+        guestIPMustBeZero: true,
         guestPort: 8080,
+        hostIP: "127.0.0.1",
         hostPort: 8080,
         proto: "tcp",
-        guestIPMustBeZero: true,
-        hostIP: "127.0.0.1",
       },
     ]);
   };
@@ -55,7 +55,7 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && hasInvalid) return;
+        if (!open && hasInvalid) {return;}
         setIsOpen(open);
       }}
     >

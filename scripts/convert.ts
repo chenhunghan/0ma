@@ -30,7 +30,7 @@ export async function extractAlphaTwoPass(
   const outputBuffer = Buffer.alloc(dataWhite.length);
 
   // Distance between White (255,255,255) and Black (0,0,0)
-  // sqrt(255^2 + 255^2 + 255^2) ≈ 441.67
+  // Sqrt(255^2 + 255^2 + 255^2) ≈ 441.67
   const bgDist = Math.sqrt(3 * 255 * 255);
 
   for (let i = 0; i < meta.width * meta.height; i++) {
@@ -59,7 +59,7 @@ export async function extractAlphaTwoPass(
 
     // Color Recovery:
     // We use the image on black to recover the color, dividing by alpha
-    // to un-premultiply it (brighten the semi-transparent pixels)
+    // To un-premultiply it (brighten the semi-transparent pixels)
     let rOut = 0,
       gOut = 0,
       bOut = 0;
@@ -80,7 +80,7 @@ export async function extractAlphaTwoPass(
   }
 
   await sharp(outputBuffer, {
-    raw: { width: meta.width, height: meta.height, channels: 4 },
+    raw: { channels: 4, height: meta.height, width: meta.width },
   })
     .png()
     .toFile(outputPath);
@@ -95,8 +95,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const outputPath = args[2] || "output.png";
   extractAlphaTwoPass(args[0], args[1], outputPath)
     .then(() => console.log(`Done! Saved to ${outputPath}`))
-    .catch((err) => {
-      console.error(err);
+    .catch((error) => {
+      console.error(error);
       process.exit(1);
     });
 }

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback, RefObject } from "react";
-import { Terminal } from "@xterm/xterm";
+import type { RefObject } from "react";
+import { useEffect, useRef, useCallback } from "react";
+import type { Terminal } from "@xterm/xterm";
 import * as log from "@tauri-apps/plugin-log";
 import { TERMINAL_METRICS } from "./config";
 
@@ -31,7 +32,7 @@ export function useTerminalResize({
    * This matches FitAddon's approach.
    */
   const getXtermCore = useCallback(() => {
-    if (!terminal?.element) return null;
+    if (!terminal?.element) {return null;}
 
     const core = (
       terminal as unknown as {
@@ -54,16 +55,16 @@ export function useTerminalResize({
   const calculateDimensions = useCallback(() => {
     const termElement = terminal?.element;
     const parentElement = termElement?.parentElement;
-    if (!termElement || !parentElement) return null;
+    if (!termElement || !parentElement) {return null;}
 
     const core = getXtermCore();
     const dims = core?._renderService?.dimensions;
-    if (!dims?.css?.cell?.width || !dims?.css?.cell?.height) return null;
-    if (dims.css.cell.width === 0 || dims.css.cell.height === 0) return null;
+    if (!dims?.css?.cell?.width || !dims?.css?.cell?.height) {return null;}
+    if (dims.css.cell.width === 0 || dims.css.cell.height === 0) {return null;}
 
     // Get scrollbar width from xterm's viewport
     // Always use at least TERMINAL_METRICS.scrollbarWidth if scrollback is enabled,
-    // since viewport.scrollBarWidth may not be initialized yet
+    // Since viewport.scrollBarWidth may not be initialized yet
     const scrollbarWidth =
       terminal.options.scrollback === 0
         ? 0
@@ -71,7 +72,7 @@ export function useTerminalResize({
 
     // Use containerRef dimensions directly (more reliable than parentElement)
     const container = containerRef.current;
-    if (!container) return null;
+    if (!container) {return null;}
     const parentHeight = container.clientHeight;
     const parentWidth = container.clientWidth;
 
@@ -90,7 +91,7 @@ export function useTerminalResize({
       `[useTerminalResize] parent=${parentWidth}x${parentHeight} padding=${paddingLeft},${paddingRight},${paddingTop},${paddingBottom} scrollbar=${scrollbarWidth} cell=${dims.css.cell.width}x${dims.css.cell.height} => ${Math.floor(availableWidth / dims.css.cell.width)}x${Math.floor(availableHeight / dims.css.cell.height)}`,
     );
 
-    if (availableWidth <= 0 || availableHeight <= 0) return null;
+    if (availableWidth <= 0 || availableHeight <= 0) {return null;}
 
     const cols = Math.max(
       TERMINAL_METRICS.minimumCols,
@@ -114,10 +115,10 @@ export function useTerminalResize({
    */
   const fitTerminal = useCallback(
     (forceRefresh = false) => {
-      if (!terminal || !containerRef.current) return false;
+      if (!terminal || !containerRef.current) {return false;}
 
       const container = containerRef.current;
-      if (container.clientWidth <= 0 || container.clientHeight <= 0) return false;
+      if (container.clientWidth <= 0 || container.clientHeight <= 0) {return false;}
 
       try {
         // Remember scroll position
@@ -126,7 +127,7 @@ export function useTerminalResize({
 
         // Calculate new dimensions
         const dimensions = calculateDimensions();
-        if (!dimensions) return false;
+        if (!dimensions) {return false;}
 
         const { cols, rows } = dimensions;
 
@@ -178,8 +179,8 @@ export function useTerminalResize({
         }
 
         return colsChanged || rowsChanged;
-      } catch (e) {
-        log.debug(`Terminal fit error: ${e}`);
+      } catch (error) {
+        log.debug(`Terminal fit error: ${error}`);
         return false;
       }
     },
@@ -239,7 +240,7 @@ export function useTerminalResize({
   // Setup ResizeObserver and event listeners
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !terminal) return;
+    if (!container || !terminal) {return;}
 
     // Initial fit
     requestAnimationFrame(() => {
@@ -277,7 +278,7 @@ export function useTerminalResize({
 
   // Handle visibility changes (isActive prop)
   useEffect(() => {
-    if (!terminal || !isActive) return;
+    if (!terminal || !isActive) {return;}
 
     // When becoming active, force fit with delay
     const rafId = requestAnimationFrame(() => {
@@ -292,8 +293,7 @@ export function useTerminalResize({
    * Wait for xterm to be ready with valid dimensions.
    * Returns a promise that resolves when dimensions are available.
    */
-  const waitForReady = useCallback((): Promise<boolean> => {
-    return new Promise((resolve) => {
+  const waitForReady = useCallback((): Promise<boolean> => new Promise((resolve) => {
       let attempts = 0;
       const maxAttempts = 50; // ~500ms max wait
 
@@ -320,13 +320,12 @@ export function useTerminalResize({
       };
 
       requestAnimationFrame(check);
-    });
-  }, [calculateDimensions, fitTerminal]);
+    }), [calculateDimensions, fitTerminal]);
 
   return {
     fitTerminal,
-    onDragStart,
     onDragEnd,
+    onDragStart,
     waitForReady,
   };
 }

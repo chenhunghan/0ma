@@ -1,11 +1,11 @@
-import { CopyToHost } from "src/types/LimaConfig";
+import type { CopyToHost } from "src/types/LimaConfig";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 export function CopyToHostAccordion({ value: rules }: { value: CopyToHost[] }) {
   const truncatePath = (path: string, maxLength: number = 20) => {
-    if (!path) return "";
-    if (path.length <= maxLength) return path;
+    if (!path) {return "";}
+    if (path.length <= maxLength) {return path;}
     const half = Math.floor((maxLength - 3) / 2);
     return `${path.slice(0, half)}...${path.slice(-half)}`;
   };

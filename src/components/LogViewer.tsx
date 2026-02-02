@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import "@xterm/xterm/css/xterm.css";
 import { error } from "@tauri-apps/plugin-log";
-import { LogState } from "src/types/Log";
+import type { LogState } from "src/types/Log";
 import { useXterm } from "../hooks/terminal";
 
 interface Props {
@@ -9,14 +9,14 @@ interface Props {
 }
 
 const LOG_VIEW_TERM_CONFIG = {
+  allowProposedApi: true,
+  cursorBlink: false,
+  cursorInactiveStyle: "none" as const,
+  cursorStyle: "underline" as const,
+  disableStdin: true,
   fontFamily: '"JetBrains Mono Variable", monospace',
   fontSize: 11,
   lineHeight: 1.15,
-  cursorBlink: false,
-  cursorStyle: "underline" as const,
-  cursorInactiveStyle: "none" as const,
-  disableStdin: true,
-  allowProposedApi: true,
   theme: {
     background: "#000000",
     foreground: "#d4d4d8", // zinc-300
@@ -47,30 +47,30 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
 
   // Write stdout to terminal
   useEffect(() => {
-    if (!terminal) return;
+    if (!terminal) {return;}
 
     logState.stdout.forEach((log) => {
       try {
         terminal.writeln(log.message);
         // Auto-scroll to bottom
         terminal.scrollToBottom();
-      } catch (e) {
-        error(`Error writing to terminal: ${e}`);
+      } catch (error) {
+        error(`Error writing to terminal: ${error}`);
       }
     });
   }, [logState.stdout, terminal]);
 
   // Write stderr to terminal
   useEffect(() => {
-    if (!terminal) return;
+    if (!terminal) {return;}
 
     logState.stderr.forEach((log) => {
       try {
         terminal.writeln(log.message);
         // Auto-scroll to bottom
         terminal.scrollToBottom();
-      } catch (e) {
-        error(`Error writing to terminal: ${e}`);
+      } catch (error) {
+        error(`Error writing to terminal: ${error}`);
       }
     });
   }, [logState.stderr, terminal]);

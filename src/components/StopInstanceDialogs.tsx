@@ -3,7 +3,7 @@ import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { StopInstanceDialog } from "./StopInstanceDialog";
 import { StoppingInstanceDialog } from "./StoppingInstanceDialog";
 import { useLimaInstance } from "src/hooks/useLimaInstance";
-import { StopCircleIcon, PlayIcon } from "lucide-react";
+import { PlayIcon, StopCircleIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { InstanceStatus } from "src/types/InstanceStatus";
 import { StartInstanceDialog } from "./StartInstanceDialog";
@@ -24,7 +24,7 @@ export function StopInstanceDialogs() {
   };
 
   const handleConfirmStop = () => {
-    if (!selectedName) return;
+    if (!selectedName) {return;}
     stopInstance(selectedName);
     setStoppingInstanceDialogOpen(true);
   };
@@ -34,7 +34,7 @@ export function StopInstanceDialogs() {
   };
 
   const handleConfirmStart = () => {
-    if (!selectedName) return;
+    if (!selectedName) {return;}
     startInstance(selectedName);
     setStartingInstanceDialogOpen(true);
   };

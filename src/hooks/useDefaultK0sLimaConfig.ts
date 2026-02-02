@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
-import { LimaConfig } from "../types/LimaConfig";
+import type { LimaConfig } from "../types/LimaConfig";
 
 export function useDefaultK0sLimaConfig(
   instanceName: string,
@@ -14,7 +14,7 @@ export function useDefaultK0sLimaConfig(
     isFetched,
     refetch,
   } = useQuery({
-    queryKey: ["default_k0s_lima_config", instanceName, installHelm, installLocalPathProvisioner],
+    enabled: !!instanceName,
     queryFn: async () => {
       const config = await invoke<LimaConfig>("get_default_k0s_lima_config_yaml_cmd", {
         instanceName,
@@ -23,7 +23,7 @@ export function useDefaultK0sLimaConfig(
       });
       return config;
     },
-    enabled: !!instanceName, // Only fetch if instanceName is provided
+    queryKey: ["default_k0s_lima_config", instanceName, installHelm, installLocalPathProvisioner], // Only fetch if instanceName is provided
   });
 
   return {

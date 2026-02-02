@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { Image } from "src/types/LimaConfig";
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import type { Image } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -42,7 +42,7 @@ export function ImagesDialog({ value: images, onChange }: Props) {
   };
 
   const addImage = () => {
-    onChange([...images, { location: "", arch: "aarch64" }]);
+    onChange([...images, { arch: "aarch64", location: "" }]);
   };
 
   const removeImage = (index: number) => {
@@ -55,7 +55,7 @@ export function ImagesDialog({ value: images, onChange }: Props) {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && hasInvalid) return;
+        if (!open && hasInvalid) {return;}
         setIsOpen(open);
       }}
     >

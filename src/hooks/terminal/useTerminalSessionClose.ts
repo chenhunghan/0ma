@@ -10,17 +10,17 @@ export function useTerminalSessionClose() {
     mutationFn: async (sessionId: string) => {
       await invoke("close_pty_cmd", { sessionId });
     },
-    onSuccess: (_, sessionId) => {
-      log.info(`Closed PTY session: ${sessionId}`);
-    },
     onError: (error, sessionId) => {
       log.error(`Failed to close PTY session ${sessionId}: ${error}`);
+    },
+    onSuccess: (_, sessionId) => {
+      log.info(`Closed PTY session: ${sessionId}`);
     },
   });
 
   return {
     close: mutation.mutate,
-    isClosing: mutation.isPending,
     closeError: mutation.error,
+    isClosing: mutation.isPending,
   };
 }

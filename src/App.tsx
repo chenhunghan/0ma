@@ -3,7 +3,8 @@ import { ResizableLayout } from "./components/ResizableLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Separator } from "src/components/ui/separator";
 import { TopBar } from "src/components/TopBar";
-import { TermTabs, TabGroup } from "src/components/TermTabs";
+import type { TabGroup } from "src/components/TermTabs";
+import { TermTabs } from "src/components/TermTabs";
 import { EmptyTerminalState } from "src/components/EmptyTerminalState";
 import { LimaConfigTabContent } from "src/components/LimaConfigTabContent";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
@@ -105,7 +106,7 @@ export function App() {
     setActiveTab: React.Dispatch<React.SetStateAction<string>>,
   ) => {
     const tabIdx = currentTabs.findIndex((t) => t.id === tabId);
-    if (tabIdx === -1) return;
+    if (tabIdx === -1) {return;}
 
     const tab = currentTabs[tabIdx];
 
@@ -140,11 +141,11 @@ export function App() {
   ) => {
     setTabs((prev) =>
       prev.map((tab) => {
-        if (tab.id !== tabId) return tab;
+        if (tab.id !== tabId) {return tab;}
         return {
           ...tab,
           terminals: tab.terminals.map((term) => {
-            if (term.id !== termId) return term;
+            if (term.id !== termId) {return term;}
             return { ...term, sessionId };
           }),
         };

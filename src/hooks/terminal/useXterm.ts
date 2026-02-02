@@ -1,5 +1,7 @@
-import { useEffect, useState, RefObject } from "react";
-import { Terminal, ITerminalOptions } from "@xterm/xterm";
+import type { RefObject } from "react";
+import { useEffect, useState } from "react";
+import type { ITerminalOptions } from "@xterm/xterm";
+import { Terminal } from "@xterm/xterm";
 import { TERM_CONFIG } from "./config";
 
 /**
@@ -13,7 +15,7 @@ export function useXterm(
   const [terminal, setTerminal] = useState<Terminal | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {return;}
 
     const term = new Terminal(options);
     term.open(containerRef.current);

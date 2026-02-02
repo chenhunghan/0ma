@@ -1,11 +1,11 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Separator } from "src/components/ui/separator";
 import { Button } from "src/components/ui/button";
-import { Terminal as TerminalIcon, Columns2Icon, SquarePlusIcon, XIcon } from "lucide-react";
+import { Columns2Icon, SquarePlusIcon, Terminal as TerminalIcon, XIcon } from "lucide-react";
 import { useIsMobile } from "src/hooks/useMediaQuery";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "src/components/ui/resizable";
-import { Terminal } from "src/services/Terminal";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "src/components/ui/resizable";
+import type { Terminal } from "src/services/Terminal";
 import { TerminalRow } from "./TermRow";
 import { TerminalResizeProvider } from "src/contexts/TerminalResizeContext";
 import { useTerminalResizeContext } from "src/contexts/useTerminalResizeContext";
@@ -106,7 +106,7 @@ function TermTabsInner({
         {tabs.length === 0
           ? emptyState
           : tabs.map((tab) => {
-              const terminals = tab.terminals;
+              const {terminals} = tab;
               const needsTwoRows = terminals.length > 5;
               const row1 = needsTwoRows
                 ? terminals.slice(0, Math.ceil(terminals.length / 2))
@@ -137,8 +137,8 @@ function TermTabsInner({
                       <ResizableHandle
                         withHandle
                         onDragging={(isDragging) => {
-                          if (isDragging) onDragStart();
-                          else onDragEnd();
+                          if (isDragging) {onDragStart();}
+                          else {onDragEnd();}
                         }}
                       />
                       <ResizablePanel defaultSize={50} minSize={20}>

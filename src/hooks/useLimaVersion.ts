@@ -9,17 +9,15 @@ export function useLimaVersion() {
     refetch: checkLimaVersion,
   } = useQuery({
     queryKey: ["lima_version"],
-    queryFn: async () => {
-      return await invoke<string>("lima_version_cmd");
-    },
+    queryFn: async () => await invoke<string>("lima_version_cmd"),
     enabled: false, // Don't auto-fetch on mount
     retry: false, // Don't retry on error
   });
 
   return {
+    checkLimaVersion,
+    isLoadingLimaVersion,
     limaVersion,
     limaVersionError,
-    isLoadingLimaVersion,
-    checkLimaVersion,
   };
 }

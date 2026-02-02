@@ -1,24 +1,24 @@
 import React from "react";
 import {
-  Cpu,
+  Activity,
   ChevronDown,
   ChevronRight,
+  Copy,
+  Cpu,
   FileText,
+  FolderInput,
+  Image as ImageIcon,
   Plus,
-  Trash2,
-  Activity,
   ScrollText,
   Settings,
-  Image as ImageIcon,
-  FolderInput,
-  Copy,
+  Trash2,
 } from "lucide-react";
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-yaml";
 import "prismjs/components/prism-bash";
 import { Select } from "./Select";
-import { LimaConfig, Image, Mount, CopyToHost, Provision, Probe } from "../types/LimaConfig";
+import type { CopyToHost, Image, LimaConfig, Mount, Probe, Provision } from "../types/LimaConfig";
 
 interface LimaConfigFormProps {
   parsedConfig?: LimaConfig;
@@ -72,14 +72,14 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
 
   const effectiveShowScripts = propsShowScripts ?? localShowScripts;
   const handleToggleScripts = (val: boolean) => {
-    if (onToggleScripts) onToggleScripts(val);
-    else setLocalShowScripts(val);
+    if (onToggleScripts) {onToggleScripts(val);}
+    else {setLocalShowScripts(val);}
   };
 
   const effectiveShowProbes = propsShowProbes ?? localShowProbes;
   const handleToggleProbes = (val: boolean) => {
-    if (onToggleProbes) onToggleProbes(val);
-    else setLocalShowProbes(val);
+    if (onToggleProbes) {onToggleProbes(val);}
+    else {setLocalShowProbes(val);}
   };
 
   const updateArrayItem = (
@@ -216,7 +216,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                 </span>
               </button>
               <button
-                onClick={() => addArrayItem("images", { location: "", arch: "x86_64" })}
+                onClick={() => addArrayItem("images", { arch: "x86_64", location: "" })}
                 className="p-1 hover:bg-zinc-800 rounded transition-colors"
                 title="Add Image"
               >
@@ -348,7 +348,7 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
               </button>
               <button
                 onClick={() =>
-                  addArrayItem("copyToHost", { guest: "", host: "", deleteOnStop: true })
+                  addArrayItem("copyToHost", { deleteOnStop: true, guest: "", host: "" })
                 }
                 className="p-1 hover:bg-zinc-800 rounded transition-colors"
                 title="Add Copy Rule"
@@ -500,9 +500,9 @@ export const LimaConfigForm: React.FC<LimaConfigFormProps> = ({
                             padding={10}
                             className="font-mono"
                             style={{
-                              fontSize: 11,
                               backgroundColor: "#1e1e1e",
                               color: "#e0e0e0",
+                              fontSize: 11,
                             }}
                           />
                         </div>

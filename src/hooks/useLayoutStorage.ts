@@ -13,12 +13,10 @@ export function useLayoutStorage() {
 
   const resizableLayoutStorage = useMemo(
     () => ({
-      getItem: (name: string): string | null => {
-        return resizableLayout?.[name] || null;
-      },
+      getItem: (name: string): string | null => resizableLayout?.[name] || null,
       setItem: (name: string, value: string): void => {
         set("resizable-layouts", {
-          ...(resizableLayout || {}),
+          ...resizableLayout,
           [name]: value,
         });
       },
@@ -30,7 +28,7 @@ export function useLayoutStorage() {
   const setActiveTab = useCallback(
     (value: string) => {
       set("app-tabs", {
-        ...(tabs || {}),
+        ...tabs,
         activeTab: value,
       });
     },
@@ -38,10 +36,10 @@ export function useLayoutStorage() {
   );
 
   return {
-    resizableLayoutStorage,
     activeTab,
-    setActiveTab,
     isLoadingActiveTabs: !isFetched,
     isLoadingStore,
+    resizableLayoutStorage,
+    setActiveTab,
   };
 }

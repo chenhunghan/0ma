@@ -1,4 +1,5 @@
-import { Terminal, ITerminalOptions } from "@xterm/xterm";
+import type { ITerminalOptions } from "@xterm/xterm";
+import { Terminal } from "@xterm/xterm";
 
 export interface TerminalInstance {
   term: Terminal;
@@ -13,7 +14,7 @@ class TerminalManager {
   getOrCreate(id: string, options: ITerminalOptions): TerminalInstance {
     if (!this.instances.has(id)) {
       const term = new Terminal(options);
-      this.instances.set(id, { term, initialized: false });
+      this.instances.set(id, { initialized: false, term });
     }
     return this.instances.get(id)!;
   }
@@ -25,8 +26,8 @@ class TerminalManager {
   dispose(id: string) {
     const inst = this.instances.get(id);
     if (inst) {
-      if (inst.intervalId) clearInterval(inst.intervalId);
-      if (inst.cleanup) inst.cleanup();
+      if (inst.intervalId) {clearInterval(inst.intervalId);}
+      if (inst.cleanup) {inst.cleanup();}
       inst.term.dispose();
       this.instances.delete(id);
     }

@@ -1,6 +1,7 @@
-import { createContext, useContext, useCallback, useMemo } from "react";
-import { load, Store } from "@tauri-apps/plugin-store";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import type { Store } from "@tauri-apps/plugin-store";
+import { load } from "@tauri-apps/plugin-store";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { defaultGlobalStoreFileName, queryKeyForValue } from "./tauri-store-constants";
 
 interface TauriStoreContextType {
@@ -37,11 +38,11 @@ export function TauriStoreProvider({
     isLoading: isLoadingStore,
     error: errorLoadingStore,
   } = useQuery({
-    queryKey: ["tauri-store", storeFileName],
+    initialData: null,
     queryFn: async () => {
       return await load(storeFileName, { autoSave: false, defaults: {} });
     },
-    initialData: null,
+    queryKey: ["tauri-store", storeFileName],
   });
 
   const {
@@ -108,18 +109,18 @@ export function TauriStoreProvider({
 
   const contextValue = useMemo(
     () => ({
-      store,
-      isLoadingStore,
       errorLoadingStore,
-      save,
-      isSaving,
-      errorSave,
-      set,
-      isSetting,
-      errorSet,
-      remove,
-      isRemoving,
       errorRemove,
+      errorSave,
+      errorSet,
+      isLoadingStore,
+      isRemoving,
+      isSaving,
+      isSetting,
+      remove,
+      save,
+      set,
+      store,
       storeFileName,
     }),
     [
@@ -156,13 +157,13 @@ export function useTauriStoreValue<T = unknown>(key: string) {
   const { store, storeFileName } = useTauriStore();
 
   return useQuery({
-    queryKey: [queryKeyForValue, storeFileName, key],
+    enabled: !!store,
+    initialData: null,
     queryFn: async () => {
       if (!store) return null;
       const value = await store.get<T>(key);
       return value ?? null;
     },
-    enabled: !!store,
-    initialData: null,
+    queryKey: [queryKeyForValue, storeFileName, key],
   });
 }

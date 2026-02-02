@@ -1,4 +1,4 @@
-import { Log } from "src/types/Log";
+import type { Log } from "src/types/Log";
 
 export const insertLog = (logs: Log[], newLog: Log): Log[] => {
   // If empty or newLog is newer/equal to the last one, append.

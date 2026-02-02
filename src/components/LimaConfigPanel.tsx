@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronUp, GripHorizontal } from "lucide-react";
 import { LimaConfigForm } from "./LimaConfigForm";
-import { LimaConfig } from "../types/LimaConfig";
+import type { LimaConfig } from "../types/LimaConfig";
 
 interface LimaConfigPanelProps {
   parsedConfig?: LimaConfig;
@@ -41,8 +41,7 @@ export const LimaConfigPanel: React.FC<LimaConfigPanelProps> = ({
   onClose,
   panelHeight,
   handlePanelResizeStart,
-}) => {
-  return (
+}) => (
     <div
       className="bg-zinc-900 border-b border-zinc-800 shadow-xl relative z-10 flex-none animate-in slide-in-from-top-2 fade-in duration-200 font-mono"
       style={{ height: panelHeight }}
@@ -80,4 +79,3 @@ export const LimaConfigPanel: React.FC<LimaConfigPanelProps> = ({
       </div>
     </div>
   );
-};

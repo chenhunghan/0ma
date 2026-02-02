@@ -1,5 +1,5 @@
-import { Session } from "./TerminalSession";
-import { LimaConfig } from "./LimaConfig";
+import type { Session } from "./TerminalSession";
+import type { LimaConfig } from "./LimaConfig";
 
 export interface InstanceUIState {
   activeTab: "lima" | "k8s" | "config";

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useXterm, useTerminalSession } from "../hooks/terminal";
+import { useTerminalSession, useXterm } from "../hooks/terminal";
 import { useTerminalResize } from "../hooks/terminal/useTerminalResize";
 import { useTerminalResizeContext } from "src/contexts/useTerminalResizeContext";
 import "@xterm/xterm/css/xterm.css";
@@ -29,19 +29,17 @@ export function TerminalComponent({
 
   const { onDragEnd, waitForReady } = useTerminalResize({
     containerRef,
-    terminal,
     isActive,
+    terminal,
   });
 
   // Subscribe to drag end events
-  useEffect(() => {
-    return subscribeDragEnd(onDragEnd);
-  }, [subscribeDragEnd, onDragEnd]);
+  useEffect(() => subscribeDragEnd(onDragEnd), [subscribeDragEnd, onDragEnd]);
 
   // Wait for terminal dimensions to be ready, then spawn/connect
   useEffect(() => {
-    log.debug(`[Terminal] useEffect: terminal=${!!terminal} isReady=${isReady}`);
-    if (!terminal || isReady) return;
+    log.debug(`[Terminal] useEffect: terminal=${Boolean(terminal)} isReady=${isReady}`);
+    if (!terminal || isReady) {return;}
 
     let cancelled = false;
 
@@ -49,7 +47,7 @@ export function TerminalComponent({
     // Wait for xterm to initialize dimensions before spawning
     waitForReady().then((ready) => {
       log.debug(`[Terminal] waitForReady resolved: ready=${ready} cancelled=${cancelled}`);
-      if (cancelled || !ready) return;
+      if (cancelled || !ready) {return;}
 
       if (propsSessionId) {
         log.debug(`[Terminal] connecting to session ${propsSessionId}`);
@@ -57,8 +55,8 @@ export function TerminalComponent({
       } else {
         log.debug(`[Terminal] spawning session ${initialCommand}`);
         spawn({
-          command: initialCommand,
           args: initialArgs,
+          command: initialCommand,
           cwd,
         });
       }

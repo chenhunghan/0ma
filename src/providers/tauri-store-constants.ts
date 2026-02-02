@@ -3,7 +3,7 @@ export const defaultGlobalStoreFileName = "app.json";
 export const queryKeyForValue = "tauri-store-value";
 
 export const DEFAULT_TAURI_STORE_STATE = {
-  store: null,
-  isLoading: true,
   error: null,
+  isLoading: true,
+  store: null,
 };

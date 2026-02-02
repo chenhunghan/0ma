@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Log, LogState } from "src/types/Log";
+import type { Log, LogState } from "src/types/Log";
 import { insertLog } from "src/services/insertLog";
 
 interface LimaLogPayload {
@@ -12,17 +12,17 @@ interface LimaLogPayload {
 }
 
 const DEFAULT_LIMA_STOP_STATE: LogState = {
-  stdout: [],
-  stderr: [],
   error: [],
   isLoading: false,
   isSuccess: undefined,
+  stderr: [],
+  stdout: [],
 };
 
 const getStopLogsQueryKey = (instanceName: string) => ["lima", "stop-logs", instanceName];
 
 /**
- * useOnLimaStopLogs
+ * UseOnLimaStopLogs
  *
  * Tracks the logs for the "stop instance" operation.
  * Similar to useOnLimaStartLogs but for the stop command.
@@ -37,24 +37,24 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
   }, [options?.onSuccess]);
 
   const { data } = useQuery({
-    queryKey,
-    queryFn: () => queryClient.getQueryData<LogState>(queryKey),
-    staleTime: Infinity,
     gcTime: Infinity,
     initialData: DEFAULT_LIMA_STOP_STATE,
+    queryFn: () => queryClient.getQueryData<LogState>(queryKey),
+    queryKey,
+    staleTime: Infinity,
   });
 
   useEffect(() => {
     // Skip listener setup when instanceName is empty
-    if (!instanceName) return;
+    if (!instanceName) {return;}
 
     let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
     const updateCache = (updater: (prev: LogState) => LogState) => {
-      if (!active) return;
+      if (!active) {return;}
       queryClient.setQueryData<LogState>(queryKey, (prev) => {
-        if (!prev) return DEFAULT_LIMA_STOP_STATE;
+        if (!prev) {return DEFAULT_LIMA_STOP_STATE;}
         return updater(prev);
       });
     };
@@ -62,7 +62,7 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
     // 1. Stop Started
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-stop", (event) => {
-        if (event.payload.instance_name !== instanceName) return;
+        if (event.payload.instance_name !== instanceName) {return;}
 
         updateCache(() => ({
           // Reset all logs
@@ -76,11 +76,11 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-stop-stdout", (event) => {
         const { instance_name, message, message_id, timestamp } = event.payload;
-        if (instance_name !== instanceName) return;
+        if (instance_name !== instanceName) {return;}
 
         updateCache((prev) => {
           // Deduplicate
-          if (prev.stdout.some((l) => l.id === message_id)) return prev;
+          if (prev.stdout.some((l) => l.id === message_id)) {return prev;}
 
           const newLog: Log = { id: message_id, message, timestamp };
           return { ...prev, stdout: insertLog(prev.stdout, newLog) };
@@ -92,11 +92,11 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-stop-stderr", (event) => {
         const { instance_name, message, message_id, timestamp } = event.payload;
-        if (instance_name !== instanceName) return;
+        if (instance_name !== instanceName) {return;}
 
         updateCache((prev) => {
           // Deduplicate
-          if (prev.stderr.some((l) => l.id === message_id)) return prev;
+          if (prev.stderr.some((l) => l.id === message_id)) {return prev;}
 
           const newLog: Log = { id: message_id, message, timestamp };
           return { ...prev, stderr: insertLog(prev.stderr, newLog) };
@@ -108,10 +108,10 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-stop-error", (event) => {
         const { instance_name, message, message_id, timestamp } = event.payload;
-        if (instance_name !== instanceName) return;
+        if (instance_name !== instanceName) {return;}
 
         updateCache((prev) => {
-          if (prev.error.some((l) => l.id === message_id)) return prev;
+          if (prev.error.some((l) => l.id === message_id)) {return prev;}
 
           const newLog: Log = { id: message_id, message, timestamp };
           return {
@@ -126,7 +126,7 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
     // 5. Success
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-stop-success", (event) => {
-        if (event.payload.instance_name !== instanceName) return;
+        if (event.payload.instance_name !== instanceName) {return;}
 
         updateCache((prev) => ({
           ...prev,
@@ -154,11 +154,11 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
   }, [instanceName, queryClient, queryKey]);
 
   return {
-    stdout: data?.stdout ?? [],
-    stderr: data?.stderr ?? [],
     error: data?.error ?? [],
     isLoading: data?.isLoading ?? false,
     isSuccess: data?.isSuccess,
     reset: () => queryClient.setQueryData(queryKey, DEFAULT_LIMA_STOP_STATE),
+    stderr: data?.stderr ?? [],
+    stdout: data?.stdout ?? [],
   };
 }

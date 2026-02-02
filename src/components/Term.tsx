@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import "@xterm/xterm/css/xterm.css";
-import { useXterm, useTerminalSession, TERM_CONFIG } from "../hooks/terminal";
+import { TERM_CONFIG, useTerminalSession, useXterm } from "../hooks/terminal";
 
 const TERM_HIDDEN_CURSOR_CONFIG = {
   ...TERM_CONFIG,

@@ -1,8 +1,8 @@
-import { useMemo, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { isEqual } from "lodash";
 import { useLimaYaml } from "./useLimaYaml";
 import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-provider";
-import { LimaConfig } from "src/types/LimaConfig";
+import type { LimaConfig } from "src/types/LimaConfig";
 
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
@@ -39,7 +39,7 @@ export function useUpdateLimaInstanceDraft() {
 
   // Derived dirty state
   const isDirty = useMemo(() => {
-    if (!actualConfig || !draftConfig) return false;
+    if (!actualConfig || !draftConfig) {return false;}
     return !isEqual(actualConfig, draftConfig);
   }, [actualConfig, draftConfig]);
 
@@ -73,15 +73,15 @@ export function useUpdateLimaInstanceDraft() {
   }, [draftConfig, writeLimaYaml]);
 
   return {
-    draftConfig,
     actualConfig,
+    applyDraft,
+    applyError: writeLimaError,
+    draftConfig,
+    isApplying: isWritingLima,
     isDirty,
     isLoading: isLoadingLima || isLoadingDraft,
-    isApplying: isWritingLima,
-    applyError: writeLimaError,
-    updateField,
-    updateDraftConfig,
     resetDraft,
-    applyDraft,
+    updateDraftConfig,
+    updateField,
   };
 }

@@ -1,4 +1,4 @@
-import { PortForward } from "src/types/LimaConfig";
+import type { PortForward } from "src/types/LimaConfig";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 

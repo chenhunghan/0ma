@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
-import { LimaConfig } from "../types/LimaConfig";
+import type { LimaConfig } from "../types/LimaConfig";
 
 export function useLimaYaml(instanceName: string | null) {
   const queryClient = useQueryClient();
@@ -11,17 +11,17 @@ export function useLimaYaml(instanceName: string | null) {
     isLoading: isLoadingLima,
     refetch: refetchLima,
   } = useQuery({
-    queryKey: ["lima_yaml", instanceName],
+    enabled: !!instanceName,
     queryFn: async () => {
       return await invoke<LimaConfig>("read_lima_yaml_cmd", { instanceName });
     },
-    enabled: !!instanceName, // Only fetch if instanceName is provided
+    queryKey: ["lima_yaml", instanceName], // Only fetch if instanceName is provided
   });
 
   // Write Lima YAML
   const writeLimaYamlMutation = useMutation({
     mutationFn: async (config: LimaConfig) => {
-      await invoke("write_lima_yaml_cmd", { instanceName, config });
+      await invoke("write_lima_yaml_cmd", { config, instanceName });
     },
     onSuccess: async () => {
       // Invalidate and refetch the Lima YAML after writing
@@ -38,18 +38,16 @@ export function useLimaYaml(instanceName: string | null) {
     isLoading: isLoadingLimaYamlPath,
     refetch: fetchLimaYamlPath,
   } = useQuery({
-    queryKey: ["lima_yaml_path", instanceName],
+    enabled: false,
     queryFn: async () => {
       return await invoke<string>("get_lima_yaml_path_cmd", { instanceName });
     },
-    enabled: false, // Don't auto-fetch on mount
+    queryKey: ["lima_yaml_path", instanceName], // Don't auto-fetch on mount
   });
 
   // Reset Lima YAML to bundled version
   const resetLimaYamlMutation = useMutation({
-    mutationFn: async () => {
-      return await invoke<LimaConfig>("reset_lima_yaml_cmd", { instanceName });
-    },
+    mutationFn: async () => await invoke<LimaConfig>("reset_lima_yaml_cmd", { instanceName }),
     onSuccess: async (newConfig) => {
       // Update the cache with the new config
       queryClient.setQueryData(["lima_yaml", instanceName], newConfig);
@@ -57,19 +55,19 @@ export function useLimaYaml(instanceName: string | null) {
   });
 
   return {
+    fetchLimaYamlPath,
+    isLoadingLima,
+    isLoadingLimaYamlPath,
+    isResettingLima: resetLimaYamlMutation.isPending,
+    isWritingLima: writeLimaYamlMutation.isPending,
     limaConfig,
     limaError,
-    isLoadingLima,
-    refetchLima,
-    writeLimaYaml: writeLimaYamlMutation.mutate,
-    isWritingLima: writeLimaYamlMutation.isPending,
-    writeLimaError: writeLimaYamlMutation.error,
     limaYamlPath,
     limaYamlPathError,
-    isLoadingLimaYamlPath,
-    fetchLimaYamlPath,
-    resetLimaYaml: resetLimaYamlMutation.mutate,
-    isResettingLima: resetLimaYamlMutation.isPending,
+    refetchLima,
     resetLimaError: resetLimaYamlMutation.error,
+    resetLimaYaml: resetLimaYamlMutation.mutate,
+    writeLimaError: writeLimaYamlMutation.error,
+    writeLimaYaml: writeLimaYamlMutation.mutate,
   };
 }

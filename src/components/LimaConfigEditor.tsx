@@ -1,7 +1,7 @@
 import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
 import Editor from "@monaco-editor/react";
-import { useState, useEffect } from "react";
-import { stringify, parse } from "yaml";
+import { useEffect, useState } from "react";
+import { parse, stringify } from "yaml";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { isEqual } from "lodash";
 import { Spinner } from "./ui/spinner";
@@ -23,7 +23,7 @@ export function LimaConfigEditor() {
         }
       } catch {
         // If local YAML is invalid, and draftConfig exists, we might want to sync
-        // but wait if user is typing. For now, just sync if yamlValue is empty.
+        // But wait if user is typing. For now, just sync if yamlValue is empty.
         if (!yamlValue) {
           setYamlValue(currentYaml);
         }
@@ -43,23 +43,23 @@ export function LimaConfigEditor() {
         updateDraftConfig(parsed);
       }
       setError(null);
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        setError(e.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
       } else {
-        setError(String(e));
+        setError(String(error));
       }
     }
   };
 
   if (isLoading)
-    return (
+    {return (
       <div className="flex items-center justify-center h-full w-full">
         <div title="Loading config draft...">
           <Spinner />
         </div>
       </div>
-    );
+    );}
 
   return (
     <div className="flex flex-col h-full bg-background border-l border-border relative">
@@ -87,17 +87,17 @@ export function LimaConfigEditor() {
           value={yamlValue}
           onChange={handleEditorChange}
           options={{
-            minimap: { enabled: false },
-            fontSize: 12,
-            lineNumbers: "on",
-            scrollBeyondLastLine: false,
             automaticLayout: true,
-            padding: { top: 16, bottom: 16 },
-            glyphMargin: false,
-            folding: true,
-            lineDecorationsWidth: 5,
-            lineNumbersMinChars: 3,
             contextmenu: false,
+            folding: true,
+            fontSize: 12,
+            glyphMargin: false,
+            lineDecorationsWidth: 5,
+            lineNumbers: "on",
+            lineNumbersMinChars: 3,
+            minimap: { enabled: false },
+            padding: { top: 16, bottom: 16 },
+            scrollBeyondLastLine: false,
             scrollbar: {
               verticalScrollbarSize: 6,
               horizontalScrollbarSize: 6,

@@ -13,8 +13,8 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Trash2Icon, PlusIcon, PencilIcon } from "lucide-react";
-import { Probe } from "src/types/LimaConfig";
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import type { Probe } from "src/types/LimaConfig";
 import Editor from "@monaco-editor/react";
 
 interface Props {
@@ -101,16 +101,16 @@ export function ProbesDialog({ value: probes, onChange }: Props) {
                     value={p.script}
                     onChange={(val) => updateArrayField(idx, "script", val || "")}
                     options={{
-                      minimap: { enabled: false },
-                      fontSize: 11,
-                      lineNumbers: "off",
-                      scrollBeyondLastLine: false,
                       automaticLayout: true,
-                      padding: { top: 8, bottom: 8 },
-                      glyphMargin: false,
                       folding: false,
+                      fontSize: 11,
+                      glyphMargin: false,
                       lineDecorationsWidth: 0,
+                      lineNumbers: "off",
                       lineNumbersMinChars: 3,
+                      minimap: { enabled: false },
+                      padding: { top: 8, bottom: 8 },
+                      scrollBeyondLastLine: false,
                       scrollbar: {
                         verticalScrollbarSize: 6,
                         horizontalScrollbarSize: 6,

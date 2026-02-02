@@ -1,4 +1,5 @@
-import { ReactNode, Fragment } from "react";
+import type { ReactNode} from "react";
+import { Fragment } from "react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "src/components/ui/resizable";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 import { useIsMobile } from "src/hooks/useMediaQuery";
@@ -34,7 +35,7 @@ export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayout
           </ResizablePanelGroup>
         </ResizablePanel>
       ) : (
-        <ResizablePanel defaultSize={0}></ResizablePanel>
+        <ResizablePanel defaultSize={0} />
       )}
 
       <ResizableHandle className={columns.length > 0 ? "" : "hidden"} />

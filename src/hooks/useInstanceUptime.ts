@@ -7,11 +7,9 @@ import { invoke } from "@tauri-apps/api/core";
 export function useInstanceUptime(instanceName: string, enabled = true) {
   return useQuery({
     queryKey: ["instance-uptime", instanceName],
-    queryFn: async () => {
-      return await invoke<string>("get_instance_uptime_cmd", { instanceName });
-    },
-    enabled: enabled && !!instanceName,
-    staleTime: 10000, // Uptime changes every second, but we don't need to refresh that often
-    refetchInterval: 60000, // Refresh every minute
+    queryFn: async () => await invoke<string>("get_instance_uptime_cmd", { instanceName }),
+    enabled: enabled && Boolean(instanceName),
+    staleTime: 10_000, // Uptime changes every second, but we don't need to refresh that often
+    refetchInterval: 60_000, // Refresh every minute
   });
 }

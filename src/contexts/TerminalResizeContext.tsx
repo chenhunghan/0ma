@@ -1,4 +1,5 @@
-import { useCallback, useState, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useCallback, useState } from "react";
 import { TerminalResizeContext } from "./terminalResizeContextDef";
 
 export function TerminalResizeProvider({ children }: { children: ReactNode }) {
@@ -27,8 +28,8 @@ export function TerminalResizeProvider({ children }: { children: ReactNode }) {
     <TerminalResizeContext.Provider
       value={{
         isDragging,
-        onDragStart,
         onDragEnd,
+        onDragStart,
         subscribeDragEnd,
       }}
     >

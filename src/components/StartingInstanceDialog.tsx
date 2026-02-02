@@ -81,9 +81,9 @@ function StartingInstanceDialogContent({
         <DialogDescription>
           {isSuccess
             ? "The instance has started successfully."
-            : isReady
+            : (isReady
               ? "The instance is ready, you can close the dialog"
-              : "Please wait while the instance starts."}
+              : "Please wait while the instance starts.")}
         </DialogDescription>
       </DialogHeader>
       {children}
@@ -93,7 +93,7 @@ function StartingInstanceDialogContent({
           title={isSuccess ? "Close the dialog" : "The instance is ready, you can close the dialog"}
           onClick={onClose}
         >
-          {isSuccess ? "Done" : isReady ? "Ready" : "Close"}
+          {isSuccess ? "Done" : (isReady ? "Ready" : "Close")}
         </Button>
       </DialogFooter>
     </DialogContent>

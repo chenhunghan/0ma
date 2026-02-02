@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-provider";
-import { LimaConfig } from "src/types/LimaConfig";
+import type { LimaConfig } from "src/types/LimaConfig";
 import { useDefaultK0sLimaConfig } from "./useDefaultK0sLimaConfig";
 
 const NEW_INSTANCE_DRAFT_KEY = "newLimaInstanceDraft";
@@ -77,10 +77,10 @@ export function useCreateLimaInstanceDraft() {
   return {
     draftConfig: draftConfig,
     instanceName: instanceName || "",
-    setInstanceName,
     isLoading,
-    updateField,
-    updateDraftConfig,
     resetDraft,
+    setInstanceName,
+    updateDraftConfig,
+    updateField,
   };
 }

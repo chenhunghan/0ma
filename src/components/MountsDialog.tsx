@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { Mount } from "src/types/LimaConfig";
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import type { Mount } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -46,7 +46,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && hasInvalid) return;
+        if (!open && hasInvalid) {return;}
         setIsOpen(open);
       }}
     >

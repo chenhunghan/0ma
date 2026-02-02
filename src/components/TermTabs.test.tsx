@@ -1,14 +1,13 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TermTabs } from "./TermTabs";
-import { Terminal } from "src/services/Terminal";
+import type { Terminal } from "src/services/Terminal";
 import { TerminalRow } from "./TermRow";
 import { EmptyTerminalState } from "./EmptyTerminalState";
 
 // Utility to mock window.matchMedia state
 const setMobile = (isMobile: boolean) => {
   Object.defineProperty(window, "matchMedia", {
-    writable: true,
     value: vi.fn().mockImplementation((query) => ({
       matches: isMobile,
       media: query,
@@ -19,10 +18,11 @@ const setMobile = (isMobile: boolean) => {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     })),
+    writable: true,
   });
 };
 
-describe("TerminalRow", () => {
+describe(TerminalRow, () => {
   const mockOnSessionCreated = vi.fn();
   const mockTerminals: Terminal[] = [
     { id: 1, name: "Term 1" },
@@ -103,7 +103,7 @@ describe("TerminalRow", () => {
   });
 });
 
-describe("TermTabs", () => {
+describe(TermTabs, () => {
   const mockOnTabChange = vi.fn();
   const mockOnAddTab = vi.fn();
   const mockOnAddSideBySide = vi.fn();
@@ -166,7 +166,7 @@ describe("TermTabs", () => {
     const addButton = screen.getByTitle("New Tab");
     fireEvent.click(addButton);
 
-    expect(mockOnAddTab).toHaveBeenCalled();
+    expect(mockOnAddTab).toHaveBeenCalledWith();
   });
 
   it("calls onAddSideBySide when 'Side-by-side' button is clicked", () => {

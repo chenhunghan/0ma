@@ -14,11 +14,9 @@ export interface DiskUsage {
 export function useInstanceDiskUsage(instanceName: string, enabled = true) {
   return useQuery({
     queryKey: ["instance-disk-usage", instanceName],
-    queryFn: async () => {
-      return await invoke<DiskUsage>("get_instance_disk_usage_cmd", { instanceName });
-    },
-    enabled: enabled && !!instanceName,
+    queryFn: async () => await invoke<DiskUsage>("get_instance_disk_usage_cmd", { instanceName }),
+    enabled: enabled && Boolean(instanceName),
     staleTime: 5000, // Disk usage changes frequently, keep fresh
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchInterval: 30_000, // Auto-refresh every 30 seconds
   });
 }

@@ -1,8 +1,8 @@
-import { useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { invoke, Channel } from "@tauri-apps/api/core";
-import { Terminal } from "@xterm/xterm";
-import { PtyEvent, SpawnOptions } from "./types";
+import { Channel, invoke } from "@tauri-apps/api/core";
+import type { Terminal } from "@xterm/xterm";
+import type { PtyEvent, SpawnOptions } from "./types";
 
 /**
  * Hook for spawning a new terminal session
@@ -11,19 +11,17 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
   const channelRef = useRef<Channel<PtyEvent> | null>(null);
 
   // Cleanup listener on unmount. We use a "soft unplug" (empty function)
-  // because Tauri v2 Channels don't have an explicit unlisten/close on the frontend.
+  // Because Tauri v2 Channels don't have an explicit unlisten/close on the frontend.
   // This stops the UI from processing data while letting the PTY stay alive.
-  useEffect(() => {
-    return () => {
+  useEffect(() => () => {
       if (channelRef.current) {
         channelRef.current.onmessage = () => {};
       }
-    };
-  }, []);
+    }, []);
 
   const mutation = useMutation({
     mutationFn: async (options: SpawnOptions): Promise<string> => {
-      if (!terminal) throw new Error("Terminal not initialized");
+      if (!terminal) {throw new Error("Terminal not initialized");}
 
       // Silence the old listener before attaching a new session to this terminal instance.
       // This prevents "ghost output" from previous sessions appearing in the view.
@@ -33,11 +31,11 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
 
       // 1. Spawn PTY process
       const sid = await invoke<string>("spawn_pty_cmd", {
-        command: options.command,
         args: options.args,
+        cols: terminal.cols,
+        command: options.command,
         cwd: options.cwd,
         rows: terminal.rows,
-        cols: terminal.cols,
       });
 
       // 2. Create channel for output
@@ -52,7 +50,7 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
       };
 
       // 3. Attach channel to session
-      await invoke("attach_pty_cmd", { sessionId: sid, channel });
+      await invoke("attach_pty_cmd", { channel, sessionId: sid });
       channelRef.current = channel;
 
       return sid;
@@ -60,10 +58,10 @@ export function useTerminalSessionSpawn(terminal: Terminal | null) {
   });
 
   return {
+    isSpawned: mutation.isSuccess,
+    isSpawning: mutation.isPending,
     sessionId: mutation.data ?? null,
     spawn: mutation.mutate,
-    isSpawning: mutation.isPending,
     spawnError: mutation.error,
-    isSpawned: mutation.isSuccess,
   };
 }

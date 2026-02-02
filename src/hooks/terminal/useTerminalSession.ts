@@ -1,4 +1,4 @@
-import { Terminal } from "@xterm/xterm";
+import type { Terminal } from "@xterm/xterm";
 import { useTerminalSessionSpawn } from "./useTerminalSessionSpawn";
 import { useTerminalSessionConnect } from "./useTerminalSessionConnect";
 import { useTerminalSessionInput } from "./useTerminalSessionInput";

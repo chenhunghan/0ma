@@ -9,7 +9,6 @@ afterEach(() => {
 
 // Mock matchMedia if it doesn't exist (needed for useMediaQuery hooks)
 Object.defineProperty(window, "matchMedia", {
-  writable: true,
   value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
@@ -20,6 +19,7 @@ Object.defineProperty(window, "matchMedia", {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+  writable: true,
 });
 
 // Mock ResizeObserver

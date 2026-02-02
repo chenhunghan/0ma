@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { CopyToHost } from "src/types/LimaConfig";
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import type { CopyToHost } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -33,7 +33,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
   };
 
   const addRule = () => {
-    onChange([...rules, { guest: "", host: "", deleteOnStop: false }]);
+    onChange([...rules, { deleteOnStop: false, guest: "", host: "" }]);
   };
 
   const removeRule = (index: number) => {
@@ -46,7 +46,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && hasInvalid) return;
+        if (!open && hasInvalid) {return;}
         setIsOpen(open);
       }}
     >

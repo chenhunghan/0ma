@@ -57,34 +57,31 @@ export interface UIPod {
   ip: string;
   age: string;
   labels: Record<string, string>;
-  env: Array<{ name: string; value: string; source: string }>;
+  env: { name: string; value: string; source: string }[];
 }
 
-const fetchK8sPods = async (instanceName: string): Promise<Pod[]> => {
-  return await invoke("get_k8s_pods_cmd", { instanceName });
-};
+const fetchK8sPods = async (instanceName: string): Promise<Pod[]> => await invoke("get_k8s_pods_cmd", { instanceName });
 
 // Calculate age from creationTimestamp
 const calculateAge = (timestamp?: string): string => {
-  if (!timestamp) return "Unknown";
+  if (!timestamp) {return "Unknown";}
   const created = new Date(timestamp);
   const now = new Date();
   const diffMs = now.getTime() - created.getTime();
 
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays > 0) return `${diffDays}d`;
+  if (diffDays > 0) {return `${diffDays}d`;}
 
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (diffHours > 0) return `${diffHours}h`;
+  if (diffHours > 0) {return `${diffHours}h`;}
 
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  if (diffMinutes > 0) return `${diffMinutes}m`;
+  if (diffMinutes > 0) {return `${diffMinutes}m`;}
 
   return "Just now";
 };
 
-export const useK8sPods = (instanceName: string | undefined) => {
-  return useQuery({
+export const useK8sPods = (instanceName: string | undefined) => useQuery({
     queryKey: ["k8s-pods", instanceName],
     queryFn: () => (instanceName ? fetchK8sPods(instanceName) : Promise.resolve([])),
     enabled: !!instanceName,
@@ -134,4 +131,3 @@ export const useK8sPods = (instanceName: string | undefined) => {
     },
     refetchInterval: 5000,
   });
-};

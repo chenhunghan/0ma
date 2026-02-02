@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from 'class-variance-authority';
+import type { VariantProps } from 'class-variance-authority';
 
 import { cn } from "src/lib/utils";
 import { Separator } from "src/components/ui/separator";
@@ -9,6 +10,9 @@ import { Separator } from "src/components/ui/separator";
 const buttonGroupVariants = cva(
   "rounded-none has-[>[data-slot=button-group]]:gap-2 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-none flex w-fit items-stretch [&>*]:focus-visible:z-10 [&>*]:focus-visible:relative [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
   {
+    defaultVariants: {
+      orientation: "horizontal",
+    },
     variants: {
       orientation: {
         horizontal:
@@ -16,9 +20,6 @@ const buttonGroupVariants = cva(
         vertical:
           "flex-col [&>[data-slot]~[data-slot]]:rounded-t-none [&>[data-slot]~[data-slot]]:border-t-0 [&>[data-slot]]:rounded-b-none",
       },
-    },
-    defaultVariants: {
-      orientation: "horizontal",
     },
   },
 );

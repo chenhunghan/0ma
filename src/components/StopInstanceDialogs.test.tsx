@@ -1,5 +1,5 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StopInstanceDialogs } from "./StopInstanceDialogs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { InstanceStatus } from "src/types/InstanceStatus";
@@ -8,7 +8,7 @@ import { InstanceStatus } from "src/types/InstanceStatus";
 
 // Mock @tauri-apps/api/core
 const mockInvoke = vi.fn();
-vi.mock("@tauri-apps/api/core", () => ({
+vi.mock<typeof import('@tauri-apps/api/core')>("@tauri-apps/api/core", () => ({
   invoke: (cmd: string, args: unknown) => Promise.resolve(mockInvoke(cmd, args)),
 }));
 
@@ -27,7 +27,7 @@ const mockListen = vi.fn((event: string, handler: (event: unknown) => void) => {
   });
 });
 
-vi.mock("@tauri-apps/api/event", () => ({
+vi.mock<typeof import('@tauri-apps/api/event')>("@tauri-apps/api/event", () => ({
   listen: (event: string, handler: (event: unknown) => void) => mockListen(event, handler),
 }));
 
@@ -41,17 +41,17 @@ const emitEvent = (eventName: string, payload: unknown) => {
 
 // Mock useSelectedInstance
 const mockUseSelectedInstance = vi.fn();
-vi.mock("src/hooks/useSelectedInstance", () => ({
+vi.mock<typeof import('src/hooks/useSelectedInstance')>("src/hooks/useSelectedInstance", () => ({
   useSelectedInstance: () => mockUseSelectedInstance(),
 }));
 
 // Mock useLimaInstance
 const mockStopInstance = vi.fn();
 const mockStartInstance = vi.fn();
-vi.mock("src/hooks/useLimaInstance", () => ({
+vi.mock<typeof import('src/hooks/useLimaInstance')>("src/hooks/useLimaInstance", () => ({
   useLimaInstance: () => ({
-    stopInstance: mockStopInstance,
     startInstance: mockStartInstance,
+    stopInstance: mockStopInstance,
   }),
 }));
 
@@ -73,7 +73,7 @@ const createTestQueryClient = () =>
     },
   });
 
-describe("StopInstanceDialogs", () => {
+describe(StopInstanceDialogs, () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -91,9 +91,9 @@ describe("StopInstanceDialogs", () => {
 
   const renderComponent = (selectedInstanceOverride?: { status?: string; name?: string }) => {
     mockUseSelectedInstance.mockReturnValue({
+      isLoading: false,
       selectedInstance: selectedInstanceOverride || { status: InstanceStatus.Running },
       selectedName: selectedInstanceOverride?.name || "test-instance",
-      isLoading: false,
     });
 
     render(
@@ -103,11 +103,11 @@ describe("StopInstanceDialogs", () => {
     );
   };
 
-  it("Shows Start button if instance is stopped", () => {
+  it("shows Start button if instance is stopped", () => {
     mockUseSelectedInstance.mockReturnValue({
+      isLoading: false,
       selectedInstance: { status: InstanceStatus.Stopped },
       selectedName: "test-instance",
-      isLoading: false,
     });
 
     render(
@@ -123,7 +123,7 @@ describe("StopInstanceDialogs", () => {
     expect(screen.queryByLabelText("Stop Lima instance")).not.toBeInTheDocument();
   });
 
-  it("Disables stop button if instance status is unknown", () => {
+  it("disables stop button if instance status is unknown", () => {
     mockUseSelectedInstance.mockReturnValue({
       selectedInstance: { status: "Unknown" }, // Or undefined status
       selectedName: "test-instance",
@@ -140,13 +140,13 @@ describe("StopInstanceDialogs", () => {
     expect(stopButton).toBeDisabled();
   });
 
-  it("Enables stop button if instance is running", () => {
+  it("enables stop button if instance is running", () => {
     renderComponent();
     const stopButton = screen.getByLabelText("Stop Lima instance");
     expect(stopButton).not.toBeDisabled();
   });
 
-  it("Shows confirmation dialog on Stop click and cancels", async () => {
+  it("shows confirmation dialog on Stop click and cancels", async () => {
     renderComponent();
     const stopButton = screen.getByLabelText("Stop Lima instance");
     fireEvent.click(stopButton);
@@ -163,7 +163,7 @@ describe("StopInstanceDialogs", () => {
     expect(mockStopInstance).not.toHaveBeenCalled();
   });
 
-  it("Proceeds to stop and shows logs dialog", async () => {
+  it("proceeds to stop and shows logs dialog", async () => {
     renderComponent();
 
     // 1. Open Dialog
@@ -217,13 +217,13 @@ describe("StopInstanceDialogs", () => {
       expect(screen.getByText("Instance Stopped")).toBeInTheDocument();
       expect(screen.getByText("Done")).toBeInTheDocument();
     });
-  }, 30000);
+  }, 30_000);
 
-  it("Proceeds to Start flow for stopped instance", async () => {
+  it("proceeds to Start flow for stopped instance", async () => {
     mockUseSelectedInstance.mockReturnValue({
+      isLoading: false,
       selectedInstance: { status: InstanceStatus.Stopped },
       selectedName: "test-instance",
-      isLoading: false,
     });
 
     render(
