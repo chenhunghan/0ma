@@ -109,11 +109,11 @@ export function ProbesDialog({ value: probes, onChange }: Props) {
                       lineNumbers: "off",
                       lineNumbersMinChars: 3,
                       minimap: { enabled: false },
-                      padding: { top: 8, bottom: 8 },
+                      padding: { bottom: 8, top: 8 },
                       scrollBeyondLastLine: false,
                       scrollbar: {
-                        verticalScrollbarSize: 6,
                         horizontalScrollbarSize: 6,
+                        verticalScrollbarSize: 6,
                       },
                     }}
                   />

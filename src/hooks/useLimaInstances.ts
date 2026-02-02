@@ -14,7 +14,7 @@ export function useLimaInstances() {
       return registeredInstances;
     },
     queryKey: ["instances"],
-    staleTime: 30000, // Consider data stale after 30 seconds
+    staleTime: 30_000, // Consider data stale after 30 seconds
   });
 
   return {

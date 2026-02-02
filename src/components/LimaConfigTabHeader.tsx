@@ -21,7 +21,7 @@ export const LimaConfigTabHeader: React.FC<LimaConfigTabHeaderProps> = ({
         <span className="underline decoration-dotted underline-offset-4">QUICK SETTINGS</span>
       </button>
 
-      <div className="w-px h-3 bg-zinc-800"></div>
+      <div className="w-px h-3 bg-zinc-800" />
       <span className="text-zinc-500 uppercase text-[10px]">YAML Editor Mode</span>
     </>
   );

@@ -52,14 +52,14 @@ vi.mock<typeof import('src/hooks/useLayoutStorage')>("src/hooks/useLayoutStorage
 const mockDraftConfig: LimaConfig = {
   arch: "aarch64",
   audio: { device: "coreaudio" },
-  caCerts: { removeDefaults: false, files: [], certs: [] },
+  caCerts: { certs: [], files: [], removeDefaults: false },
   containerd: { system: false, user: false },
   cpus: 4,
   disk: "100GiB",
   env: {},
   firmware: { legacyBIOS: false },
-  hostResolver: { enabled: true, ipv6: false, hosts: {} },
-  images: [{ location: "https://example.com/image.img", arch: "aarch64" }],
+  hostResolver: { enabled: true, hosts: {}, ipv6: false },
+  images: [{ arch: "aarch64", location: "https://example.com/image.img" }],
   memory: "4GiB",
   message: "",
   mounts: [],
@@ -68,8 +68,8 @@ const mockDraftConfig: LimaConfig = {
   portForwards: [],
   probes: [],
   propagateProxyEnv: false,
-  rosetta: { enabled: false, bin: true },
-  ssh: { localPort: 60022, loadDotSSHPubKeys: true, forwardAgent: false },
+  rosetta: { bin: true, enabled: false },
+  ssh: { forwardAgent: false, loadDotSSHPubKeys: true, localPort: 60_022 },
   video: { display: "cocoa" },
 };
 

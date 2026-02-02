@@ -9,14 +9,14 @@ import { EmptyTerminalState } from "./EmptyTerminalState";
 const setMobile = (isMobile: boolean) => {
   Object.defineProperty(window, "matchMedia", {
     value: vi.fn().mockImplementation((query) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
       matches: isMobile,
       media: query,
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
+      removeListener: vi.fn(),
     })),
     writable: true,
   });

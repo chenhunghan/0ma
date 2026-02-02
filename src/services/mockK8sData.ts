@@ -41,8 +41,8 @@ export const MOCK_PODS: MockPod[] = [
   {
     age: "4d",
     env: [
-      { name: "CONFIG_FILE", value: "/etc/coredns/Corefile", source: "configmap" },
-      { name: "MAX_RETRIES", value: "5", source: "literal" },
+      { name: "CONFIG_FILE", source: "configmap", value: "/etc/coredns/Corefile" },
+      { name: "MAX_RETRIES", source: "literal", value: "5" },
     ],
     id: "p1",
     ip: "10.42.0.5",
@@ -54,7 +54,7 @@ export const MOCK_PODS: MockPod[] = [
   },
   {
     age: "4d",
-    env: [{ name: "PROVISIONER_NAME", value: "rancher.io/local-path", source: "literal" }],
+    env: [{ name: "PROVISIONER_NAME", source: "literal", value: "rancher.io/local-path" }],
     id: "p2",
     ip: "10.42.0.6",
     labels: { app: "local-path-provisioner" },
@@ -66,9 +66,9 @@ export const MOCK_PODS: MockPod[] = [
   {
     age: "2h",
     env: [
-      { name: "POSTGRES_USER", value: "admin", source: "secret" },
-      { name: "POSTGRES_PASSWORD", value: "******", source: "secret" },
-      { name: "PGDATA", value: "/var/lib/postgresql/data", source: "literal" },
+      { name: "POSTGRES_USER", source: "secret", value: "admin" },
+      { name: "POSTGRES_PASSWORD", source: "secret", value: "******" },
+      { name: "PGDATA", source: "literal", value: "/var/lib/postgresql/data" },
     ],
     id: "p3",
     ip: "10.42.0.12",
@@ -81,9 +81,9 @@ export const MOCK_PODS: MockPod[] = [
   {
     age: "1m",
     env: [
-      { name: "API_URL", value: "http://backend:8080", source: "configmap" },
-      { name: "API_KEY", value: "******", source: "secret" },
-      { name: "DEBUG", value: "true", source: "literal" },
+      { name: "API_URL", source: "configmap", value: "http://backend:8080" },
+      { name: "API_KEY", source: "secret", value: "******" },
+      { name: "DEBUG", source: "literal", value: "true" },
     ],
     id: "p4",
     ip: "None",
@@ -103,7 +103,7 @@ export const MOCK_SERVICES: MockService[] = [
     id: "s1",
     name: "kubernetes",
     namespace: "default",
-    ports: [{ name: "https", port: 443, targetPort: 6443, protocol: "TCP" }],
+    ports: [{ name: "https", port: 443, protocol: "TCP", targetPort: 6443 }],
     selector: {},
     status: "Active",
     type: "ClusterIP",
@@ -116,8 +116,8 @@ export const MOCK_SERVICES: MockService[] = [
     name: "coredns",
     namespace: "kube-system",
     ports: [
-      { name: "dns", port: 53, targetPort: 53, protocol: "UDP" },
-      { name: "dns-tcp", port: 53, targetPort: 53, protocol: "TCP" },
+      { name: "dns", port: 53, protocol: "UDP", targetPort: 53 },
+      { name: "dns-tcp", port: 53, protocol: "TCP", targetPort: 53 },
     ],
     selector: { "k8s-app": "kube-dns" },
     status: "Active",
@@ -130,7 +130,7 @@ export const MOCK_SERVICES: MockService[] = [
     id: "s3",
     name: "frontend-svc",
     namespace: "default",
-    ports: [{ name: "http", port: 80, targetPort: 8080, protocol: "TCP" }],
+    ports: [{ name: "http", port: 80, protocol: "TCP", targetPort: 8080 }],
     selector: { app: "frontend", tier: "web" },
     status: "Active",
     type: "LoadBalancer",
@@ -142,7 +142,7 @@ export const MOCK_SERVICES: MockService[] = [
     id: "s4",
     name: "postgres-svc",
     namespace: "default",
-    ports: [{ name: "db", port: 5432, targetPort: 5432, protocol: "TCP" }],
+    ports: [{ name: "db", port: 5432, protocol: "TCP", targetPort: 5432 }],
     selector: { app: "postgres" },
     status: "Active",
     type: "ClusterIP",

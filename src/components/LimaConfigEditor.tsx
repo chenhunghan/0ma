@@ -96,11 +96,11 @@ export function LimaConfigEditor() {
             lineNumbers: "on",
             lineNumbersMinChars: 3,
             minimap: { enabled: false },
-            padding: { top: 16, bottom: 16 },
+            padding: { bottom: 16, top: 16 },
             scrollBeyondLastLine: false,
             scrollbar: {
-              verticalScrollbarSize: 6,
               horizontalScrollbarSize: 6,
+              verticalScrollbarSize: 6,
             },
           }}
         />

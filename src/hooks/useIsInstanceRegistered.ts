@@ -6,11 +6,9 @@ import { useQuery } from "@tanstack/react-query";
  */
 export function useIsInstanceRegistered(instanceName: string, enabled = true) {
   return useQuery({
-    enabled: enabled && !!instanceName,
-    queryFn: async () => {
-      return await invoke<boolean>("is_instance_registered_cmd", { instanceName });
-    },
+    enabled: enabled && Boolean(instanceName),
+    queryFn: async () => await invoke<boolean>("is_instance_registered_cmd", { instanceName }),
     queryKey: ["instance-registered", instanceName],
-    staleTime: 10000, // Consider data stale after 10 seconds
+    staleTime: 10_000, // Consider data stale after 10 seconds
   });
 }

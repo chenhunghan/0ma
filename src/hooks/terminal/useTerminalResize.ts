@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { Terminal } from "@xterm/xterm";
 import * as log from "@tauri-apps/plugin-log";
 import { TERMINAL_METRICS } from "./config";

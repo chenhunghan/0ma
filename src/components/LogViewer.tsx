@@ -19,9 +19,9 @@ const LOG_VIEW_TERM_CONFIG = {
   lineHeight: 1.15,
   theme: {
     background: "#000000",
-    foreground: "#d4d4d8", // zinc-300
+    foreground: "#d4d4d8", // Zinc-300
     cursor: "transparent",
-    selectionBackground: "#27272a", // zinc-800
+    selectionBackground: "#27272a", // Zinc-800
     black: "#000000",
     red: "#ef4444",
     green: "#10b981",

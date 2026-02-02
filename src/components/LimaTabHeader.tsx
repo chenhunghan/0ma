@@ -24,7 +24,7 @@ export const LimaTabHeader: React.FC<LimaTabHeaderProps> = ({
         <span className="underline decoration-dotted underline-offset-4">INSTANCE DETAILS</span>
       </button>
 
-      <div className="w-px h-3 bg-zinc-800"></div>
+      <div className="w-px h-3 bg-zinc-800" />
 
       <div className="flex items-center gap-2 text-zinc-500">
         <Cpu className="w-3 h-3" />
@@ -38,7 +38,7 @@ export const LimaTabHeader: React.FC<LimaTabHeaderProps> = ({
         <HardDrive className="w-3 h-3" />
         <span className="text-zinc-400">{instance.disk}</span>
       </div>
-      <div className="w-px h-3 bg-zinc-800"></div>
+      <div className="w-px h-3 bg-zinc-800" />
       <div className="text-zinc-600 uppercase text-[10px] font-bold">{instance.arch}</div>
     </>
   );

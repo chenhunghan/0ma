@@ -10,11 +10,9 @@ export interface GuestInfo {
  */
 export function useInstanceGuestInfo(instanceName: string, enabled = true) {
   return useQuery({
-    enabled: enabled && !!instanceName,
-    queryFn: async () => {
-      return await invoke<GuestInfo>("get_instance_guest_info_cmd", { instanceName });
-    },
+    enabled: enabled && Boolean(instanceName),
+    queryFn: async () => await invoke<GuestInfo>("get_instance_guest_info_cmd", { instanceName }),
     queryKey: ["instance-guest-info", instanceName],
-    staleTime: 300000, // Guest configuration rarely changes
+    staleTime: 300_000, // Guest configuration rarely changes
   });
 }

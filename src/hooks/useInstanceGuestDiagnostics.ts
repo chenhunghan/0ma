@@ -11,11 +11,9 @@ export interface GuestDiagnostics {
  */
 export function useInstanceGuestDiagnostics(instanceName: string, enabled = true) {
   return useQuery({
-    enabled: enabled && !!instanceName,
-    queryFn: async () => {
-      return await invoke<GuestDiagnostics>("get_instance_guest_diagnostics_cmd", { instanceName });
-    },
+    enabled: enabled && Boolean(instanceName),
+    queryFn: async () => await invoke<GuestDiagnostics>("get_instance_guest_diagnostics_cmd", { instanceName }),
     queryKey: ["instance-guest-diagnostics", instanceName],
-    staleTime: 3600000, // Diagnostics (OS/Kernel) don't change during a session
+    staleTime: 3_600_000, // Diagnostics (OS/Kernel) don't change during a session
   });
 }

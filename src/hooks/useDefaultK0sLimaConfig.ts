@@ -14,12 +14,12 @@ export function useDefaultK0sLimaConfig(
     isFetched,
     refetch,
   } = useQuery({
-    enabled: !!instanceName,
+    enabled: Boolean(instanceName),
     queryFn: async () => {
       const config = await invoke<LimaConfig>("get_default_k0s_lima_config_yaml_cmd", {
-        instanceName,
         installHelm,
         installLocalPathProvisioner,
+        instanceName,
       });
       return config;
     },

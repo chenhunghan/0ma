@@ -39,9 +39,7 @@ export function TauriStoreProvider({
     error: errorLoadingStore,
   } = useQuery({
     initialData: null,
-    queryFn: async () => {
-      return await load(storeFileName, { autoSave: false, defaults: {} });
-    },
+    queryFn: async () => await load(storeFileName, { autoSave: false, defaults: {} }),
     queryKey: ["tauri-store", storeFileName],
   });
 
@@ -157,10 +155,10 @@ export function useTauriStoreValue<T = unknown>(key: string) {
   const { store, storeFileName } = useTauriStore();
 
   return useQuery({
-    enabled: !!store,
+    enabled: Boolean(store),
     initialData: null,
     queryFn: async () => {
-      if (!store) return null;
+      if (!store) {return null;}
       const value = await store.get<T>(key);
       return value ?? null;
     },

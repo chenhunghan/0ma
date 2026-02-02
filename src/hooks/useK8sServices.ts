@@ -56,34 +56,30 @@ const calculateAge = (timestamp?: string): string => {
 };
 
 export const useK8sServices = (instanceName: string | undefined) => useQuery({
-    queryKey: ["k8s-services", instanceName],
+    enabled: Boolean(instanceName),
     queryFn: () => (instanceName ? fetchK8sServices(instanceName) : Promise.resolve([])),
-    enabled: !!instanceName,
-    select: (data): MockService[] => {
-      return data.map((svc) => {
-        return {
-          id: svc.metadata.uid || svc.metadata.name,
-          name: svc.metadata.name,
-          namespace: svc.metadata.namespace,
-          type: svc.spec?.type || "ClusterIP",
+    queryKey: ["k8s-services", instanceName],
+    refetchInterval: 5000,
+    select: (data): MockService[] => data.map((svc) => ({
+          age: calculateAge(svc.metadata.creationTimestamp),
           clusterIP: svc.spec?.clusterIP || "None",
           externalIP:
             svc.status?.loadBalancer?.ingress?.[0]?.ip || svc.spec?.externalIPs?.[0] || "<none>",
+          id: svc.metadata.uid || svc.metadata.name,
+          name: svc.metadata.name,
+          namespace: svc.metadata.namespace,
           ports: (svc.spec?.ports || []).map((p) => ({
             name: p.name || "",
+            nodePort: p.nodePort,
             port: p.port,
+            protocol: p.protocol || "TCP",
             targetPort:
               typeof p.targetPort === "string"
                 ? parseInt(p.targetPort, 10) || 0
                 : p.targetPort || 0,
-            protocol: p.protocol || "TCP",
-            nodePort: p.nodePort,
           })),
           selector: svc.spec?.selector || {},
-          age: calculateAge(svc.metadata.creationTimestamp),
-          status: "Active", // K8s services are usually active if they exist
-        };
-      });
-    },
-    refetchInterval: 5000,
+          status: "Active",
+          type: svc.spec?.type || "ClusterIP", // K8s services are usually active if they exist
+        })),
   });

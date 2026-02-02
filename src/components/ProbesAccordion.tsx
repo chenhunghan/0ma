@@ -35,12 +35,12 @@ export function ProbesAccordion({ value: probes }: { value: Probe[] }) {
                     lineNumbersMinChars: 0,
                     minimap: { enabled: false },
                     overviewRulerLanes: 0,
-                    padding: { top: 4, bottom: 4 },
+                    padding: { bottom: 4, top: 4 },
                     readOnly: true,
                     scrollBeyondLastLine: false,
                     scrollbar: {
-                      verticalScrollbarSize: 4,
                       horizontalScrollbarSize: 4,
+                      verticalScrollbarSize: 4,
                     },
                     wordWrap: "on",
                   }}

@@ -82,13 +82,13 @@ const calculateAge = (timestamp?: string): string => {
 };
 
 export const useK8sPods = (instanceName: string | undefined) => useQuery({
-    queryKey: ["k8s-pods", instanceName],
+    enabled: Boolean(instanceName),
     queryFn: () => (instanceName ? fetchK8sPods(instanceName) : Promise.resolve([])),
-    enabled: !!instanceName,
-    select: (data): UIPod[] => {
-      return data.map((pod) => {
+    queryKey: ["k8s-pods", instanceName],
+    refetchInterval: 5000,
+    select: (data): UIPod[] => data.map((pod) => {
         // Collect env vars from all containers
-        const envVars: Array<{ name: string; value: string; source: string }> = [];
+        const envVars: { name: string; value: string; source: string }[] = [];
         if (pod.spec?.containers) {
           for (const container of pod.spec.containers) {
             if (container.env) {
@@ -108,8 +108,8 @@ export const useK8sPods = (instanceName: string | undefined) => useQuery({
 
                 envVars.push({
                   name: env.name,
-                  value,
                   source,
+                  value,
                 });
               }
             }
@@ -117,17 +117,15 @@ export const useK8sPods = (instanceName: string | undefined) => useQuery({
         }
 
         return {
+          age: calculateAge(pod.metadata.creationTimestamp),
+          env: envVars,
           id: pod.metadata.uid || pod.metadata.name,
+          ip: pod.status?.podIP || "None",
+          labels: pod.metadata.labels || {},
           name: pod.metadata.name,
           namespace: pod.metadata.namespace,
-          status: pod.status?.phase || "Unknown",
           node: pod.spec?.nodeName || "Unknown",
-          ip: pod.status?.podIP || "None",
-          age: calculateAge(pod.metadata.creationTimestamp),
-          labels: pod.metadata.labels || {},
-          env: envVars,
+          status: pod.status?.phase || "Unknown",
         };
-      });
-    },
-    refetchInterval: 5000,
+      }),
   });

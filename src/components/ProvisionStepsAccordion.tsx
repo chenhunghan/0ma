@@ -35,12 +35,12 @@ export function ProvisionStepsAccordion({ value: provision }: { value: Provision
                     lineNumbersMinChars: 0,
                     minimap: { enabled: false },
                     overviewRulerLanes: 0,
-                    padding: { top: 1, bottom: 1 },
+                    padding: { bottom: 1, top: 1 },
                     readOnly: true,
                     scrollBeyondLastLine: false,
                     scrollbar: {
-                      verticalScrollbarSize: 4,
                       horizontalScrollbarSize: 4,
+                      verticalScrollbarSize: 4,
                     },
                     wordWrap: "on",
                   }}

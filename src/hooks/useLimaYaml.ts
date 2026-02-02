@@ -11,10 +11,8 @@ export function useLimaYaml(instanceName: string | null) {
     isLoading: isLoadingLima,
     refetch: refetchLima,
   } = useQuery({
-    enabled: !!instanceName,
-    queryFn: async () => {
-      return await invoke<LimaConfig>("read_lima_yaml_cmd", { instanceName });
-    },
+    enabled: Boolean(instanceName),
+    queryFn: async () => await invoke<LimaConfig>("read_lima_yaml_cmd", { instanceName }),
     queryKey: ["lima_yaml", instanceName], // Only fetch if instanceName is provided
   });
 
@@ -39,9 +37,7 @@ export function useLimaYaml(instanceName: string | null) {
     refetch: fetchLimaYamlPath,
   } = useQuery({
     enabled: false,
-    queryFn: async () => {
-      return await invoke<string>("get_lima_yaml_path_cmd", { instanceName });
-    },
+    queryFn: async () => await invoke<string>("get_lima_yaml_path_cmd", { instanceName }),
     queryKey: ["lima_yaml_path", instanceName], // Don't auto-fetch on mount
   });
 
