@@ -1,5 +1,5 @@
 export interface Terminal {
-    id: number
-    name: string
-    sessionId?: string
+  id: number;
+  name: string;
+  sessionId?: string;
 }

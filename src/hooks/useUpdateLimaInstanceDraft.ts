@@ -11,67 +11,77 @@ import { useSelectedInstance } from "src/hooks/useSelectedInstance";
  * Computes 'isDirty' by comparing draft with actual config from limactl.
  */
 export function useUpdateLimaInstanceDraft() {
-    const { selectedName: instanceName } = useSelectedInstance();
-    const {
-        limaConfig: actualConfig,
-        isLoadingLima,
-        writeLimaYaml,
-        isWritingLima,
-        writeLimaError
-    } = useLimaYaml(instanceName);
+  const { selectedName: instanceName } = useSelectedInstance();
+  const {
+    limaConfig: actualConfig,
+    isLoadingLima,
+    writeLimaYaml,
+    isWritingLima,
+    writeLimaError,
+  } = useLimaYaml(instanceName);
 
-    const { set } = useTauriStore();
+  const { set } = useTauriStore();
 
-    // Use a per-instance key to prevent drafts from leaking across different instances
-    const draftKey = `updateLimaInstanceDraft:${instanceName}`;
-    const { data: draftConfig, isLoading: isLoadingDraft, isFetched } = useTauriStoreValue<LimaConfig>(draftKey);
+  // Use a per-instance key to prevent drafts from leaking across different instances
+  const draftKey = `updateLimaInstanceDraft:${instanceName}`;
+  const {
+    data: draftConfig,
+    isLoading: isLoadingDraft,
+    isFetched,
+  } = useTauriStoreValue<LimaConfig>(draftKey);
 
-    // Initialize draft from actual config if draft is missing
-    useEffect(() => {
-        if (isFetched && actualConfig && !draftConfig) {
-            set(draftKey, actualConfig);
-        }
-    }, [isFetched, actualConfig, draftConfig, set, draftKey]);
+  // Initialize draft from actual config if draft is missing
+  useEffect(() => {
+    if (isFetched && actualConfig && !draftConfig) {
+      set(draftKey, actualConfig);
+    }
+  }, [isFetched, actualConfig, draftConfig, set, draftKey]);
 
-    // Derived dirty state
-    const isDirty = useMemo(() => {
-        if (!actualConfig || !draftConfig) return false;
-        return !isEqual(actualConfig, draftConfig);
-    }, [actualConfig, draftConfig]);
+  // Derived dirty state
+  const isDirty = useMemo(() => {
+    if (!actualConfig || !draftConfig) return false;
+    return !isEqual(actualConfig, draftConfig);
+  }, [actualConfig, draftConfig]);
 
-    const updateField = useCallback((field: keyof LimaConfig, value: unknown) => {
-        const currentBase = draftConfig || actualConfig;
-        if (currentBase) {
-            set(draftKey, { ...currentBase, [field]: value });
-        }
-    }, [draftConfig, actualConfig, set, draftKey]);
+  const updateField = useCallback(
+    (field: keyof LimaConfig, value: unknown) => {
+      const currentBase = draftConfig || actualConfig;
+      if (currentBase) {
+        set(draftKey, { ...currentBase, [field]: value });
+      }
+    },
+    [draftConfig, actualConfig, set, draftKey],
+  );
 
-    const updateDraftConfig = useCallback((newConfig: LimaConfig) => {
-        set(draftKey, newConfig);
-    }, [set, draftKey]);
+  const updateDraftConfig = useCallback(
+    (newConfig: LimaConfig) => {
+      set(draftKey, newConfig);
+    },
+    [set, draftKey],
+  );
 
-    const resetDraft = useCallback(() => {
-        if (actualConfig) {
-            set(draftKey, actualConfig);
-        }
-    }, [actualConfig, set, draftKey]);
+  const resetDraft = useCallback(() => {
+    if (actualConfig) {
+      set(draftKey, actualConfig);
+    }
+  }, [actualConfig, set, draftKey]);
 
-    const applyDraft = useCallback(() => {
-        if (draftConfig) {
-            writeLimaYaml(draftConfig);
-        }
-    }, [draftConfig, writeLimaYaml]);
+  const applyDraft = useCallback(() => {
+    if (draftConfig) {
+      writeLimaYaml(draftConfig);
+    }
+  }, [draftConfig, writeLimaYaml]);
 
-    return {
-        draftConfig,
-        actualConfig,
-        isDirty,
-        isLoading: isLoadingLima || isLoadingDraft,
-        isApplying: isWritingLima,
-        applyError: writeLimaError,
-        updateField,
-        updateDraftConfig,
-        resetDraft,
-        applyDraft,
-    };
+  return {
+    draftConfig,
+    actualConfig,
+    isDirty,
+    isLoading: isLoadingLima || isLoadingDraft,
+    isApplying: isWritingLima,
+    applyError: writeLimaError,
+    updateField,
+    updateDraftConfig,
+    resetDraft,
+    applyDraft,
+  };
 }

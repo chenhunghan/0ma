@@ -1,21 +1,18 @@
-import React from 'react';
-import {
-  ChevronUp,
-  GripHorizontal
-} from 'lucide-react';
-import { LimaConfigForm } from './LimaConfigForm';
-import { LimaConfig } from '../types/LimaConfig';
+import React from "react";
+import { ChevronUp, GripHorizontal } from "lucide-react";
+import { LimaConfigForm } from "./LimaConfigForm";
+import { LimaConfig } from "../types/LimaConfig";
 
 interface LimaConfigPanelProps {
   parsedConfig?: LimaConfig;
   updateConfigField: (field: string, value: unknown) => void;
-  updateProvisionScript: (index: number, key: 'mode' | 'script', value: string) => void;
+  updateProvisionScript: (index: number, key: "mode" | "script", value: string) => void;
   addProvisionScript: () => void;
   removeProvisionScript: (index: number) => void;
   updateProbeScript: (
     index: number,
-    key: 'description' | 'script' | 'hint' | 'mode',
-    value: string
+    key: "description" | "script" | "hint" | "mode",
+    value: string,
   ) => void;
   addProbeScript: () => void;
   removeProbeScript: (index: number) => void;

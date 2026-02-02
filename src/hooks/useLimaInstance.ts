@@ -13,7 +13,7 @@ export function useLimaInstance() {
     mutationFn: async ({ config, instanceName }: { config: LimaConfig; instanceName: string }) => {
       return await invoke<string>("create_lima_instance_cmd", {
         config,
-        instanceName
+        instanceName,
       });
     },
     onSuccess: () => {

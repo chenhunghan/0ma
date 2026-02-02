@@ -3,5 +3,5 @@ export interface K8sInfo {
   nodes: number;
   pods: number;
   services: number;
-  status: 'Ready' | 'NotReady' | 'Unknown';
+  status: "Ready" | "NotReady" | "Unknown";
 }

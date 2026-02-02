@@ -1,13 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useQuery } from "@tanstack/react-query";
-import { LimaInstance } from '../types/LimaInstance';
+import { LimaInstance } from "../types/LimaInstance";
 
 export function useLimaInstances() {
   const {
     data: instances = [],
     isLoading,
     error,
-    refetch: loadInstances
+    refetch: loadInstances,
   } = useQuery({
     queryKey: ["instances"],
     queryFn: async () => {

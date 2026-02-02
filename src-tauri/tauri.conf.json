@@ -23,9 +23,7 @@
         "titleBarStyle": "Transparent",
         "transparent": true,
         "windowEffects": {
-          "effects": [
-            "underWindowBackground"
-          ],
+          "effects": ["underWindowBackground"],
           "state": "active"
         }
       }

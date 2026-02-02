@@ -1,15 +1,15 @@
-import React from 'react';
-import { ChevronDown } from 'lucide-react';
+import React from "react";
+import { ChevronDown } from "lucide-react";
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   wrapperClassName?: string;
 }
 
-export const Select: React.FC<SelectProps> = ({ 
-  className = '', 
-  wrapperClassName = '', 
-  children, 
-  ...props 
+export const Select: React.FC<SelectProps> = ({
+  className = "",
+  wrapperClassName = "",
+  children,
+  ...props
 }) => {
   return (
     <div className={`relative group flex items-center transition-colors ${wrapperClassName}`}>

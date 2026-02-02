@@ -5,146 +5,135 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "./ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "./ui/select";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface Props {
-    value: Image[];
-    onChange: (images: Image[]) => void;
+  value: Image[];
+  onChange: (images: Image[]) => void;
 }
 
 export function ImagesDialog({ value: images, onChange }: Props) {
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-    const isUrl = (str: string) => {
-        try {
-            const url = new URL(str);
-            return url.protocol === 'https:';
-        } catch {
-            return false;
-        }
-    };
+  const isUrl = (str: string) => {
+    try {
+      const url = new URL(str);
+      return url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
 
-    const hasInvalid = (images || []).some(img => !img.location?.trim() || !isUrl(img.location));
+  const hasInvalid = (images || []).some((img) => !img.location?.trim() || !isUrl(img.location));
 
-    const updateImage = (index: number, field: string, value: string) => {
-        const newImages = [...images];
-        newImages[index] = { ...newImages[index], [field]: value };
-        onChange(newImages);
-    };
+  const updateImage = (index: number, field: string, value: string) => {
+    const newImages = [...images];
+    newImages[index] = { ...newImages[index], [field]: value };
+    onChange(newImages);
+  };
 
-    const addImage = () => {
-        onChange([...images, { location: '', arch: 'aarch64' }]);
-    };
+  const addImage = () => {
+    onChange([...images, { location: "", arch: "aarch64" }]);
+  };
 
-    const removeImage = (index: number) => {
-        const newImages = [...images];
-        newImages.splice(index, 1);
-        onChange(newImages);
-    };
+  const removeImage = (index: number) => {
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    onChange(newImages);
+  };
 
-    return (
-        <Dialog
-            open={isOpen}
-            onOpenChange={(open) => {
-                if (!open && hasInvalid) return;
-                setIsOpen(open);
-            }}
-        >
-            <div className="flex items-center justify-between w-full">
-                <Label className="mb-0.5">Images</Label>
-                <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
-                    {(!images || images.length === 0)
-                        ? <PlusIcon className="size-2.5 mr-[4px]" />
-                        : <PencilIcon className="size-2.5 mr-[4px]" />
-                    }
-                </DialogTrigger>
-            </div>
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && hasInvalid) return;
+        setIsOpen(open);
+      }}
+    >
+      <div className="flex items-center justify-between w-full">
+        <Label className="mb-0.5">Images</Label>
+        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
+          {!images || images.length === 0 ? (
+            <PlusIcon className="size-2.5 mr-[4px]" />
+          ) : (
+            <PencilIcon className="size-2.5 mr-[4px]" />
+          )}
+        </DialogTrigger>
+      </div>
 
-            <DialogContent
-                className="sm:max-w-md"
-                showCloseButton={!hasInvalid}
+      <DialogContent className="sm:max-w-md" showCloseButton={!hasInvalid}>
+        <DialogHeader>
+          <DialogTitle>Configure Images</DialogTitle>
+          <DialogDescription>
+            Add or remove virtual machine images for this instance.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
+          {(images || []).map((image, idx) => (
+            <div
+              key={idx}
+              className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
             >
-                <DialogHeader>
-                    <DialogTitle>Configure Images</DialogTitle>
-                    <DialogDescription>
-                        Add or remove virtual machine images for this instance.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-                    {(images || []).map((image, idx) => (
-                        <div key={idx} className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => removeImage(idx)}
-                                disabled={images.length === 1}
-                                title={images.length === 1 ? "At least one image is required" : undefined}
-                            >
-                                <Trash2Icon className="size-3 text-destructive" />
-                            </Button>
-                            <div className="grid gap-1">
-                                <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
-                                <Input
-                                    value={image.location}
-                                    onChange={(e) => updateImage(idx, 'location', e.target.value)}
-                                    placeholder="https://cloud-images.ubuntu.com/..."
-                                    className="h-7 text-[11px]"
-                                />
-                            </div>
-                            <div className="grid gap-1">
-                                <Label className="text-[10px] uppercase text-muted-foreground">Arch</Label>
-                                <Select value={image.arch || 'x86_64'} onValueChange={(val) => updateImage(idx, 'arch', val || 'x86_64')}>
-                                    <SelectTrigger className="h-7 text-[11px] w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="x86_64">x86_64</SelectItem>
-                                        <SelectItem value="aarch64">aarch64</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    ))}
-                    <Button
-                        variant="outline"
-                        size="xs"
-                        className="border-dashed"
-                        onClick={addImage}
-                    >
-                        <PlusIcon className="size-3 mr-1" /> Add Image
-                    </Button>
-                </div>
-                {hasInvalid && (
-                    <p className="text-[10px] text-destructive font-medium animate-pulse">
-                        All images must have a valid URL.
-                    </p>
-                )}
-                <DialogFooter>
-                    <DialogClose
-                        disabled={hasInvalid}
-                        render={<Button variant="outline" size="sm" />}
-                    >
-                        Done
-                    </DialogClose>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => removeImage(idx)}
+                disabled={images.length === 1}
+                title={images.length === 1 ? "At least one image is required" : undefined}
+              >
+                <Trash2Icon className="size-3 text-destructive" />
+              </Button>
+              <div className="grid gap-1">
+                <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
+                <Input
+                  value={image.location}
+                  onChange={(e) => updateImage(idx, "location", e.target.value)}
+                  placeholder="https://cloud-images.ubuntu.com/..."
+                  className="h-7 text-[11px]"
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label className="text-[10px] uppercase text-muted-foreground">Arch</Label>
+                <Select
+                  value={image.arch || "x86_64"}
+                  onValueChange={(val) => updateImage(idx, "arch", val || "x86_64")}
+                >
+                  <SelectTrigger className="h-7 text-[11px] w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="x86_64">x86_64</SelectItem>
+                    <SelectItem value="aarch64">aarch64</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ))}
+          <Button variant="outline" size="xs" className="border-dashed" onClick={addImage}>
+            <PlusIcon className="size-3 mr-1" /> Add Image
+          </Button>
+        </div>
+        {hasInvalid && (
+          <p className="text-[10px] text-destructive font-medium animate-pulse">
+            All images must have a valid URL.
+          </p>
+        )}
+        <DialogFooter>
+          <DialogClose disabled={hasInvalid} render={<Button variant="outline" size="sm" />}>
+            Done
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

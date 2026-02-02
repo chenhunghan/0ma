@@ -7,31 +7,39 @@ import { ProvisionStepsAccordion } from "./ProvisionStepsAccordion";
 import { ProbesAccordion } from "./ProbesAccordion";
 
 export function LimaConfigAutomationColumn() {
-    const { draftConfig, updateField, isLoading } = useUpdateLimaInstanceDraft();
+  const { draftConfig, updateField, isLoading } = useUpdateLimaInstanceDraft();
 
-    if (isLoading) {
-        return <div title="Loading Lima Config..."><Spinner /></div>
-    }
-
+  if (isLoading) {
     return (
-        <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
-            <ConfigSection dialog={
-                <ProvisionStepsDialog
-                    value={draftConfig?.provision || []}
-                    onChange={(val) => updateField('provision', val)}
-                />
-            }>
-                <ProvisionStepsAccordion value={draftConfig?.provision || []} />
-            </ConfigSection>
+      <div title="Loading Lima Config...">
+        <Spinner />
+      </div>
+    );
+  }
 
-            <ConfigSection dialog={
-                <ProbesDialog
-                    value={draftConfig?.probes || []}
-                    onChange={(val) => updateField('probes', val)}
-                />
-            }>
-                <ProbesAccordion value={draftConfig?.probes || []} />
-            </ConfigSection>
-        </div>
-    )
+  return (
+    <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
+      <ConfigSection
+        dialog={
+          <ProvisionStepsDialog
+            value={draftConfig?.provision || []}
+            onChange={(val) => updateField("provision", val)}
+          />
+        }
+      >
+        <ProvisionStepsAccordion value={draftConfig?.provision || []} />
+      </ConfigSection>
+
+      <ConfigSection
+        dialog={
+          <ProbesDialog
+            value={draftConfig?.probes || []}
+            onChange={(val) => updateField("probes", val)}
+          />
+        }
+      >
+        <ProbesAccordion value={draftConfig?.probes || []} />
+      </ConfigSection>
+    </div>
+  );
 }
