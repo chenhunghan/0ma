@@ -1,55 +1,74 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LogState } from "src/types/Log";
-import { useFrankenTerm, useFrankenTermInput, useFrankenTermResize } from "../hooks/terminal";
+import type { HighlighterCore } from "shiki/core";
+import { getHighlighter } from "src/lib/shiki";
 
-const textEncoder = new TextEncoder();
+const CONTAINER_STYLE: React.CSSProperties = {
+  fontFamily: '"FiraCode Nerd Font", monospace',
+  fontSize: 12,
+  lineHeight: 1.15,
+};
 
 interface Props {
   logState: LogState;
 }
 
 export const LogViewer: React.FC<Props> = ({ logState }) => {
-  const terminalContainerRef = useRef<HTMLDivElement>(null);
-  const { term, canvasRef } = useFrankenTerm(terminalContainerRef);
-  const lastStdoutLen = useRef(0);
-  const lastStderrLen = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef(true);
+  const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
 
-  // Resize: adapts to container size (no PTY to notify)
-  const dims = useFrankenTermResize(term, terminalContainerRef, null);
-
-  // Input: mouse selection, copy, wheel scrolling (read-only: no PTY session)
-  const { updateGeometry } = useFrankenTermInput(term, null, canvasRef);
-
-  // Keep input hook geometry in sync with resize
   useEffect(() => {
-    updateGeometry(dims.cols, dims.cellWidth, dims.cellHeight);
-  }, [dims.cols, dims.cellWidth, dims.cellHeight, updateGeometry]);
+    getHighlighter().then(setHighlighter);
+  }, []);
 
-  // Feed only new stdout entries (reset ref when array shrinks, e.g. new operation)
   useEffect(() => {
-    if (!term) return;
-    const entries = logState.stdout;
-    if (entries.length < lastStdoutLen.current) {
-      lastStdoutLen.current = 0;
+    const el = containerRef.current;
+    if (el && autoScrollRef.current) {
+      el.scrollTop = el.scrollHeight;
     }
-    for (let i = lastStdoutLen.current; i < entries.length; i++) {
-      term.feed(textEncoder.encode(entries[i].message + "\r\n"));
-    }
-    lastStdoutLen.current = entries.length;
-  }, [logState.stdout, term]);
+  }, [logState.stdout, logState.stderr]);
 
-  // Feed only new stderr entries (reset ref when array shrinks, e.g. new operation)
-  useEffect(() => {
-    if (!term) return;
-    const entries = logState.stderr;
-    if (entries.length < lastStderrLen.current) {
-      lastStderrLen.current = 0;
-    }
-    for (let i = lastStderrLen.current; i < entries.length; i++) {
-      term.feed(textEncoder.encode(entries[i].message + "\r\n"));
-    }
-    lastStderrLen.current = entries.length;
-  }, [logState.stderr, term]);
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    autoScrollRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 20;
+  }, []);
 
-  return <div className="h-full w-full overflow-hidden bg-black" ref={terminalContainerRef} />;
+  const allEntries = useMemo(() => {
+    return [
+      ...logState.stdout.map((e) => ({ ...e, stream: "stdout" as const })),
+      ...logState.stderr.map((e) => ({ ...e, stream: "stderr" as const })),
+    ];
+  }, [logState.stdout, logState.stderr]);
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className="h-64 w-full overflow-y-auto overflow-x-hidden rounded bg-transparent text-zinc-300 p-2 select-text"
+      style={CONTAINER_STYLE}
+    >
+      {allEntries.map((entry) => {
+        if (!highlighter) {
+          return (
+            <div key={entry.id} className="whitespace-pre-wrap break-all">
+              {entry.message}
+            </div>
+          );
+        }
+        const html = highlighter.codeToHtml(entry.message, {
+          lang: "log",
+          theme: "github-dark",
+        });
+        return (
+          <div
+            key={entry.id}
+            className="[&>pre]:!bg-transparent [&>pre]:!p-0 [&>pre]:!m-0 [&_code]:!bg-transparent [&>pre]:!whitespace-pre-wrap [&_code]:!whitespace-pre-wrap [&>pre]:break-all [&_code]:break-all"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
+      })}
+    </div>
+  );
 };

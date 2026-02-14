@@ -183,6 +183,12 @@ export function useFrankenTermInput(
     };
 
     const handleWheel = (e: WheelEvent) => {
+      if (readOnly) {
+        // No PTY to forward mouse protocol — scroll the viewport directly
+        const lines = Math.sign(e.deltaY) * 3;
+        term.scrollLines(lines);
+        return;
+      }
       const [x, y] = cellCoordsFromMouse(e, cellWidthRef.current, cellHeightRef.current);
       term.input({
         kind: "wheel",
@@ -195,7 +201,7 @@ export function useFrankenTermInput(
         altKey: e.altKey,
         metaKey: e.metaKey,
       });
-      if (sessionId) flushInputBytes(term, sessionId);
+      flushInputBytes(term, sessionId);
     };
 
     const handlePaste = (e: ClipboardEvent) => {
