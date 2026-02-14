@@ -30,6 +30,7 @@ export function TerminalComponent({
   const containerRef = useRef<HTMLDivElement>(null);
   const { term, geometry, canvasRef } = useFrankenTerm(containerRef);
   const spawnedRef = useRef(false);
+  const restoredRef = useRef(false);
 
   // Session management (spawn/connect) — uses initial geometry for spawn dims
   const {
@@ -74,7 +75,8 @@ export function TerminalComponent({
 
   // If reconnect failed (session gone after app restart), restore from disk + spawn new shell
   useEffect(() => {
-    if (!connectError || !term || !propsSessionId) return;
+    if (!connectError || !term || !propsSessionId || restoredRef.current) return;
+    restoredRef.current = true;
 
     log.debug(`[TerminalComponent] reconnect failed, restoring from disk`);
     invoke<string>("load_session_history_cmd", { sessionId: propsSessionId })
