@@ -1,4 +1,4 @@
-import { useCallback, type MouseEvent, type ReactNode } from "react";
+import { useCallback, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Separator } from "src/components/ui/separator";
 import { Button } from "src/components/ui/button";
@@ -178,21 +178,34 @@ function CloseTabButton({
   onRemoveTab: (tabId: string) => void;
 }) {
   const handleClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
+    (event: MouseEvent<HTMLSpanElement>) => {
       event.stopPropagation();
+      event.preventDefault();
       onRemoveTab(tabId);
     },
     [onRemoveTab, tabId],
   );
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLSpanElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.stopPropagation();
+        event.preventDefault();
+        onRemoveTab(tabId);
+      }
+    },
+    [onRemoveTab, tabId],
+  );
+
   return (
-    <button
-      type="button"
+    <span
       className="rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted-foreground/20 p-0.5 transition-all ml-1"
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
       title="Close Tab"
     >
       <XIcon className="size-3" />
-    </button>
+    </span>
   );
 }
