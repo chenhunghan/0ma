@@ -87,13 +87,14 @@ export function useFrankenTerm(containerRef: RefObject<HTMLDivElement | null>) {
         cellHeightPx: geo.cellHeightPx ?? CELL_HEIGHT,
       });
 
-      // Start render loop
+      // Start render loop — stop on error to avoid flooding a poisoned WASM instance
       const renderLoop = () => {
         if (disposedRef.current) return;
         try {
           t.render();
         } catch (e) {
-          log.error(`[useFrankenTerm] render error: ${e}`);
+          log.error(`[useFrankenTerm] render error (loop stopped): ${e}`);
+          return;
         }
         rafRef.current = requestAnimationFrame(renderLoop);
       };
