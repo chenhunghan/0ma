@@ -73,7 +73,9 @@ pub fn run() {
             // Persist terminal histories when the process is stopped from the terminal
             // (for example `make dev` -> Ctrl+C).
             let pty_for_signal = app.state::<terminal_manager::PtyManager>().inner().clone();
-            let app_data_for_signal = app.path().app_data_dir()
+            let app_data_for_signal = app
+                .path()
+                .app_data_dir()
                 .expect("failed to get app data dir");
             let app_handle_for_signal = app.handle().clone();
             ctrlc::set_handler(move || {
@@ -89,21 +91,23 @@ pub fn run() {
             // Periodic auto-save of terminal session history.
             // Ensures history is persisted even on ungraceful exits
             let pty_for_timer = app.state::<terminal_manager::PtyManager>().inner().clone();
-            let app_data_for_timer = app.path().app_data_dir()
+            let app_data_for_timer = app
+                .path()
+                .app_data_dir()
                 .expect("failed to get app data dir");
-            std::thread::spawn(move || {
-                loop {
-                    std::thread::sleep(std::time::Duration::from_secs(
-                        SESSION_AUTOSAVE_INTERVAL_SECS,
-                    ));
-                    if let Err(e) = pty_for_timer.save_all_sessions(&app_data_for_timer) {
-                        log::error!("Auto-save sessions failed: {}", e);
-                    }
+            std::thread::spawn(move || loop {
+                std::thread::sleep(std::time::Duration::from_secs(
+                    SESSION_AUTOSAVE_INTERVAL_SECS,
+                ));
+                if let Err(e) = pty_for_timer.save_all_sessions(&app_data_for_timer) {
+                    log::error!("Auto-save sessions failed: {}", e);
                 }
             });
 
             // Clean up old session history files (older than 7 days)
-            let app_data_for_cleanup = app.path().app_data_dir()
+            let app_data_for_cleanup = app
+                .path()
+                .app_data_dir()
                 .expect("failed to get app data dir");
             std::thread::spawn(move || {
                 terminal_persistence::cleanup_old_histories(
@@ -169,6 +173,7 @@ pub fn run() {
             terminal_manager::close_pty_cmd,
             terminal_manager::save_all_sessions_cmd,
             terminal_manager::load_session_history_cmd,
+            terminal_manager::load_session_restore_cmd,
             terminal_manager::delete_session_history_cmd
         ])
         .run(tauri::generate_context!())

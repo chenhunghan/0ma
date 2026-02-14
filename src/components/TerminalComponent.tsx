@@ -18,6 +18,11 @@ interface Props {
   cwd: string;
 }
 
+interface SessionRestoreData {
+  historyText: string | null;
+  cwd: string | null;
+}
+
 function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
   void unlistenPromise
     .then((unlisten) => Promise.resolve(unlisten()))
@@ -82,15 +87,21 @@ export function TerminalComponent({
     restoredRef.current = true;
 
     log.debug(`[TerminalComponent] reconnect failed, restoring from disk`);
-    invoke<string>("load_session_history_cmd", { sessionId: propsSessionId })
-      .then((historyText) => {
-        if (historyText && term) {
-          term.feed(new TextEncoder().encode(historyText));
+    invoke<SessionRestoreData>("load_session_restore_cmd", { sessionId: propsSessionId })
+      .then((restore) => {
+        if (restore.historyText && term) {
+          term.feed(new TextEncoder().encode(restore.historyText));
         }
+        return restore.cwd ?? cwd;
       })
-      .catch((e) => log.debug(`No persisted history for ${propsSessionId}: ${e}`))
+      .catch((e) => {
+        log.debug(`No persisted restore data for ${propsSessionId}: ${e}`);
+        return cwd;
+      })
+      .then((restoredCwd) => {
+        spawn({ args: initialArgs, command: initialCommand, cwd: restoredCwd });
+      })
       .finally(() => {
-        spawn({ args: initialArgs, command: initialCommand, cwd });
         invoke("delete_session_history_cmd", { sessionId: propsSessionId }).catch(() => {});
       });
   }, [connectError, term, propsSessionId, spawn, initialArgs, initialCommand, cwd]);
@@ -102,7 +113,7 @@ export function TerminalComponent({
     }
   }, [hookSessionId, propsSessionId, onSessionCreated]);
 
-  // Listen for CWD changes from backend (OSC 7)
+  // Listen for CWD changes from backend
   useEffect(() => {
     const sessionId = hookSessionId;
     if (!sessionId || !onCwdChanged) return;
