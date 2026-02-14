@@ -163,14 +163,21 @@ export function useOnLimaStopLogs(instanceName: string, options?: { onSuccess?: 
 
     return () => {
       active = false;
-      Promise.all(unlistenPromises).then((unlistenFns) => {
-        unlistenFns.forEach((unlisten) => {
+      void Promise.allSettled(unlistenPromises).then((results) => {
+        const unlistenCalls: Promise<unknown>[] = [];
+
+        for (const result of results) {
+          if (result.status !== "fulfilled") {
+            continue;
+          }
           try {
-            unlisten();
+            unlistenCalls.push(Promise.resolve(result.value()).catch(() => {}));
           } catch {
             // Listener may have already been cleaned up
           }
-        });
+        }
+
+        void Promise.allSettled(unlistenCalls);
       });
     };
   }, [instanceName, queryClient, queryKey]);

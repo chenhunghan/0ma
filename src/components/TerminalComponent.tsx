@@ -18,6 +18,14 @@ interface Props {
   cwd: string;
 }
 
+function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
+  void unlistenPromise
+    .then((unlisten) => Promise.resolve(unlisten()))
+    .catch(() => {
+      // Listener may have already been disposed
+    });
+}
+
 export function TerminalComponent({
   sessionId: propsSessionId,
   onSessionCreated,
@@ -105,7 +113,7 @@ export function TerminalComponent({
       }
     });
     return () => {
-      unlisten.then((fn) => fn());
+      cleanupTauriListener(unlisten);
     };
   }, [hookSessionId, onCwdChanged]);
 
@@ -121,7 +129,7 @@ export function TerminalComponent({
       }
     });
     return () => {
-      unlisten.then((fn) => fn());
+      cleanupTauriListener(unlisten);
     };
   }, [hookSessionId, term]);
 

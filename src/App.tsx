@@ -27,6 +27,14 @@ const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
   ],
 });
 
+function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
+  void unlistenPromise
+    .then((unlisten) => Promise.resolve(unlisten()))
+    .catch(() => {
+      // Listener may have already been disposed
+    });
+}
+
 // oxlint-disable-next-line max-statements
 export function App() {
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
@@ -63,7 +71,7 @@ export function App() {
       persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
     });
     return () => {
-      unlisten.then((fn) => fn());
+      cleanupTauriListener(unlisten);
     };
   }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
 
