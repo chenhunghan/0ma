@@ -130,11 +130,14 @@ export function TerminalComponent({
     };
   }, [hookSessionId, term]);
 
-  // Re-attach to live session after wake from sleep / visibility restore.
-  // This guards against edge cases where the IPC channel goes stale.
+  // Re-attach to live session on HMR (channel silenced in cleanup) or wake from sleep.
+  // Fires on every effect setup — after HMR this recreates the dead channel,
+  // after initial spawn this is a harmless no-op (re-subscribes to same session).
   useEffect(() => {
     const sessionId = hookSessionId;
     if (!sessionId) return;
+
+    connect(sessionId);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
