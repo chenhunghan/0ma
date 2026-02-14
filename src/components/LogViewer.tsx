@@ -11,6 +11,8 @@ interface Props {
 export const LogViewer: React.FC<Props> = ({ logState }) => {
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const { term, canvasRef } = useFrankenTerm(terminalContainerRef);
+  const lastStdoutLen = useRef(0);
+  const lastStderrLen = useRef(0);
 
   // Resize: adapts to container size (no PTY to notify)
   const dims = useFrankenTermResize(term, terminalContainerRef, null);
@@ -23,20 +25,30 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
     updateGeometry(dims.cols, dims.cellWidth, dims.cellHeight);
   }, [dims.cols, dims.cellWidth, dims.cellHeight, updateGeometry]);
 
-  // Write stdout to terminal
+  // Feed only new stdout entries (reset ref when array shrinks, e.g. new operation)
   useEffect(() => {
     if (!term) return;
-    for (const entry of logState.stdout) {
-      term.feed(textEncoder.encode(entry.message + "\n"));
+    const entries = logState.stdout;
+    if (entries.length < lastStdoutLen.current) {
+      lastStdoutLen.current = 0;
     }
+    for (let i = lastStdoutLen.current; i < entries.length; i++) {
+      term.feed(textEncoder.encode(entries[i].message + "\r\n"));
+    }
+    lastStdoutLen.current = entries.length;
   }, [logState.stdout, term]);
 
-  // Write stderr to terminal
+  // Feed only new stderr entries (reset ref when array shrinks, e.g. new operation)
   useEffect(() => {
     if (!term) return;
-    for (const entry of logState.stderr) {
-      term.feed(textEncoder.encode(entry.message + "\n"));
+    const entries = logState.stderr;
+    if (entries.length < lastStderrLen.current) {
+      lastStderrLen.current = 0;
     }
+    for (let i = lastStderrLen.current; i < entries.length; i++) {
+      term.feed(textEncoder.encode(entries[i].message + "\r\n"));
+    }
+    lastStderrLen.current = entries.length;
   }, [logState.stderr, term]);
 
   return <div className="h-full w-full overflow-hidden bg-black" ref={terminalContainerRef} />;
