@@ -14,14 +14,6 @@ const EMPTY_PROBES: Probe[] = [];
 export function LimaConfigAutomationColumn() {
   const { draftConfig, updateField, isLoading } = useUpdateLimaInstanceDraft();
 
-  if (isLoading) {
-    return (
-      <div title="Loading Lima Config...">
-        <Spinner />
-      </div>
-    );
-  }
-
   const provision = draftConfig?.provision ?? EMPTY_PROVISION;
   const probes = draftConfig?.probes ?? EMPTY_PROBES;
 
@@ -47,6 +39,14 @@ export function LimaConfigAutomationColumn() {
     () => <ProbesDialog value={probes} onChange={handleProbesChange} />,
     [probes, handleProbesChange],
   );
+
+  if (isLoading) {
+    return (
+      <div title="Loading Lima Config...">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">

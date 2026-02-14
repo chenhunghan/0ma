@@ -91,7 +91,7 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
   );
 
   const getProtocolChangeHandler = useCallback(
-    (index: number) => (value: string) => {
+    (index: number) => (value: string | null) => {
       updatePortForward(index, "proto", value || "tcp");
     },
     [updatePortForward],

@@ -13,7 +13,7 @@ export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayout
   const isMobile = useIsMobile();
   const { resizableLayoutStorage } = useLayoutStorage();
   const lastColumnKey = useMemo(() => {
-    const lastColumn = columns.at(-1);
+    const lastColumn = columns[columns.length - 1];
     if (isValidElement(lastColumn) && lastColumn.key != null) {
       return String(lastColumn.key);
     }

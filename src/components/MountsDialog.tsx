@@ -73,7 +73,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
   );
 
   const getWritableChangeHandler = useCallback(
-    (index: number) => (value: string) => {
+    (index: number) => (value: string | null) => {
       updateMount(index, "writable", value === "true");
     },
     [updateMount],

@@ -80,7 +80,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
   );
 
   const getDeleteOnStopChangeHandler = useCallback(
-    (index: number) => (value: string) => {
+    (index: number) => (value: string | null) => {
       updateRule(index, "deleteOnStop", value === "true");
     },
     [updateRule],

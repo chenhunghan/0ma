@@ -10,14 +10,6 @@ import { Separator } from "./ui/separator";
 export function LimaConfigResourceColumn() {
   const { draftConfig, actualConfig, isLoading, updateField } = useUpdateLimaInstanceDraft();
 
-  if (isLoading) {
-    return (
-      <div title="Loading Lima Config...">
-        <Spinner />
-      </div>
-    );
-  }
-
   const handleCpuChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       updateField("cpus", Number(event.target.value));
@@ -26,25 +18,33 @@ export function LimaConfigResourceColumn() {
   );
 
   const handleMemoryChange = useCallback(
-    (value: string) => {
-      updateField("memory", value);
+    (value: string | null) => {
+      updateField("memory", value || "4GiB");
     },
     [updateField],
   );
 
   const handleDiskChange = useCallback(
-    (value: string) => {
-      updateField("disk", value);
+    (value: string | null) => {
+      updateField("disk", value || "100GiB");
     },
     [updateField],
   );
 
   const handleVmTypeChange = useCallback(
-    (value: string) => {
-      updateField("vmType", value);
+    (value: string | null) => {
+      updateField("vmType", value || "vz");
     },
     [updateField],
   );
+
+  if (isLoading) {
+    return (
+      <div title="Loading Lima Config...">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">

@@ -29,21 +29,12 @@ const EMPTY_PROBES: Probe[] = [];
 export function CreateInstanceConfigForm() {
   const { draftConfig, isLoading, updateField, instanceName, setInstanceName } =
     useCreateLimaInstanceDraft();
-
-  if (isLoading || !draftConfig) {
-    return (
-      <div title="Loading Lima Config...">
-        <Spinner />
-      </div>
-    );
-  }
-
-  const images = draftConfig.images ?? EMPTY_IMAGES;
-  const mounts = draftConfig.mounts ?? EMPTY_MOUNTS;
-  const copyToHost = draftConfig.copyToHost ?? EMPTY_COPY_TO_HOST;
-  const portForwards = draftConfig.portForwards ?? EMPTY_PORT_FORWARDS;
-  const provision = draftConfig.provision ?? EMPTY_PROVISION;
-  const probes = draftConfig.probes ?? EMPTY_PROBES;
+  const images = draftConfig?.images ?? EMPTY_IMAGES;
+  const mounts = draftConfig?.mounts ?? EMPTY_MOUNTS;
+  const copyToHost = draftConfig?.copyToHost ?? EMPTY_COPY_TO_HOST;
+  const portForwards = draftConfig?.portForwards ?? EMPTY_PORT_FORWARDS;
+  const provision = draftConfig?.provision ?? EMPTY_PROVISION;
+  const probes = draftConfig?.probes ?? EMPTY_PROBES;
 
   const handlers = useMemo(
     () => ({
@@ -53,8 +44,8 @@ export function CreateInstanceConfigForm() {
       cpu: (event: ChangeEvent<HTMLInputElement>) => {
         updateField("cpus", Number(event.target.value));
       },
-      disk: (value: string) => {
-        updateField("disk", value);
+      disk: (value: string | null) => {
+        updateField("disk", value || "100GiB");
       },
       images: (nextImages: Image[]) => {
         updateField("images", nextImages);
@@ -62,8 +53,8 @@ export function CreateInstanceConfigForm() {
       instanceName: (event: ChangeEvent<HTMLInputElement>) => {
         setInstanceName(event.target.value);
       },
-      memory: (value: string) => {
-        updateField("memory", value);
+      memory: (value: string | null) => {
+        updateField("memory", value || "4GiB");
       },
       mounts: (nextMounts: Mount[]) => {
         updateField("mounts", nextMounts);
@@ -77,8 +68,8 @@ export function CreateInstanceConfigForm() {
       provision: (nextProvision: Provision[]) => {
         updateField("provision", nextProvision);
       },
-      vmType: (value: string) => {
-        updateField("vmType", value);
+      vmType: (value: string | null) => {
+        updateField("vmType", value || "vz");
       },
     }),
     [setInstanceName, updateField],
@@ -95,6 +86,14 @@ export function CreateInstanceConfigForm() {
     }),
     [copyToHost, handlers, images, mounts, portForwards, probes, provision],
   );
+
+  if (isLoading || !draftConfig) {
+    return (
+      <div title="Loading Lima Config...">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 gap-x-12 gap-y-4 w-full px-4 py-4 lg:px-8 lg:py-4 relative overflow-y-auto max-h-full items-start">

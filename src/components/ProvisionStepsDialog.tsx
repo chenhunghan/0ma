@@ -88,7 +88,7 @@ export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props)
   );
 
   const getModeChangeHandler = useCallback(
-    (index: number) => (value: string) => {
+    (index: number) => (value: string | null) => {
       updateArrayField(index, "mode", value || "system");
     },
     [updateArrayField],

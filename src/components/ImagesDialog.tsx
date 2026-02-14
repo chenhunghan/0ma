@@ -82,7 +82,7 @@ export function ImagesDialog({ value: images, onChange }: Props) {
   );
 
   const getArchChangeHandler = useCallback(
-    (index: number) => (value: string) => {
+    (index: number) => (value: string | null) => {
       updateImage(index, "arch", value || "x86_64");
     },
     [updateImage],

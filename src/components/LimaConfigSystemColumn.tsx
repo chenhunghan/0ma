@@ -19,15 +19,6 @@ const EMPTY_PORT_FORWARDS: PortForward[] = [];
 
 export function LimaConfigSystemColumn() {
   const { draftConfig, updateField, isLoading } = useUpdateLimaInstanceDraft();
-
-  if (isLoading) {
-    return (
-      <div title="Loading Lima Config...">
-        <Spinner />
-      </div>
-    );
-  }
-
   const images = draftConfig?.images ?? EMPTY_IMAGES;
   const mounts = draftConfig?.mounts ?? EMPTY_MOUNTS;
   const copyToHost = draftConfig?.copyToHost ?? EMPTY_COPY_TO_HOST;
@@ -52,6 +43,14 @@ export function LimaConfigSystemColumn() {
     }),
     [copyToHost, handlers, images, mounts, portForwards],
   );
+
+  if (isLoading) {
+    return (
+      <div title="Loading Lima Config...">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
