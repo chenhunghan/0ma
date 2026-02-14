@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
-import { useTerminalSession, useXterm } from "../hooks/terminal";
-import { useTerminalResize } from "../hooks/terminal/useTerminalResize";
-import { useTerminalResizeContext } from "src/contexts/useTerminalResizeContext";
+import {
+  useFrankenTerm,
+  useFrankenTermInput,
+  useFrankenTermResize,
+  useTerminalSession,
+} from "../hooks/terminal";
 import * as log from "@tauri-apps/plugin-log";
 
 interface Props {
@@ -19,65 +22,58 @@ export function TerminalComponent({
   initialCommand,
   initialArgs,
   cwd,
-  isActive = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { terminal } = useXterm(containerRef);
-  const { sessionId: hookSessionId, spawn, connect, isReady } = useTerminalSession(terminal);
-  const { subscribeDragEnd } = useTerminalResizeContext();
+  const { term, geometry, canvasRef } = useFrankenTerm(containerRef);
+  const spawnedRef = useRef(false);
 
-  const { onDragEnd, waitForReady } = useTerminalResize({
-    containerRef,
-    isActive,
-    terminal,
-  });
-
-  // Subscribe to drag end events
-  useEffect(() => subscribeDragEnd(onDragEnd), [subscribeDragEnd, onDragEnd]);
-
-  // Spawn/connect session
-  useEffect(() => {
-    log.debug(`[Terminal] useEffect: isReady=${isReady}`);
-    if (isReady) {return;}
-
-    let cancelled = false;
-
-    // TODO: replace waitForReady with new terminal lib readiness check
-    waitForReady().then((ready) => {
-      log.debug(`[Terminal] waitForReady resolved: ready=${ready} cancelled=${cancelled}`);
-      if (cancelled || !ready) {
-        // Fallback: spawn immediately with default dims
-        if (cancelled) {return;}
-        if (propsSessionId) {
-          connect(propsSessionId);
-        } else {
-          spawn({ args: initialArgs, command: initialCommand, cwd });
-        }
-        return;
-      }
-
-      if (propsSessionId) {
-        log.debug(`[Terminal] connecting to session ${propsSessionId}`);
-        connect(propsSessionId);
-      } else {
-        log.debug(`[Terminal] spawning session ${initialCommand}`);
-        spawn({ args: initialArgs, command: initialCommand, cwd });
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    propsSessionId,
-    initialCommand,
-    initialArgs,
-    cwd,
-    connect,
+  // Session management (spawn/connect) — uses initial geometry for spawn dims
+  const {
+    sessionId: hookSessionId,
     spawn,
+    connect,
     isReady,
-    waitForReady,
-  ]);
+    connectError,
+  } = useTerminalSession(
+    term,
+    geometry?.cols ?? 80,
+    geometry?.rows ?? 24,
+  );
+
+  // Resize hook: observes container and notifies PTY
+  const dims = useFrankenTermResize(term, containerRef, hookSessionId ?? null);
+
+  // Input hook: keyboard/mouse/paste → FrankenTerm → PTY
+  const { updateCols } = useFrankenTermInput(term, hookSessionId, canvasRef);
+
+  // Keep input hook cols in sync with resize
+  useEffect(() => {
+    updateCols(dims.cols);
+  }, [dims.cols, updateCols]);
+
+  // Spawn/connect when term is ready (fire once)
+  useEffect(() => {
+    if (!term || !geometry || isReady || spawnedRef.current) return;
+    spawnedRef.current = true;
+
+    log.debug(`[TerminalComponent] term ready: ${geometry.cols}x${geometry.rows}`);
+
+    if (propsSessionId) {
+      log.debug(`[TerminalComponent] connecting to session ${propsSessionId}`);
+      connect(propsSessionId);
+    } else {
+      log.debug(`[TerminalComponent] spawning: ${initialCommand}`);
+      spawn({ args: initialArgs, command: initialCommand, cwd });
+    }
+  }, [term, geometry, propsSessionId, initialCommand, initialArgs, cwd, connect, spawn, isReady]);
+
+  // Fallback: if connect failed (stale session from persistence), spawn a new one
+  useEffect(() => {
+    if (!connectError || !term || !geometry) return;
+
+    log.warn(`[TerminalComponent] connect failed, spawning new session: ${connectError}`);
+    spawn({ args: initialArgs, command: initialCommand, cwd });
+  }, [connectError, term, geometry, spawn, initialArgs, initialCommand, cwd]);
 
   // Lift sessionId up when created
   useEffect(() => {
@@ -86,5 +82,5 @@ export function TerminalComponent({
     }
   }, [hookSessionId, propsSessionId, onSessionCreated]);
 
-  return <div ref={containerRef} className="h-full w-full min-h-0 min-w-0" />;
+  return <div ref={containerRef} className="h-full w-full min-h-0 min-w-0 overflow-hidden bg-black" />;
 }

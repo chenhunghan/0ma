@@ -2,16 +2,20 @@ import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import * as log from "@tauri-apps/plugin-log";
+import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
 import type { PtyEvent } from "./types";
+
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
 
 /**
  * Hook for connecting to an existing terminal session.
- *
- * xterm.js removed — the channel.onmessage callback currently logs data.
- * Wire in the replacement terminal's write method here.
+ * Feeds PTY output into FrankenTermWeb and drains reply bytes back.
  */
-export function useTerminalSessionConnect() {
+export function useTerminalSessionConnect(term: FrankenTermWeb | null) {
   const channelRef = useRef<Channel<PtyEvent> | null>(null);
+  const termRef = useRef(term);
+  termRef.current = term;
 
   // Cleanup listener on unmount
   useEffect(() => () => {
@@ -30,8 +34,24 @@ export function useTerminalSessionConnect() {
       // 1. Create channel for output
       const channel = new Channel<PtyEvent>();
       channel.onmessage = (msg) => {
-        // TODO: wire replacement terminal write here
-        log.debug(`[pty-output] ${msg.data}`);
+        const t = termRef.current;
+        if (!t) return;
+
+        // PtyEvent.data is String; FrankenTerm.feed() expects Uint8Array
+        const bytes = textEncoder.encode(msg.data);
+        t.feed(bytes);
+
+        // Drain terminal reply bytes (cursor position reports, etc.)
+        const replies = t.drainReplyBytes();
+        for (let i = 0; i < replies.length; i++) {
+          const chunk = replies[i] as Uint8Array;
+          if (chunk.length > 0) {
+            const data = textDecoder.decode(chunk);
+            invoke("write_pty_cmd", { sessionId: targetSessionId, data }).catch((e) =>
+              log.error(`[connect] reply write failed: ${e}`),
+            );
+          }
+        }
       };
 
       // 2. Attach channel to existing session

@@ -2,16 +2,24 @@ import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import * as log from "@tauri-apps/plugin-log";
+import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
 import type { PtyEvent, SpawnOptions } from "./types";
+
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
 
 /**
  * Hook for spawning a new terminal session.
- *
- * xterm.js removed — the channel.onmessage callback currently logs data.
- * Wire in the replacement terminal's write method here.
+ * Feeds PTY output into FrankenTermWeb and drains reply bytes back.
  */
-export function useTerminalSessionSpawn() {
+export function useTerminalSessionSpawn(
+  term: FrankenTermWeb | null,
+  cols: number,
+  rows: number,
+) {
   const channelRef = useRef<Channel<PtyEvent> | null>(null);
+  const termRef = useRef(term);
+  termRef.current = term;
 
   // Cleanup listener on unmount
   useEffect(() => () => {
@@ -27,20 +35,36 @@ export function useTerminalSessionSpawn() {
         channelRef.current.onmessage = () => {};
       }
 
-      // 1. Spawn PTY process (default 80x24 until replacement terminal provides dims)
+      // 1. Spawn PTY process with FrankenTerm's geometry
       const sid = await invoke<string>("spawn_pty_cmd", {
         args: options.args,
-        cols: 80,
+        cols,
         command: options.command,
         cwd: options.cwd,
-        rows: 24,
+        rows,
       });
 
       // 2. Create channel for output
       const channel = new Channel<PtyEvent>();
       channel.onmessage = (msg) => {
-        // TODO: wire replacement terminal write here
-        log.debug(`[pty-output] ${msg.data}`);
+        const t = termRef.current;
+        if (!t) return;
+
+        // PtyEvent.data is String; FrankenTerm.feed() expects Uint8Array
+        const bytes = textEncoder.encode(msg.data);
+        t.feed(bytes);
+
+        // Drain terminal reply bytes (cursor position reports, etc.)
+        const replies = t.drainReplyBytes();
+        for (let i = 0; i < replies.length; i++) {
+          const chunk = replies[i] as Uint8Array;
+          if (chunk.length > 0) {
+            const data = textDecoder.decode(chunk);
+            invoke("write_pty_cmd", { sessionId: sid, data }).catch((e) =>
+              log.error(`[spawn] reply write failed: ${e}`),
+            );
+          }
+        }
       };
 
       // 3. Attach channel to session
