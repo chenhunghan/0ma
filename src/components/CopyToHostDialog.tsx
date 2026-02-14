@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState, type ChangeEvent } from "react";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import type { CopyToHost } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
@@ -24,36 +24,81 @@ interface Props {
 export function CopyToHostDialog({ value: rules, onChange }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasInvalid = (rules || []).some((c) => !c.guest?.trim() || !c.host?.trim());
+  const hasInvalid = rules.some((rule) => !rule.guest?.trim() || !rule.host?.trim());
 
-  const updateRule = (index: number, field: string, value: string | boolean) => {
-    const newRules = [...rules];
-    newRules[index] = { ...newRules[index], [field]: value };
-    onChange(newRules);
-  };
+  const updateRule = useCallback(
+    (index: number, field: string, value: string | boolean) => {
+      const newRules = [...rules];
+      newRules[index] = { ...newRules[index], [field]: value };
+      onChange(newRules);
+    },
+    [onChange, rules],
+  );
 
-  const addRule = () => {
+  const addRule = useCallback(() => {
     onChange([...rules, { deleteOnStop: false, guest: "", host: "" }]);
-  };
+  }, [onChange, rules]);
 
-  const removeRule = (index: number) => {
-    const newRules = [...rules];
-    newRules.splice(index, 1);
-    onChange(newRules);
-  };
+  const removeRule = useCallback(
+    (index: number) => {
+      const newRules = [...rules];
+      newRules.splice(index, 1);
+      onChange(newRules);
+    },
+    [onChange, rules],
+  );
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && hasInvalid) {
+        return;
+      }
+      setIsOpen(open);
+    },
+    [hasInvalid],
+  );
+
+  const getRemoveRuleHandler = useCallback(
+    (index: number) => () => {
+      removeRule(index);
+    },
+    [removeRule],
+  );
+
+  const getGuestChangeHandler = useCallback(
+    (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
+      updateRule(index, "guest", event.target.value);
+    },
+    [updateRule],
+  );
+
+  const getHostChangeHandler = useCallback(
+    (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
+      updateRule(index, "host", event.target.value);
+    },
+    [updateRule],
+  );
+
+  const getDeleteOnStopChangeHandler = useCallback(
+    (index: number) => (value: string) => {
+      updateRule(index, "deleteOnStop", value === "true");
+    },
+    [updateRule],
+  );
+
+  const triggerRender = useMemo(
+    () => <Button variant="ghost" size="icon" className="size-7" />,
+    [],
+  );
+
+  const doneButtonRender = useMemo(() => <Button variant="outline" size="sm" />, []);
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open && hasInvalid) {return;}
-        setIsOpen(open);
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <div className="flex items-center justify-between w-full">
         <Label className="mb-0.5">Copy to Host</Label>
-        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
-          {!rules || rules.length === 0 ? (
+        <DialogTrigger render={triggerRender}>
+          {rules.length === 0 ? (
             <PlusIcon className="size-2.5 mr-[4px]" />
           ) : (
             <PencilIcon className="size-2.5 mr-[4px]" />
@@ -67,16 +112,16 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
           <DialogDescription>Copy files from the guest VM to the host machine.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-          {(rules || []).map((rule, idx) => (
+          {rules.map((rule, idx) => (
             <div
-              key={idx}
+              key={`${rule.guest}-${rule.host}-${rule.deleteOnStop ? "true" : "false"}`}
               className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
             >
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => removeRule(idx)}
+                onClick={getRemoveRuleHandler(idx)}
               >
                 <Trash2Icon className="size-3 text-destructive" />
               </Button>
@@ -84,7 +129,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
                 <Label className="text-[10px] uppercase text-muted-foreground">Guest Path</Label>
                 <Input
                   value={rule.guest}
-                  onChange={(e) => updateRule(idx, "guest", e.target.value)}
+                  onChange={getGuestChangeHandler(idx)}
                   placeholder="/path/in/guest"
                   className="h-7 text-[11px]"
                 />
@@ -93,7 +138,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
                 <Label className="text-[10px] uppercase text-muted-foreground">Host Path</Label>
                 <Input
                   value={rule.host}
-                  onChange={(e) => updateRule(idx, "host", e.target.value)}
+                  onChange={getHostChangeHandler(idx)}
                   placeholder="/path/on/host"
                   className="h-7 text-[11px]"
                 />
@@ -104,7 +149,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
                 </Label>
                 <Select
                   value={rule.deleteOnStop ? "true" : "false"}
-                  onValueChange={(val) => updateRule(idx, "deleteOnStop", val === "true")}
+                  onValueChange={getDeleteOnStopChangeHandler(idx)}
                 >
                   <SelectTrigger className="h-7 text-[11px] w-full">
                     <SelectValue />
@@ -127,7 +172,7 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
           </p>
         )}
         <DialogFooter>
-          <DialogClose disabled={hasInvalid} render={<Button variant="outline" size="sm" />}>
+          <DialogClose disabled={hasInvalid} render={doneButtonRender}>
             Done
           </DialogClose>
         </DialogFooter>

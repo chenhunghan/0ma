@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { PlusIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -24,20 +25,32 @@ export function CreateInstanceDialog({
   onDialogOpenChange,
   onClickCreate,
 }: Props) {
+  const handleCancel = useCallback(() => {
+    onDialogOpenChange(false);
+  }, [onDialogOpenChange]);
+
+  const handleCreate = useCallback(() => {
+    onClickCreate();
+    onDialogOpenChange(false);
+  }, [onClickCreate, onDialogOpenChange]);
+
+  const triggerRender = useMemo(
+    () => (
+      <Button
+        variant="default"
+        size="icon"
+        aria-label="Create new Lima instance"
+        className={buttonClassName}
+      >
+        <PlusIcon />
+      </Button>
+    ),
+    [buttonClassName],
+  );
+
   return (
     <Dialog open={open} onOpenChange={onDialogOpenChange}>
-      <DialogTrigger
-        render={
-          <Button
-            variant="default"
-            size="icon"
-            aria-label="Create new Lima instance"
-            className={buttonClassName}
-          >
-            <PlusIcon />
-          </Button>
-        }
-      />
+      <DialogTrigger render={triggerRender} />
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create Instance</DialogTitle>
@@ -45,16 +58,10 @@ export function CreateInstanceDialog({
         </DialogHeader>
         <CreateInstanceConfigForm />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onDialogOpenChange(false)}>
+          <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button
-            variant="default"
-            onClick={() => {
-              onClickCreate();
-              onDialogOpenChange(false);
-            }}
-          >
+          <Button variant="default" onClick={handleCreate}>
             Create
           </Button>
         </DialogFooter>

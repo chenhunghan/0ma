@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 
 import { cn } from "src/lib/utils";
 import { Button } from "src/components/ui/button";
@@ -47,18 +47,38 @@ function InputGroupAddon({
   align = "inline-start",
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
+  const focusInput = React.useCallback((element: HTMLDivElement) => {
+    element.parentElement?.querySelector("input")?.focus();
+  }, []);
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if ((event.target as HTMLElement).closest("button")) {
+        return;
+      }
+      focusInput(event.currentTarget);
+    },
+    [focusInput],
+  );
+
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        focusInput(event.currentTarget);
+      }
+    },
+    [focusInput],
+  );
+
   return (
     <div
       role="group"
       data-slot="input-group-addon"
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
-      onClick={(e) => {
-        if ((e.target as HTMLElement).closest("button")) {
-          return;
-        }
-        e.currentTarget.parentElement?.querySelector("input")?.focus();
-      }}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       {...props}
     />
   );

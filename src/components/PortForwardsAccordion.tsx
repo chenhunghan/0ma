@@ -6,8 +6,12 @@ export function PortForwardsAccordion({ value: portForwards }: { value: PortForw
   return (
     portForwards.length > 0 && (
       <Accordion className="w-full">
-        {portForwards.map((pf, idx) => (
-          <AccordionItem value={`pf-${idx}`} key={idx} className="border-border/40">
+        {portForwards.map((pf) => (
+          <AccordionItem
+            value={`pf-${pf.proto ?? "tcp"}-${pf.guestPort ?? "0"}-${pf.hostPort ?? "0"}-${pf.hostIP ?? "127.0.0.1"}-${pf.guestIPMustBeZero ? "true" : "false"}`}
+            key={`${pf.proto ?? "tcp"}-${pf.guestPort ?? "0"}-${pf.hostPort ?? "0"}-${pf.hostIP ?? "127.0.0.1"}-${pf.guestIPMustBeZero ? "true" : "false"}`}
+            className="border-border/40"
+          >
             <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors tracking-tight text-muted-foreground font-semibold">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] bg-muted px-1 rounded text-foreground/70 uppercase">

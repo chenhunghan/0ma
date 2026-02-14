@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Mock @tauri-apps/api/core
 const mockInvoke = vi.fn();
-vi.mock<typeof import('@tauri-apps/api/core')>("@tauri-apps/api/core", () => ({
+vi.mock<typeof import("@tauri-apps/api/core")>("@tauri-apps/api/core", () => ({
   invoke: (cmd: string, args: unknown) => Promise.resolve(mockInvoke(cmd, args)),
 }));
 
@@ -28,7 +28,7 @@ const mockListen = vi.fn((event: string, handler: (event: unknown) => void) => {
   });
 });
 
-vi.mock<typeof import('@tauri-apps/api/event')>("@tauri-apps/api/event", () => ({
+vi.mock<typeof import("@tauri-apps/api/event")>("@tauri-apps/api/event", () => ({
   listen: (event: string, handler: (event: unknown) => void) => mockListen(event, handler),
 }));
 
@@ -42,7 +42,7 @@ const emitEvent = (eventName: string, payload: unknown) => {
 
 // Mock useLayoutStorage
 const mockSetActiveTab = vi.fn();
-vi.mock<typeof import('src/hooks/useLayoutStorage')>("src/hooks/useLayoutStorage", () => ({
+vi.mock<typeof import("src/hooks/useLayoutStorage")>("src/hooks/useLayoutStorage", () => ({
   useLayoutStorage: () => ({
     setActiveTab: mockSetActiveTab,
   }),
@@ -78,9 +78,12 @@ const mockUseCreateLimaInstanceDraft = vi.fn(() => ({
   instanceName: "test-instance",
 }));
 
-vi.mock<typeof import('src/hooks/useCreateLimaInstanceDraft')>("src/hooks/useCreateLimaInstanceDraft", () => ({
-  useCreateLimaInstanceDraft: () => mockUseCreateLimaInstanceDraft(),
-}));
+vi.mock<typeof import("src/hooks/useCreateLimaInstanceDraft")>(
+  "src/hooks/useCreateLimaInstanceDraft",
+  () => ({
+    useCreateLimaInstanceDraft: () => mockUseCreateLimaInstanceDraft(),
+  }),
+);
 
 // Mock ResizeObserver (needed for some UI components likely)
 // Mock ResizeObserver (needed for some UI components likely)
@@ -101,7 +104,7 @@ const createTestQueryClient = () =>
     },
   });
 
-describe(CreateStartInstanceDialogs, () => {
+describe("CreateStartInstanceDialogs", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -125,21 +128,17 @@ describe(CreateStartInstanceDialogs, () => {
     );
   };
 
-  it("successfully (happy flow) creates and starts an instance, showing logs and switching tabs", async () => {
-    renderComponent();
-
+  const openCreateAndSubmit = () => {
     const createButton = screen.getByLabelText("Create new Lima instance");
     expect(createButton).toBeInTheDocument();
 
-    // 1. Open Create Dialog
     fireEvent.click(createButton);
-    expect(screen.getByText("Create Instance")).toBeInTheDocument(); // Title
+    expect(screen.getByText("Create Instance")).toBeInTheDocument();
 
-    // 2. Click Create
-    const createConfirmButton = screen.getByRole("button", { name: "Create" });
-    fireEvent.click(createConfirmButton);
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+  };
 
-    // Verify create command was called
+  const expectCreateCommandAndDialog = async () => {
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("create_lima_instance_cmd", {
         config: mockDraftConfig,
@@ -147,13 +146,12 @@ describe(CreateStartInstanceDialogs, () => {
       });
     });
 
-    // 3. Verify Creating Logs Dialog appears
-    // Using waitFor to ensure state update has propagated
     await waitFor(() => {
       expect(screen.getByText("Creating Instance")).toBeInTheDocument();
     });
+  };
 
-    // Simulate creating logs
+  const emitCreateLogsAndVerify = async () => {
     act(() => {
       emitEvent("lima-instance-create", {
         instance_name: "test-instance",
@@ -169,12 +167,12 @@ describe(CreateStartInstanceDialogs, () => {
       });
     });
 
-    // Verify logs are displayed
     await waitFor(() => {
       expect(screen.getByText("Downloading image...")).toBeInTheDocument();
     });
+  };
 
-    // 4. Simulate Success
+  const completeCreateAndStart = async () => {
     act(() => {
       emitEvent("lima-instance-create-success", {
         instance_name: "test-instance",
@@ -184,32 +182,25 @@ describe(CreateStartInstanceDialogs, () => {
       });
     });
 
-    // 5. Verify transition to Start Dialog
     await waitFor(() => {
-      // "Creating Instance" should disappear (or be replaced)
-      // StartInstanceDialog title is "Instance Created"
       expect(screen.getByText("Instance Created")).toBeInTheDocument();
-      // Button is "Start"
       expect(screen.getByRole("button", { name: "Start" })).toBeInTheDocument();
     });
 
-    // 6. Click Start
-    const startButton = screen.getByRole("button", { name: "Start" });
-    fireEvent.click(startButton);
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
 
-    // Verify start command called
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("start_lima_instance_cmd", {
         instanceName: "test-instance",
       });
     });
 
-    // 7. Verify Starting Logs Dialog appears
     await waitFor(() => {
       expect(screen.getByText("Starting Instance...")).toBeInTheDocument();
     });
+  };
 
-    // Simulate starting logs
+  const emitStartLogsAndVerify = async () => {
     act(() => {
       emitEvent("lima-instance-start", {
         instance_name: "test-instance",
@@ -228,8 +219,9 @@ describe(CreateStartInstanceDialogs, () => {
     await waitFor(() => {
       expect(screen.getByText("Booting kernel...")).toBeInTheDocument();
     });
+  };
 
-    // 8. Simulate Start Success/Ready
+  const completeStartAndVerify = async () => {
     act(() => {
       emitEvent("lima-instance-start-success", {
         instance_name: "test-instance",
@@ -239,13 +231,21 @@ describe(CreateStartInstanceDialogs, () => {
       });
     });
 
-    // 9. Verify success state and tab switch
-    // The dialog is configured to auto-close on success (via useOnLimaStartLogs calling onSuccess)
     await waitFor(() => {
       expect(mockSetActiveTab).toHaveBeenCalledWith("lima");
       expect(screen.queryByText("Starting Instance...")).not.toBeInTheDocument();
       expect(screen.queryByText("Instance Started")).not.toBeInTheDocument();
     });
+  };
+
+  it("successfully (happy flow) creates and starts an instance, showing logs and switching tabs", async () => {
+    renderComponent();
+    openCreateAndSubmit();
+    await expectCreateCommandAndDialog();
+    await emitCreateLogsAndVerify();
+    await completeCreateAndStart();
+    await emitStartLogsAndVerify();
+    await completeStartAndVerify();
   }, 30_000);
 
   it("handles creation failure gracefully", async () => {

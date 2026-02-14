@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 import { Button } from "./ui/button";
 import {
@@ -21,6 +22,15 @@ export function ErrorCreateInstanceDialog({ onRetry, onClose }: Props) {
   const { isSuccess: isSuccessCreatingInstance, error: errorCreatingInstance } =
     useOnLimaCreateLogs(instanceName);
   const isCreatingInstanceFailed = errorCreatingInstance.length > 0 && !isSuccessCreatingInstance;
+  const closeButtonRender = useMemo(
+    () => (
+      <Button variant="outline" onClick={onClose}>
+        Close
+      </Button>
+    ),
+    [onClose],
+  );
+
   return (
     <Dialog open={isCreatingInstanceFailed} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -43,13 +53,7 @@ export function ErrorCreateInstanceDialog({ onRetry, onClose }: Props) {
         </div>
 
         <DialogFooter>
-          <DialogClose
-            render={
-              <Button variant="outline" onClick={onClose}>
-                Close
-              </Button>
-            }
-          />
+          <DialogClose render={closeButtonRender} />
 
           <Button variant="default" onClick={onRetry}>
             Retry

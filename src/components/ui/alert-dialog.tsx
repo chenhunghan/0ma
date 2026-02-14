@@ -134,11 +134,16 @@ function AlertDialogCancel({
   ...props
 }: AlertDialogPrimitive.Close.Props &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+  const cancelRender = React.useMemo(
+    () => React.createElement(Button, { size, variant }),
+    [size, variant],
+  );
+
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-cancel"
       className={cn(className)}
-      render={<Button variant={variant} size={size} />}
+      render={cancelRender}
       {...props}
     />
   );

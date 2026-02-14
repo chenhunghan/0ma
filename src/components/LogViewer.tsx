@@ -13,6 +13,10 @@ interface Props {
   logState: LogState;
 }
 
+function createMarkup(html: string) {
+  return { __html: html };
+}
+
 export const LogViewer: React.FC<Props> = ({ logState }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef(true);
@@ -65,7 +69,7 @@ export const LogViewer: React.FC<Props> = ({ logState }) => {
           <div
             key={entry.id}
             className="[&>pre]:!bg-transparent [&>pre]:!p-0 [&>pre]:!m-0 [&_code]:!bg-transparent [&>pre]:!whitespace-pre-wrap [&_code]:!whitespace-pre-wrap [&>pre]:break-all [&_code]:break-all"
-            dangerouslySetInnerHTML={{ __html: html }}
+            dangerouslySetInnerHTML={createMarkup(html)}
           />
         );
       })}

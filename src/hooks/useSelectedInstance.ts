@@ -14,7 +14,9 @@ export function useSelectedInstance() {
   // Derive the current selection from live instances and the persisted name.
   // This handles external deletions, renames, and initial fallbacks automatically.
   const selectedName = useMemo(() => {
-    if (isLoadingInstances || !isPersistedNameFetched) {return null;}
+    if (isLoadingInstances || !isPersistedNameFetched) {
+      return null;
+    }
 
     // 1. Try to use the persisted name if it's still valid
     const stillExists = instances.some((i: LimaInstance) => i.name === persistedName);
@@ -34,7 +36,10 @@ export function useSelectedInstance() {
   );
 
   const isLoading = isLoadingInstances || (!isPersistedNameFetched && instances.length > 0);
-  const selectedInstance = useMemo(() => instances.find((i) => i.name === selectedName), [instances, selectedName]);
+  const selectedInstance = useMemo(
+    () => instances.find((i) => i.name === selectedName),
+    [instances, selectedName],
+  );
 
   return {
     error,

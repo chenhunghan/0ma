@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState, type ChangeEvent } from "react";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import type { Mount } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
@@ -24,36 +24,74 @@ interface Props {
 export function MountsDialog({ value: mounts, onChange }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasInvalid = (mounts || []).some((m) => !m.location?.trim());
+  const hasInvalid = mounts.some((mount) => !mount.location?.trim());
 
-  const updateMount = (index: number, field: string, value: string | boolean) => {
-    const newMounts = [...mounts];
-    newMounts[index] = { ...newMounts[index], [field]: value };
-    onChange(newMounts);
-  };
+  const updateMount = useCallback(
+    (index: number, field: string, value: string | boolean) => {
+      const newMounts = [...mounts];
+      newMounts[index] = { ...newMounts[index], [field]: value };
+      onChange(newMounts);
+    },
+    [mounts, onChange],
+  );
 
-  const addMount = () => {
+  const addMount = useCallback(() => {
     onChange([...mounts, { location: "", writable: false }]);
-  };
+  }, [mounts, onChange]);
 
-  const removeMount = (index: number) => {
-    const newMounts = [...mounts];
-    newMounts.splice(index, 1);
-    onChange(newMounts);
-  };
+  const removeMount = useCallback(
+    (index: number) => {
+      const newMounts = [...mounts];
+      newMounts.splice(index, 1);
+      onChange(newMounts);
+    },
+    [mounts, onChange],
+  );
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && hasInvalid) {
+        return;
+      }
+      setIsOpen(open);
+    },
+    [hasInvalid],
+  );
+
+  const getRemoveMountHandler = useCallback(
+    (index: number) => () => {
+      removeMount(index);
+    },
+    [removeMount],
+  );
+
+  const getLocationChangeHandler = useCallback(
+    (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
+      updateMount(index, "location", event.target.value);
+    },
+    [updateMount],
+  );
+
+  const getWritableChangeHandler = useCallback(
+    (index: number) => (value: string) => {
+      updateMount(index, "writable", value === "true");
+    },
+    [updateMount],
+  );
+
+  const triggerRender = useMemo(
+    () => <Button variant="ghost" size="icon" className="size-7" />,
+    [],
+  );
+
+  const doneButtonRender = useMemo(() => <Button variant="outline" size="sm" />, []);
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open && hasInvalid) {return;}
-        setIsOpen(open);
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <div className="flex items-center justify-between w-full">
         <Label className="mb-0.5">Mounts</Label>
-        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
-          {!mounts || mounts.length === 0 ? (
+        <DialogTrigger render={triggerRender}>
+          {mounts.length === 0 ? (
             <PlusIcon className="size-2.5 mr-[4px]" />
           ) : (
             <PencilIcon className="size-2.5 mr-[4px]" />
@@ -69,16 +107,16 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-          {(mounts || []).map((mount, idx) => (
+          {mounts.map((mount, idx) => (
             <div
-              key={idx}
+              key={`${mount.location ?? ""}-${mount.writable ? "true" : "false"}`}
               className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
             >
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => removeMount(idx)}
+                onClick={getRemoveMountHandler(idx)}
               >
                 <Trash2Icon className="size-3 text-destructive" />
               </Button>
@@ -86,7 +124,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
                 <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
                 <Input
                   value={mount.location}
-                  onChange={(e) => updateMount(idx, "location", e.target.value)}
+                  onChange={getLocationChangeHandler(idx)}
                   placeholder="Path to mount"
                   className="h-7 text-[11px]"
                 />
@@ -95,7 +133,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
                 <Label className="text-[10px] uppercase text-muted-foreground">Writable</Label>
                 <Select
                   value={mount.writable ? "true" : "false"}
-                  onValueChange={(val) => updateMount(idx, "writable", val === "true")}
+                  onValueChange={getWritableChangeHandler(idx)}
                 >
                   <SelectTrigger className="h-7 text-[11px] w-full">
                     <SelectValue />
@@ -118,7 +156,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
           </p>
         )}
         <DialogFooter>
-          <DialogClose disabled={hasInvalid} render={<Button variant="outline" size="sm" />}>
+          <DialogClose disabled={hasInvalid} render={doneButtonRender}>
             Done
           </DialogClose>
         </DialogFooter>

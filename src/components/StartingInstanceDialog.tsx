@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -29,20 +30,27 @@ export function StartingInstanceDialog({
     onSuccess,
   });
 
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      // User manually closed the dialog.
-      // This includes: ESC key, clicking background overlay, or clicking the "Close" button.
-      onDialogOpenChange(false);
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!newOpen) {
+        // User manually closed the dialog.
+        // This includes: ESC key, clicking background overlay, or clicking the "Close" button.
+        onDialogOpenChange(false);
 
-      // Only switch tab if the instance is ready or successful
-      if (logState.isReady || logState.isSuccess) {
-        onSuccess?.();
+        // Only switch tab if the instance is ready or successful
+        if (logState.isReady || logState.isSuccess) {
+          onSuccess?.();
+        }
+      } else {
+        onDialogOpenChange(true);
       }
-    } else {
-      onDialogOpenChange(true);
-    }
-  };
+    },
+    [logState.isReady, logState.isSuccess, onDialogOpenChange, onSuccess],
+  );
+
+  const handleClose = useCallback(() => {
+    onDialogOpenChange(false);
+  }, [onDialogOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -50,7 +58,7 @@ export function StartingInstanceDialog({
         isReady={logState.isReady}
         isSuccess={logState.isSuccess}
         isError={logState.error.length > 0}
-        onClose={() => onDialogOpenChange(false)}
+        onClose={handleClose}
       >
         <LogViewer logState={logState} />
       </StartingInstanceDialogContent>
@@ -81,9 +89,9 @@ function StartingInstanceDialogContent({
         <DialogDescription>
           {isSuccess
             ? "The instance has started successfully."
-            : (isReady
+            : isReady
               ? "The instance is ready, you can close the dialog"
-              : "Please wait while the instance starts.")}
+              : "Please wait while the instance starts."}
         </DialogDescription>
       </DialogHeader>
       {children}
@@ -93,7 +101,7 @@ function StartingInstanceDialogContent({
           title={isSuccess ? "Close the dialog" : "The instance is ready, you can close the dialog"}
           onClick={onClose}
         >
-          {isSuccess ? "Done" : (isReady ? "Ready" : "Close")}
+          {isSuccess ? "Done" : isReady ? "Ready" : "Close"}
         </Button>
       </DialogFooter>
     </DialogContent>

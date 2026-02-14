@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -26,16 +27,23 @@ export function StoppingInstanceDialog({
 }: Props) {
   const logState = useOnLimaStopLogs(instanceName || "");
 
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      onDialogOpenChange(false);
-      if (logState.isSuccess) {
-        onSuccess?.();
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!newOpen) {
+        onDialogOpenChange(false);
+        if (logState.isSuccess) {
+          onSuccess?.();
+        }
+      } else {
+        onDialogOpenChange(true);
       }
-    } else {
-      onDialogOpenChange(true);
-    }
-  };
+    },
+    [logState.isSuccess, onDialogOpenChange, onSuccess],
+  );
+
+  const handleClose = useCallback(() => {
+    onDialogOpenChange(false);
+  }, [onDialogOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -55,10 +63,7 @@ export function StoppingInstanceDialog({
         </DialogHeader>
         <LogViewer logState={logState} />
         <DialogFooter>
-          <Button
-            variant={logState.isSuccess ? "default" : "outline"}
-            onClick={() => onDialogOpenChange(false)}
-          >
+          <Button variant={logState.isSuccess ? "default" : "outline"} onClick={handleClose}>
             {logState.isSuccess ? "Done" : "Close"}
           </Button>
         </DialogFooter>

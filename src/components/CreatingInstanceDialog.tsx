@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -28,10 +29,13 @@ export function CreatingInstanceDialog({
       onCreateInstanceSuccess?.();
     },
   });
+  const handleClose = useCallback(() => {
+    onDialogOpenChange(false);
+  }, [onDialogOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onDialogOpenChange}>
-      <CreatingInstanceDialogContent onClose={() => onDialogOpenChange(false)}>
+      <CreatingInstanceDialogContent onClose={handleClose}>
         <LogViewer logState={logState} />
       </CreatingInstanceDialogContent>
     </Dialog>

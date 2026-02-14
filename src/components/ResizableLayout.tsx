@@ -1,5 +1,4 @@
-import type { ReactNode} from "react";
-import { Fragment } from "react";
+import { Fragment, isValidElement, useMemo, type ReactNode } from "react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "src/components/ui/resizable";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 import { useIsMobile } from "src/hooks/useMediaQuery";
@@ -13,6 +12,13 @@ interface ResizableLayoutProps {
 export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayoutProps) {
   const isMobile = useIsMobile();
   const { resizableLayoutStorage } = useLayoutStorage();
+  const lastColumnKey = useMemo(() => {
+    const lastColumn = columns.at(-1);
+    if (isValidElement(lastColumn) && lastColumn.key != null) {
+      return String(lastColumn.key);
+    }
+    return null;
+  }, [columns]);
 
   return (
     <ResizablePanelGroup
@@ -24,14 +30,18 @@ export function ResizableLayout({ columns, bottom, autoSaveId }: ResizableLayout
       {columns.length > 0 ? (
         <ResizablePanel defaultSize={40} minSize={10}>
           <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"}>
-            {columns.map((column, index) => (
-              <Fragment key={index}>
-                <ResizablePanel defaultSize={100 / columns.length} minSize={10}>
-                  {column}
-                </ResizablePanel>
-                {index < columns.length - 1 && <ResizableHandle />}
-              </Fragment>
-            ))}
+            {columns.map((column) => {
+              const columnKey =
+                isValidElement(column) && column.key != null ? String(column.key) : String(column);
+              return (
+                <Fragment key={columnKey}>
+                  <ResizablePanel defaultSize={100 / columns.length} minSize={10}>
+                    {column}
+                  </ResizablePanel>
+                  {columnKey !== lastColumnKey && <ResizableHandle />}
+                </Fragment>
+              );
+            })}
           </ResizablePanelGroup>
         </ResizablePanel>
       ) : (

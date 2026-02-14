@@ -39,7 +39,9 @@ export function useUpdateLimaInstanceDraft() {
 
   // Derived dirty state
   const isDirty = useMemo(() => {
-    if (!actualConfig || !draftConfig) {return false;}
+    if (!actualConfig || !draftConfig) {
+      return false;
+    }
     return !isEqual(actualConfig, draftConfig);
   }, [actualConfig, draftConfig]);
 

@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -24,6 +25,14 @@ export function StartInstanceDialog({
   variant = "created",
 }: Props) {
   const isCreated = variant === "created";
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const handleStart = useCallback(() => {
+    onStart();
+    onOpenChange(false);
+  }, [onOpenChange, onStart]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,17 +57,10 @@ export function StartInstanceDialog({
           </p>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={handleClose}>
             Close
           </Button>
-          <Button
-            onClick={() => {
-              onStart();
-              onOpenChange(false);
-            }}
-          >
-            Start
-          </Button>
+          <Button onClick={handleStart}>Start</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

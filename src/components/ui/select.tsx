@@ -7,6 +7,12 @@ import { cn } from "src/lib/utils";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 const Select = SelectPrimitive.Root;
+const SELECT_TRIGGER_ICON_RENDER = React.createElement(ChevronDownIcon, {
+  className: "text-muted-foreground size-4 pointer-events-none",
+});
+const SELECT_ITEM_INDICATOR_RENDER = React.createElement("span", {
+  className: "pointer-events-none absolute right-2 flex size-4 items-center justify-center",
+});
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -56,9 +62,7 @@ function SelectTrigger({
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon
-        render={<ChevronDownIcon className="text-muted-foreground size-4 pointer-events-none" />}
-      />
+      <SelectPrimitive.Icon render={SELECT_TRIGGER_ICON_RENDER} />
     </SelectPrimitive.Trigger>
   );
 }
@@ -127,11 +131,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
       <SelectPrimitive.ItemText className="flex flex-1 gap-2 shrink-0 whitespace-nowrap">
         {children}
       </SelectPrimitive.ItemText>
-      <SelectPrimitive.ItemIndicator
-        render={
-          <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center" />
-        }
-      >
+      <SelectPrimitive.ItemIndicator render={SELECT_ITEM_INDICATOR_RENDER}>
         <CheckIcon className="pointer-events-none" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>

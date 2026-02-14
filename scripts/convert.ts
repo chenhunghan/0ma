@@ -7,21 +7,68 @@ export interface RGB {
   b: number;
 }
 
+const BG_DISTANCE = Math.sqrt(3 * 255 * 255);
+const MIN_VISIBLE_ALPHA = 0.01;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function readPixel(data: Buffer, offset: number): RGB {
+  return {
+    r: data[offset],
+    g: data[offset + 1],
+    b: data[offset + 2],
+  };
+}
+
+function computeAlpha(whitePixel: RGB, blackPixel: RGB): number {
+  const pixelDist = Math.sqrt(
+    Math.pow(whitePixel.r - blackPixel.r, 2) +
+      Math.pow(whitePixel.g - blackPixel.g, 2) +
+      Math.pow(whitePixel.b - blackPixel.b, 2),
+  );
+  return clamp(1 - pixelDist / BG_DISTANCE, 0, 1);
+}
+
+function recoverForegroundColor(alpha: number, blackPixel: RGB): RGB {
+  if (alpha <= MIN_VISIBLE_ALPHA) {
+    return { b: 0, g: 0, r: 0 };
+  }
+
+  return {
+    r: blackPixel.r / alpha,
+    g: blackPixel.g / alpha,
+    b: blackPixel.b / alpha,
+  };
+}
+
+function writeOutputPixel(outputBuffer: Buffer, offset: number, color: RGB, alpha: number): void {
+  outputBuffer[offset] = Math.round(Math.min(255, color.r));
+  outputBuffer[offset + 1] = Math.round(Math.min(255, color.g));
+  outputBuffer[offset + 2] = Math.round(Math.min(255, color.b));
+  outputBuffer[offset + 3] = Math.round(alpha * 255);
+}
+
+async function readRawImageWithMeta(path: string): Promise<{
+  data: Buffer;
+  info: sharp.OutputInfo;
+}> {
+  return sharp(path).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+}
+
+async function readRawImage(path: string): Promise<Buffer> {
+  const { data } = await sharp(path).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return data;
+}
+
 export async function extractAlphaTwoPass(
   imgOnWhitePath: string,
   imgOnBlackPath: string,
   outputPath: string,
 ): Promise<void> {
-  const img1 = sharp(imgOnWhitePath);
-  const img2 = sharp(imgOnBlackPath);
-
-  // Ensure we are working with raw pixel data
-  const { data: dataWhite, info: meta } = await img1
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const { data: dataBlack } = await img2.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data: dataWhite, info: meta } = await readRawImageWithMeta(imgOnWhitePath);
+  const dataBlack = await readRawImage(imgOnBlackPath);
 
   if (dataWhite.length !== dataBlack.length) {
     throw new Error("Dimension mismatch: Images must be identical size");
@@ -29,54 +76,13 @@ export async function extractAlphaTwoPass(
 
   const outputBuffer = Buffer.alloc(dataWhite.length);
 
-  // Distance between White (255,255,255) and Black (0,0,0)
-  // Sqrt(255^2 + 255^2 + 255^2) ≈ 441.67
-  const bgDist = Math.sqrt(3 * 255 * 255);
-
   for (let i = 0; i < meta.width * meta.height; i++) {
     const offset = i * 4;
-
-    // Get RGB values for the same pixel in both images
-    const rW = dataWhite[offset];
-    const gW = dataWhite[offset + 1];
-    const bW = dataWhite[offset + 2];
-
-    const rB = dataBlack[offset];
-    const gB = dataBlack[offset + 1];
-    const bB = dataBlack[offset + 2];
-
-    // Calculate the distance between the two observed pixels
-    const pixelDist = Math.sqrt(Math.pow(rW - rB, 2) + Math.pow(gW - gB, 2) + Math.pow(bW - bB, 2));
-
-    // THE FORMULA:
-    // If the pixel is 100% opaque, it looks the same on Black and White (pixelDist = 0).
-    // If the pixel is 100% transparent, it looks exactly like the backgrounds (pixelDist = bgDist).
-    // Therefore:
-    let alpha = 1 - pixelDist / bgDist;
-
-    // Clamp results to 0-1 range
-    alpha = Math.max(0, Math.min(1, alpha));
-
-    // Color Recovery:
-    // We use the image on black to recover the color, dividing by alpha
-    // To un-premultiply it (brighten the semi-transparent pixels)
-    let rOut = 0,
-      gOut = 0,
-      bOut = 0;
-
-    if (alpha > 0.01) {
-      // Recover foreground color from the version on black
-      // (C - (1-alpha) * BG) / alpha
-      // Since BG is black (0,0,0), this simplifies to C / alpha
-      rOut = rB / alpha;
-      gOut = gB / alpha;
-      bOut = bB / alpha;
-    }
-
-    outputBuffer[offset] = Math.round(Math.min(255, rOut));
-    outputBuffer[offset + 1] = Math.round(Math.min(255, gOut));
-    outputBuffer[offset + 2] = Math.round(Math.min(255, bOut));
-    outputBuffer[offset + 3] = Math.round(alpha * 255);
+    const whitePixel = readPixel(dataWhite, offset);
+    const blackPixel = readPixel(dataBlack, offset);
+    const alpha = computeAlpha(whitePixel, blackPixel);
+    const foreground = recoverForegroundColor(alpha, blackPixel);
+    writeOutputPixel(outputBuffer, offset, foreground, alpha);
   }
 
   await sharp(outputBuffer, {

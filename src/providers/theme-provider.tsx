@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useTauriStore, useTauriStoreValue } from "./tauri-store-provider";
 
 type Theme = "dark" | "light" | "system";
@@ -49,12 +49,15 @@ export function ThemeProvider({
     root.classList.add(theme);
   }, [theme]);
 
-  const value = {
-    setTheme: (theme: Theme) => {
-      set(storageKey, theme);
-    },
-    theme,
-  };
+  const value = useMemo(
+    () => ({
+      setTheme: (nextTheme: Theme) => {
+        set(storageKey, nextTheme);
+      },
+      theme,
+    }),
+    [set, storageKey, theme],
+  );
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
@@ -67,7 +70,9 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 
-  if (context === undefined) {throw new Error("useTheme must be used within a ThemeProvider");}
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
 
   return context;
 };

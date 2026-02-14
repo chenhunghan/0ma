@@ -35,9 +35,7 @@ export function useTerminalSessionStorage() {
   useEffect(() => {
     if (isFetched && stored && !persistedRef.current) {
       persistedRef.current = true;
-      log.debug(
-        `[useTerminalSessionStorage] Restored ${stored.limaTabs?.length ?? 0} tab(s)`,
-      );
+      log.debug(`[useTerminalSessionStorage] Restored ${stored.limaTabs?.length ?? 0} tab(s)`);
     }
   }, [isFetched, stored]);
 

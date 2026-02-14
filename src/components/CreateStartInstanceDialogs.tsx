@@ -5,7 +5,7 @@ import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
 import { ErrorCreateInstanceDialog } from "./ErrorCreateInstanceDialog";
 import { StartInstanceDialog } from "./StartInstanceDialog";
 import { StartingInstanceDialog } from "./StartingInstanceDialog";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 
@@ -20,29 +20,40 @@ export function CreateStartInstanceDialogs() {
   const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
   const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
 
-  const handleCreateInstance = () => {
-    if (!draftConfig || !instanceName) {return;}
-
+  const handleCreateInstance = useCallback(() => {
+    if (!draftConfig || !instanceName) {
+      return;
+    }
     setCreatingInstanceDialogOpen(true);
     createInstance({ config: draftConfig, instanceName });
-  };
+  }, [createInstance, draftConfig, instanceName]);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     resetCreateLogs();
     setCreateInstanceDialogOpen(true);
-  };
+  }, [resetCreateLogs]);
 
-  const handleCloseError = () => {
+  const handleCloseError = useCallback(() => {
     resetCreateLogs();
-  };
+  }, [resetCreateLogs]);
 
-  const handleStartInstance = () => {
+  const handleStartInstance = useCallback(() => {
     if (instanceName) {
       startInstance(instanceName);
       setStartInstanceDialogOpen(false);
       setStartingInstanceDialogOpen(true);
     }
-  };
+  }, [instanceName, startInstance]);
+
+  const handleCreateInstanceSuccess = useCallback(() => {
+    setCreatingInstanceDialogOpen(false);
+    setStartInstanceDialogOpen(true);
+  }, []);
+
+  const handleStartInstanceSuccess = useCallback(() => {
+    setStartingInstanceDialogOpen(false);
+    setActiveTab("lima");
+  }, [setActiveTab]);
 
   return (
     <>
@@ -55,10 +66,7 @@ export function CreateStartInstanceDialogs() {
       <CreatingInstanceDialog
         open={creatingInstanceDialogOpen}
         onDialogOpenChange={setCreatingInstanceDialogOpen}
-        onCreateInstanceSuccess={() => {
-          setCreatingInstanceDialogOpen(false);
-          setStartInstanceDialogOpen(true);
-        }}
+        onCreateInstanceSuccess={handleCreateInstanceSuccess}
       />
       <ErrorCreateInstanceDialog onRetry={handleRetry} onClose={handleCloseError} />
       <StartInstanceDialog
@@ -71,10 +79,7 @@ export function CreateStartInstanceDialogs() {
       <StartingInstanceDialog
         open={startingInstanceDialogOpen}
         onDialogOpenChange={setStartingInstanceDialogOpen}
-        onSuccess={() => {
-          setStartingInstanceDialogOpen(false);
-          setActiveTab("lima");
-        }}
+        onSuccess={handleStartInstanceSuccess}
         instanceName={instanceName}
       />
     </>

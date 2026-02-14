@@ -18,11 +18,14 @@ export function useTerminalSessionConnect(term: FrankenTermWeb | null) {
   termRef.current = term;
 
   // Cleanup listener on unmount
-  useEffect(() => () => {
+  useEffect(
+    () => () => {
       if (channelRef.current) {
         channelRef.current.onmessage = () => {};
       }
-    }, []);
+    },
+    [],
+  );
 
   const mutation = useMutation({
     mutationFn: async (targetSessionId: string): Promise<string> => {

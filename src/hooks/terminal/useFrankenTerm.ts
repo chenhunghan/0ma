@@ -49,9 +49,8 @@ export function useFrankenTerm(containerRef: RefObject<HTMLDivElement | null>) {
     // oxlint-disable-next-line max-statements
     (async () => {
       // Dynamic import to avoid issues when WASM isn't built yet
-      const { default: init, FrankenTermWeb } = await import(
-        "src/wasm/frankenterm-web/FrankenTerm"
-      );
+      const { default: init, FrankenTermWeb } =
+        await import("src/wasm/frankenterm-web/FrankenTerm");
       await init();
       if (disposedRef.current) return;
 

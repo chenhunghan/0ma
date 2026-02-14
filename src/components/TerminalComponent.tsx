@@ -38,11 +38,7 @@ export function TerminalComponent({
     connect,
     connectError,
     isReady,
-  } = useTerminalSession(
-    term,
-    geometry?.cols ?? 80,
-    geometry?.rows ?? 24,
-  );
+  } = useTerminalSession(term, geometry?.cols ?? 80, geometry?.rows ?? 24);
 
   // Resize hook: observes container and notifies PTY
   const dims = useFrankenTermResize(term, containerRef, hookSessionId ?? null);
@@ -149,5 +145,7 @@ export function TerminalComponent({
     };
   }, [hookSessionId, connect]);
 
-  return <div ref={containerRef} className="h-full w-full min-h-0 min-w-0 overflow-hidden bg-black" />;
+  return (
+    <div ref={containerRef} className="h-full w-full min-h-0 min-w-0 overflow-hidden bg-black" />
+  );
 }

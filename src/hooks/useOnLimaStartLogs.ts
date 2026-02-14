@@ -50,15 +50,21 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
 
   useEffect(() => {
     // Skip listener setup when instanceName is empty
-    if (!instanceName) {return;}
+    if (!instanceName) {
+      return;
+    }
 
     let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
     const updateCache = (updater: (prev: StartLogState) => StartLogState) => {
-      if (!active) {return;}
+      if (!active) {
+        return;
+      }
       queryClient.setQueryData<StartLogState>(queryKey, (prev) => {
-        if (!prev) {return DEFAULT_LIMA_START_STATE;}
+        if (!prev) {
+          return DEFAULT_LIMA_START_STATE;
+        }
         return updater(prev);
       });
     };
@@ -66,7 +72,9 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     // 1. Start Started
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start", (event) => {
-        if (event.payload.instance_name !== instanceName) {return;}
+        if (event.payload.instance_name !== instanceName) {
+          return;
+        }
         updateCache(() => ({
           // Reset all logs
           ...DEFAULT_LIMA_START_STATE,
@@ -79,7 +87,9 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-stdout", (event) => {
         const { instance_name, message, message_id, timestamp } = event.payload;
-        if (instance_name !== instanceName) {return;}
+        if (instance_name !== instanceName) {
+          return;
+        }
 
         updateCache((prev) => {
           if (prev.stdout.some((l) => l.id === message_id)) {
@@ -99,12 +109,14 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-ready", (event) => {
         const { instance_name } = event.payload;
-        if (instance_name !== instanceName) {return;}
+        if (instance_name !== instanceName) {
+          return;
+        }
 
         updateCache((prev) => ({
-            ...prev,
-            isReady: true,
-          }));
+          ...prev,
+          isReady: true,
+        }));
       }),
     );
 
@@ -112,7 +124,9 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-stderr", (event) => {
         const { instance_name, message, message_id, timestamp } = event.payload;
-        if (instance_name !== instanceName) {return;}
+        if (instance_name !== instanceName) {
+          return;
+        }
 
         updateCache((prev) => {
           if (prev.stderr.some((l) => l.id === message_id)) {
@@ -131,7 +145,9 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     // 4. Error
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-error", (event) => {
-        if (event.payload.instance_name !== instanceName) {return;}
+        if (event.payload.instance_name !== instanceName) {
+          return;
+        }
         const { message, message_id, timestamp } = event.payload;
 
         updateCache((prev) => {
@@ -152,7 +168,9 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
     // 5. Success
     unlistenPromises.push(
       listen<LimaLogPayload>("lima-instance-start-success", (event) => {
-        if (event.payload.instance_name !== instanceName) {return;}
+        if (event.payload.instance_name !== instanceName) {
+          return;
+        }
         updateCache((prev) => ({
           ...prev,
           isLoading: false,

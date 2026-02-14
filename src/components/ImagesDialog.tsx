@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState, type ChangeEvent } from "react";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import type { Image } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
@@ -24,45 +24,83 @@ interface Props {
 export function ImagesDialog({ value: images, onChange }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const isUrl = (str: string) => {
+  const isUrl = useCallback((str: string) => {
     try {
       const url = new URL(str);
       return url.protocol === "https:";
     } catch {
       return false;
     }
-  };
+  }, []);
 
-  const hasInvalid = (images || []).some((img) => !img.location?.trim() || !isUrl(img.location));
+  const hasInvalid = images.some((image) => !image.location?.trim() || !isUrl(image.location));
 
-  const updateImage = (index: number, field: string, value: string) => {
-    const newImages = [...images];
-    newImages[index] = { ...newImages[index], [field]: value };
-    onChange(newImages);
-  };
+  const updateImage = useCallback(
+    (index: number, field: string, value: string) => {
+      const newImages = [...images];
+      newImages[index] = { ...newImages[index], [field]: value };
+      onChange(newImages);
+    },
+    [images, onChange],
+  );
 
-  const addImage = () => {
+  const addImage = useCallback(() => {
     onChange([...images, { arch: "aarch64", location: "" }]);
-  };
+  }, [images, onChange]);
 
-  const removeImage = (index: number) => {
-    const newImages = [...images];
-    newImages.splice(index, 1);
-    onChange(newImages);
-  };
+  const removeImage = useCallback(
+    (index: number) => {
+      const newImages = [...images];
+      newImages.splice(index, 1);
+      onChange(newImages);
+    },
+    [images, onChange],
+  );
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && hasInvalid) {
+        return;
+      }
+      setIsOpen(open);
+    },
+    [hasInvalid],
+  );
+
+  const getRemoveImageHandler = useCallback(
+    (index: number) => () => {
+      removeImage(index);
+    },
+    [removeImage],
+  );
+
+  const getLocationChangeHandler = useCallback(
+    (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
+      updateImage(index, "location", event.target.value);
+    },
+    [updateImage],
+  );
+
+  const getArchChangeHandler = useCallback(
+    (index: number) => (value: string) => {
+      updateImage(index, "arch", value || "x86_64");
+    },
+    [updateImage],
+  );
+
+  const triggerRender = useMemo(
+    () => <Button variant="ghost" size="icon" className="size-7" />,
+    [],
+  );
+
+  const doneButtonRender = useMemo(() => <Button variant="outline" size="sm" />, []);
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open && hasInvalid) {return;}
-        setIsOpen(open);
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <div className="flex items-center justify-between w-full">
         <Label className="mb-0.5">Images</Label>
-        <DialogTrigger render={<Button variant="ghost" size="icon" className="size-7" />}>
-          {!images || images.length === 0 ? (
+        <DialogTrigger render={triggerRender}>
+          {images.length === 0 ? (
             <PlusIcon className="size-2.5 mr-[4px]" />
           ) : (
             <PencilIcon className="size-2.5 mr-[4px]" />
@@ -78,16 +116,16 @@ export function ImagesDialog({ value: images, onChange }: Props) {
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-          {(images || []).map((image, idx) => (
+          {images.map((image, idx) => (
             <div
-              key={idx}
+              key={`${image.location}-${image.arch ?? "x86_64"}`}
               className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
             >
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => removeImage(idx)}
+                onClick={getRemoveImageHandler(idx)}
                 disabled={images.length === 1}
                 title={images.length === 1 ? "At least one image is required" : undefined}
               >
@@ -97,17 +135,14 @@ export function ImagesDialog({ value: images, onChange }: Props) {
                 <Label className="text-[10px] uppercase text-muted-foreground">Location</Label>
                 <Input
                   value={image.location}
-                  onChange={(e) => updateImage(idx, "location", e.target.value)}
+                  onChange={getLocationChangeHandler(idx)}
                   placeholder="https://cloud-images.ubuntu.com/..."
                   className="h-7 text-[11px]"
                 />
               </div>
               <div className="grid gap-1">
                 <Label className="text-[10px] uppercase text-muted-foreground">Arch</Label>
-                <Select
-                  value={image.arch || "x86_64"}
-                  onValueChange={(val) => updateImage(idx, "arch", val || "x86_64")}
-                >
+                <Select value={image.arch || "x86_64"} onValueChange={getArchChangeHandler(idx)}>
                   <SelectTrigger className="h-7 text-[11px] w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -129,7 +164,7 @@ export function ImagesDialog({ value: images, onChange }: Props) {
           </p>
         )}
         <DialogFooter>
-          <DialogClose disabled={hasInvalid} render={<Button variant="outline" size="sm" />}>
+          <DialogClose disabled={hasInvalid} render={doneButtonRender}>
             Done
           </DialogClose>
         </DialogFooter>

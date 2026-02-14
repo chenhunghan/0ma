@@ -10,7 +10,8 @@ export function useLimaInstance() {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: async ({ config, instanceName }: { config: LimaConfig; instanceName: string }) => await invoke<string>("create_lima_instance_cmd", {
+    mutationFn: async ({ config, instanceName }: { config: LimaConfig; instanceName: string }) =>
+      await invoke<string>("create_lima_instance_cmd", {
         config,
         instanceName,
       }),
@@ -20,21 +21,24 @@ export function useLimaInstance() {
   });
 
   const startMutation = useMutation({
-    mutationFn: async (instanceName: string) => await invoke<string>("start_lima_instance_cmd", { instanceName }),
+    mutationFn: async (instanceName: string) =>
+      await invoke<string>("start_lima_instance_cmd", { instanceName }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instances"] });
     },
   });
 
   const stopMutation = useMutation({
-    mutationFn: async (instanceName: string) => await invoke<string>("stop_lima_instance_cmd", { instanceName }),
+    mutationFn: async (instanceName: string) =>
+      await invoke<string>("stop_lima_instance_cmd", { instanceName }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instances"] });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (instanceName: string) => await invoke<string>("delete_lima_instance_cmd", { instanceName }),
+    mutationFn: async (instanceName: string) =>
+      await invoke<string>("delete_lima_instance_cmd", { instanceName }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instances"] });
     },

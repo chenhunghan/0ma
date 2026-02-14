@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { insertLog } from "./insertLog";
 import type { Log } from "src/types/Log";
 
-describe(insertLog, () => {
+describe("insertLog", () => {
   const makeLog = (ts: string, id: string): Log => ({
     id,
     message: `msg ${id}`,

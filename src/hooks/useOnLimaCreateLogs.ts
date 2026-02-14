@@ -47,15 +47,21 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
 
   useEffect(() => {
     // Skip listener setup when instanceName is empty
-    if (!instanceName) {return;}
+    if (!instanceName) {
+      return;
+    }
 
     let active = true;
     const unlistenPromises: Promise<() => void>[] = [];
 
     const updateCache = (updater: (prev: LogState) => LogState) => {
-      if (!active) {return;}
+      if (!active) {
+        return;
+      }
       queryClient.setQueryData<LogState>(queryKey, (prev) => {
-        if (!prev) {return DEFAULT_LIMA_CREATE_STATE;}
+        if (!prev) {
+          return DEFAULT_LIMA_CREATE_STATE;
+        }
         return updater(prev);
       });
     };
@@ -63,7 +69,9 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
     // 1. Creation Started
     unlistenPromises.push(
       listen<LimaCreatePayload>("lima-instance-create", (event) => {
-        if (event.payload.instance_name !== instanceName) {return;}
+        if (event.payload.instance_name !== instanceName) {
+          return;
+        }
         updateCache(() => ({
           // Reset all logs
           ...DEFAULT_LIMA_CREATE_STATE,
@@ -77,7 +85,9 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
         "lima-instance-create-stdout",
         (event: { payload: LimaCreatePayload }) => {
           const { instance_name, message, message_id, timestamp } = event.payload;
-          if (instance_name !== instanceName) {return;}
+          if (instance_name !== instanceName) {
+            return;
+          }
 
           updateCache((prev) => {
             if (prev.stdout.some((l) => l.id === message_id)) {
@@ -100,7 +110,9 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
         "lima-instance-create-stderr",
         (event: { payload: LimaCreatePayload }) => {
           const { instance_name, message, message_id, timestamp } = event.payload;
-          if (instance_name !== instanceName) {return;}
+          if (instance_name !== instanceName) {
+            return;
+          }
 
           updateCache((prev) => {
             if (prev.stderr.some((l) => l.id === message_id)) {
@@ -121,7 +133,9 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
     // 3. Error
     unlistenPromises.push(
       listen<LimaCreatePayload>("lima-instance-create-error", (event) => {
-        if (event.payload.instance_name !== instanceName) {return;}
+        if (event.payload.instance_name !== instanceName) {
+          return;
+        }
         const { message, message_id, timestamp } = event.payload;
 
         updateCache((prev) => {
@@ -144,7 +158,9 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
     // 4. Success
     unlistenPromises.push(
       listen<LimaCreatePayload>("lima-instance-create-success", (event) => {
-        if (event.payload.instance_name !== instanceName) {return;}
+        if (event.payload.instance_name !== instanceName) {
+          return;
+        }
         updateCache((prev) => ({
           ...prev,
           stdout: [],

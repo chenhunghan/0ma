@@ -1,3 +1,4 @@
+import { useCallback, type ChangeEvent } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -17,6 +18,34 @@ export function LimaConfigResourceColumn() {
     );
   }
 
+  const handleCpuChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      updateField("cpus", Number(event.target.value));
+    },
+    [updateField],
+  );
+
+  const handleMemoryChange = useCallback(
+    (value: string) => {
+      updateField("memory", value);
+    },
+    [updateField],
+  );
+
+  const handleDiskChange = useCallback(
+    (value: string) => {
+      updateField("disk", value);
+    },
+    [updateField],
+  );
+
+  const handleVmTypeChange = useCallback(
+    (value: string) => {
+      updateField("vmType", value);
+    },
+    [updateField],
+  );
+
   return (
     <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
       <div className="grid w-full items-center gap-1.5">
@@ -27,16 +56,13 @@ export function LimaConfigResourceColumn() {
           min={1}
           max={128}
           value={draftConfig?.cpus || ""}
-          onChange={(e) => updateField("cpus", Number(e.target.value))}
+          onChange={handleCpuChange}
           className="w-full"
         />
       </div>
       <div className="grid w-full items-center gap-1.5">
         <Label htmlFor="memory">Memory</Label>
-        <Select
-          value={draftConfig?.memory || "4GiB"}
-          onValueChange={(val) => updateField("memory", val)}
-        >
+        <Select value={draftConfig?.memory || "4GiB"} onValueChange={handleMemoryChange}>
           <SelectTrigger id="memory" className="w-full">
             <SelectValue placeholder="Select memory" />
           </SelectTrigger>
@@ -52,10 +78,7 @@ export function LimaConfigResourceColumn() {
       </div>
       <div className="grid w-full items-center gap-1.5">
         <Label htmlFor="disk">Disk</Label>
-        <Select
-          value={draftConfig?.disk || "100GiB"}
-          onValueChange={(val) => updateField("disk", val)}
-        >
+        <Select value={draftConfig?.disk || "100GiB"} onValueChange={handleDiskChange}>
           <SelectTrigger id="disk" className="w-full">
             <SelectValue placeholder="Select disk size" />
           </SelectTrigger>
@@ -71,10 +94,7 @@ export function LimaConfigResourceColumn() {
       </div>
       <div className="grid w-full items-center gap-1.5">
         <Label htmlFor="vmType">VmType</Label>
-        <Select
-          value={draftConfig?.vmType || "vz"}
-          onValueChange={(val) => updateField("vmType", val)}
-        >
+        <Select value={draftConfig?.vmType || "vz"} onValueChange={handleVmTypeChange}>
           <SelectTrigger id="vmType" className="w-full">
             <SelectValue placeholder="Select VM Type" />
           </SelectTrigger>

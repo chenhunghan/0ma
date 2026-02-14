@@ -1,9 +1,5 @@
 import { useRef } from "react";
-import {
-  useFrankenTerm,
-  useFrankenTermResize,
-  useTerminalSession,
-} from "../hooks/terminal";
+import { useFrankenTerm, useFrankenTermResize, useTerminalSession } from "../hooks/terminal";
 
 export function Term() {
   const containerRef = useRef<HTMLDivElement>(null);

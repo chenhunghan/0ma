@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 
 import { cn } from "src/lib/utils";
 import { Separator } from "src/components/ui/separator";

@@ -1,10 +1,28 @@
 import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
 import Editor from "@monaco-editor/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { parse, stringify } from "yaml";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { isEqual } from "lodash";
 import { Spinner } from "./ui/spinner";
+
+const EDITOR_OPTIONS = {
+  automaticLayout: true,
+  contextmenu: false,
+  folding: true,
+  fontSize: 12,
+  glyphMargin: false,
+  lineDecorationsWidth: 5,
+  lineNumbers: "on",
+  lineNumbersMinChars: 3,
+  minimap: { enabled: false },
+  padding: { bottom: 16, top: 16 },
+  scrollBeyondLastLine: false,
+  scrollbar: {
+    horizontalScrollbarSize: 6,
+    verticalScrollbarSize: 6,
+  },
+} as const;
 
 export function LimaConfigEditor() {
   const { draftConfig, updateDraftConfig, isLoading } = useUpdateLimaInstanceDraft();
@@ -32,34 +50,38 @@ export function LimaConfigEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftConfig]);
 
-  const handleEditorChange = (value: string | undefined) => {
-    const newVal = value || "";
-    setYamlValue(newVal);
+  const handleEditorChange = useCallback(
+    (value: string | undefined) => {
+      const newVal = value || "";
+      setYamlValue(newVal);
 
-    try {
-      const parsed = parse(newVal);
-      // Only update if it's actually different to avoid unnecessary store writes
-      if (!isEqual(parsed, draftConfig)) {
-        updateDraftConfig(parsed);
+      try {
+        const parsed = parse(newVal);
+        // Only update if it's actually different to avoid unnecessary store writes
+        if (!isEqual(parsed, draftConfig)) {
+          updateDraftConfig(parsed);
+        }
+        setError(null);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError(String(error));
+        }
       }
-      setError(null);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError(String(error));
-      }
-    }
-  };
+    },
+    [draftConfig, updateDraftConfig],
+  );
 
-  if (isLoading)
-    {return (
+  if (isLoading) {
+    return (
       <div className="flex items-center justify-center h-full w-full">
         <div title="Loading config draft...">
           <Spinner />
         </div>
       </div>
-    );}
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-background border-l border-border relative">
@@ -86,23 +108,7 @@ export function LimaConfigEditor() {
           theme="vs-dark"
           value={yamlValue}
           onChange={handleEditorChange}
-          options={{
-            automaticLayout: true,
-            contextmenu: false,
-            folding: true,
-            fontSize: 12,
-            glyphMargin: false,
-            lineDecorationsWidth: 5,
-            lineNumbers: "on",
-            lineNumbersMinChars: 3,
-            minimap: { enabled: false },
-            padding: { bottom: 16, top: 16 },
-            scrollBeyondLastLine: false,
-            scrollbar: {
-              horizontalScrollbarSize: 6,
-              verticalScrollbarSize: 6,
-            },
-          }}
+          options={EDITOR_OPTIONS}
         />
       </div>
 

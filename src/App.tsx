@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ResizableLayout } from "./components/ResizableLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Separator } from "src/components/ui/separator";
@@ -62,17 +62,10 @@ export function App() {
     const unlisten = listen("app-will-quit", () => {
       persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
     });
-    return () => { unlisten.then((fn) => fn()); };
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_k8sTabs, _setK8sTabs] = useState<TabGroup[]>(() => [createInitialTab("K8s", "tab-1")]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_k8sActive, _setK8sActive] = useState("tab-1");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_k8sMaxTabId, _setK8sMaxTabId] = useState(1);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_k8sMaxTermId, _setK8sMaxTermId] = useState(1);
 
   // Handlers
   // oxlint-disable-next-line max-params
@@ -139,7 +132,9 @@ export function App() {
     setActiveTab: React.Dispatch<React.SetStateAction<string>>,
   ) => {
     const tabIdx = currentTabs.findIndex((t) => t.id === tabId);
-    if (tabIdx === -1) {return;}
+    if (tabIdx === -1) {
+      return;
+    }
 
     const tab = currentTabs[tabIdx];
 
@@ -175,11 +170,15 @@ export function App() {
   ) => {
     setTabs((prev) =>
       prev.map((tab) => {
-        if (tab.id !== tabId) {return tab;}
+        if (tab.id !== tabId) {
+          return tab;
+        }
         return {
           ...tab,
           terminals: tab.terminals.map((term) => {
-            if (term.id !== termId) {return term;}
+            if (term.id !== termId) {
+              return term;
+            }
             return { ...term, sessionId };
           }),
         };
@@ -195,17 +194,119 @@ export function App() {
   ) => {
     setTabs((prev) =>
       prev.map((tab) => {
-        if (tab.id !== tabId) {return tab;}
+        if (tab.id !== tabId) {
+          return tab;
+        }
         return {
           ...tab,
           terminals: tab.terminals.map((term) => {
-            if (term.id !== termId) {return term;}
+            if (term.id !== termId) {
+              return term;
+            }
             return { ...term, cwd };
           }),
         };
       }),
     );
   };
+
+  const handleLimaSessionCreated = useCallback(
+    (tabId: string, termId: number, sessionId: string) => {
+      handleTerminalSessionCreated(tabId, termId, sessionId, setLimaTabs);
+    },
+    [],
+  );
+
+  const handleLimaCwdChanged = useCallback((tabId: string, termId: number, cwd: string) => {
+    handleTerminalCwdChanged(tabId, termId, cwd, setLimaTabs);
+  }, []);
+
+  const handleAddLimaTab = useCallback(() => {
+    addTab(
+      "Lima",
+      setLimaTabs,
+      limaMaxTabId,
+      setLimaMaxTabId,
+      limaMaxTermId,
+      setLimaMaxTermId,
+      setLimaActive,
+    );
+  }, [limaMaxTabId, limaMaxTermId]);
+
+  const handleAddLimaSideBySide = useCallback(
+    (tabId: string) => {
+      addSideBySide("Lima", tabId, setLimaTabs, limaMaxTermId, setLimaMaxTermId);
+    },
+    [limaMaxTermId],
+  );
+
+  const handleRemoveLimaTab = useCallback(
+    (tabId: string) => {
+      removeTab(tabId, limaTabs, setLimaTabs, limaActive, setLimaActive);
+    },
+    [limaActive, limaTabs],
+  );
+
+  const limaEmptyState = useMemo(
+    () => <EmptyTerminalState onAdd={handleAddLimaTab} />,
+    [handleAddLimaTab],
+  );
+
+  const limaColumns = useMemo(
+    () => [
+      <div className="flex h-full w-full items-center justify-center" key="1">
+        <span className="font-semibold">Lima Column 1</span>
+      </div>,
+      <div className="flex h-full w-full items-center justify-center" key="2">
+        <span className="font-semibold">Lima Column 2</span>
+      </div>,
+      <div className="flex h-full w-full items-center justify-center" key="3">
+        <span className="font-semibold">Lima Column 3</span>
+      </div>,
+    ],
+    [],
+  );
+
+  const k8sColumns = useMemo(
+    () => [
+      <div className="flex h-full w-full items-center justify-center" key="1">
+        <span className="font-semibold">K8s Column 1</span>
+      </div>,
+      <div className="flex h-full w-full items-center justify-center" key="2">
+        <span className="font-semibold">K8s Column 2</span>
+      </div>,
+      <div className="flex h-full w-full items-center justify-center" key="3">
+        <span className="font-semibold">K8s Column 3</span>
+      </div>,
+    ],
+    [],
+  );
+
+  const limaBottom = useMemo(
+    () => (
+      <TermTabs
+        tabs={limaTabs}
+        activeTabId={limaActive}
+        onSessionCreated={handleLimaSessionCreated}
+        onCwdChanged={handleLimaCwdChanged}
+        onTabChange={setLimaActive}
+        onAddTab={handleAddLimaTab}
+        onAddSideBySide={handleAddLimaSideBySide}
+        onRemoveTab={handleRemoveLimaTab}
+        emptyState={limaEmptyState}
+      />
+    ),
+    [
+      handleAddLimaSideBySide,
+      handleAddLimaTab,
+      handleLimaCwdChanged,
+      handleLimaSessionCreated,
+      handleRemoveLimaTab,
+      limaActive,
+      limaEmptyState,
+      limaTabs,
+    ],
+  );
 
   // pt-8: reserve space for macOS traffic lights (titleBarStyle: Transparent)
   return (
@@ -232,81 +333,13 @@ export function App() {
           <TabsContent value="lima" keepMounted>
             <ResizableLayout
               autoSaveId="lima-tabs-content"
-              columns={[
-                <div className="flex h-full w-full items-center justify-center" key="1">
-                  <span className="font-semibold">Lima Column 1</span>
-                </div>,
-                <div className="flex h-full w-full items-center justify-center" key="2">
-                  <span className="font-semibold">Lima Column 2</span>
-                </div>,
-                <div className="flex h-full w-full items-center justify-center" key="3">
-                  <span className="font-semibold">Lima Column 3</span>
-                </div>,
-              ]}
-              bottom={
-                <TermTabs
-                  tabs={limaTabs}
-                  activeTabId={limaActive}
-                  onSessionCreated={(tabId, termId, sid) =>
-                    handleTerminalSessionCreated(tabId, termId, sid, setLimaTabs)
-                  }
-                  onCwdChanged={(tabId, termId, cwd) =>
-                    handleTerminalCwdChanged(tabId, termId, cwd, setLimaTabs)
-                  }
-                  onTabChange={setLimaActive}
-                  onAddTab={() =>
-                    addTab(
-                      "Lima",
-                      setLimaTabs,
-                      limaMaxTabId,
-                      setLimaMaxTabId,
-                      limaMaxTermId,
-                      setLimaMaxTermId,
-                      setLimaActive,
-                    )
-                  }
-                  onAddSideBySide={(id) =>
-                    addSideBySide("Lima", id, setLimaTabs, limaMaxTermId, setLimaMaxTermId)
-                  }
-                  onRemoveTab={(tabId) =>
-                    removeTab(tabId, limaTabs, setLimaTabs, limaActive, setLimaActive)
-                  }
-                  emptyState={
-                    <EmptyTerminalState
-                      onAdd={() =>
-                        addTab(
-                          "Lima",
-                          setLimaTabs,
-                          limaMaxTabId,
-                          setLimaMaxTabId,
-                          limaMaxTermId,
-                          setLimaMaxTermId,
-                          setLimaActive,
-                        )
-                      }
-                    />
-                  }
-                />
-              }
+              columns={limaColumns}
+              bottom={limaBottom}
             />
           </TabsContent>
 
           <TabsContent value="k8s" keepMounted>
-            <ResizableLayout
-              autoSaveId="k8s-tabs-content"
-              columns={[
-                <div className="flex h-full w-full items-center justify-center" key="1">
-                  <span className="font-semibold">K8s Column 1</span>
-                </div>,
-                <div className="flex h-full w-full items-center justify-center" key="2">
-                  <span className="font-semibold">K8s Column 2</span>
-                </div>,
-                <div className="flex h-full w-full items-center justify-center" key="3">
-                  <span className="font-semibold">K8s Column 3</span>
-                </div>,
-              ]}
-              bottom={null}
-            />
+            <ResizableLayout autoSaveId="k8s-tabs-content" columns={k8sColumns} bottom={null} />
           </TabsContent>
         </Tabs>
       )}

@@ -60,33 +60,44 @@ export interface UIPod {
   env: { name: string; value: string; source: string }[];
 }
 
-const fetchK8sPods = async (instanceName: string): Promise<Pod[]> => await invoke("get_k8s_pods_cmd", { instanceName });
+const fetchK8sPods = async (instanceName: string): Promise<Pod[]> =>
+  await invoke("get_k8s_pods_cmd", { instanceName });
 
 // Calculate age from creationTimestamp
 const calculateAge = (timestamp?: string): string => {
-  if (!timestamp) {return "Unknown";}
+  if (!timestamp) {
+    return "Unknown";
+  }
   const created = new Date(timestamp);
   const now = new Date();
   const diffMs = now.getTime() - created.getTime();
 
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays > 0) {return `${diffDays}d`;}
+  if (diffDays > 0) {
+    return `${diffDays}d`;
+  }
 
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (diffHours > 0) {return `${diffHours}h`;}
+  if (diffHours > 0) {
+    return `${diffHours}h`;
+  }
 
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  if (diffMinutes > 0) {return `${diffMinutes}m`;}
+  if (diffMinutes > 0) {
+    return `${diffMinutes}m`;
+  }
 
   return "Just now";
 };
 
-export const useK8sPods = (instanceName: string | undefined) => useQuery({
+export const useK8sPods = (instanceName: string | undefined) =>
+  useQuery({
     enabled: Boolean(instanceName),
     queryFn: () => (instanceName ? fetchK8sPods(instanceName) : Promise.resolve([])),
     queryKey: ["k8s-pods", instanceName],
     refetchInterval: 5000,
-    select: (data): UIPod[] => data.map((pod) => {
+    select: (data): UIPod[] =>
+      data.map((pod) => {
         // Collect env vars from all containers
         const envVars: { name: string; value: string; source: string }[] = [];
         if (pod.spec?.containers) {

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TermTabs } from "./TermTabs";
 import type { Terminal } from "src/services/Terminal";
@@ -22,39 +23,53 @@ const setMobile = (isMobile: boolean) => {
   });
 };
 
-// oxlint-disable-next-line jest/valid-title
-describe(TerminalRow, () => {
+const createMockTerminals = (): Terminal[] => [
+  { id: 1, name: "Term 1" },
+  { id: 2, name: "Term 2" },
+];
+
+const createMockTabs = () => [
+  {
+    id: "tab-1",
+    name: "Tab 1",
+    terminals: [{ id: 1, name: "Term 1" }],
+  },
+  {
+    id: "tab-2",
+    name: "Tab 2",
+    terminals: [{ id: 2, name: "Term 2" }],
+  },
+];
+
+const createEmptyState = (onAdd: () => void) => createElement(EmptyTerminalState, { onAdd });
+
+describe("TerminalRow", () => {
   const mockOnSessionCreated = vi.fn();
   const mockOnCwdChanged = vi.fn();
-  const mockTerminals: Terminal[] = [
-    { id: 1, name: "Term 1" },
-    { id: 2, name: "Term 2" },
-  ];
 
   beforeEach(() => {
     vi.clearAllMocks();
     setMobile(false); // Default to desktop
   });
 
-  // oxlint-disable-next-line jest/expect-expect
   it("renders each terminal content in its own panel", () => {
     render(
       <TerminalRow
         tabId="tab-1"
-        terminals={mockTerminals}
+        terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
       />,
     );
-    // Since we are mocking modules, we might need to adjust expectations if TerminalComponent renders differently in test
-    // For now, let's assume it renders successfully
+    expect(screen.getByTestId("resizable-panel-group")).toBeInTheDocument();
   });
 
   it("contains exactly N-1 resize handles for N terminals", () => {
+    const terminals = createMockTerminals();
     render(
       <TerminalRow
         tabId="tab-1"
-        terminals={mockTerminals}
+        terminals={terminals}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
       />,
@@ -62,7 +77,7 @@ describe(TerminalRow, () => {
 
     // Resize handles have data-slot="resizable-handle" (from our resizable.tsx)
     const handles = screen.getAllByTestId("resizable-handle");
-    expect(handles).toHaveLength(mockTerminals.length - 1);
+    expect(handles).toHaveLength(terminals.length - 1);
   });
 
   it("sets horizontal direction on desktop", () => {
@@ -70,7 +85,7 @@ describe(TerminalRow, () => {
     render(
       <TerminalRow
         tabId="tab-1"
-        terminals={mockTerminals}
+        terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
       />,
@@ -85,7 +100,7 @@ describe(TerminalRow, () => {
     render(
       <TerminalRow
         tabId="tab-1"
-        terminals={mockTerminals}
+        terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
       />,
@@ -100,7 +115,7 @@ describe(TerminalRow, () => {
     render(
       <TerminalRow
         tabId="tab-1"
-        terminals={mockTerminals}
+        terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
       />,
@@ -111,8 +126,7 @@ describe(TerminalRow, () => {
   });
 });
 
-// oxlint-disable-next-line jest/valid-title
-describe(TermTabs, () => {
+describe("TermTabs", () => {
   const mockOnTabChange = vi.fn();
   const mockOnAddTab = vi.fn();
   const mockOnAddSideBySide = vi.fn();
@@ -120,38 +134,29 @@ describe(TermTabs, () => {
   const mockOnSessionCreated = vi.fn();
   const mockOnCwdChanged = vi.fn();
 
-  const mockTabs = [
-    {
-      id: "tab-1",
-      name: "Tab 1",
-      terminals: [{ id: 1, name: "Term 1" }],
-    },
-    {
-      id: "tab-2",
-      name: "Tab 2",
-      terminals: [{ id: 2, name: "Term 2" }],
-    },
-  ];
-
   beforeEach(() => {
     vi.clearAllMocks();
     setMobile(false);
   });
 
-  it("triggers onTabChange when a tab header is clicked", () => {
+  const renderTermTabs = (activeTabId: string) => {
     render(
       <TermTabs
-        tabs={mockTabs}
-        activeTabId="tab-1"
+        tabs={createMockTabs()}
+        activeTabId={activeTabId}
         onTabChange={mockOnTabChange}
         onAddTab={mockOnAddTab}
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
-        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
+        emptyState={createEmptyState(mockOnAddTab)}
       />,
     );
+  };
+
+  it("triggers onTabChange when a tab header is clicked", () => {
+    renderTermTabs("tab-1");
 
     // Click Tab 2 since Tab 1 is already active
     const tabTrigger = screen.getByText("Tab 2");
@@ -161,19 +166,7 @@ describe(TermTabs, () => {
   });
 
   it("calls onAddTab when 'New Tab' button is clicked", () => {
-    render(
-      <TermTabs
-        tabs={mockTabs}
-        activeTabId="tab-1"
-        onTabChange={mockOnTabChange}
-        onAddTab={mockOnAddTab}
-        onAddSideBySide={mockOnAddSideBySide}
-        onRemoveTab={mockOnRemoveTab}
-        onSessionCreated={mockOnSessionCreated}
-        onCwdChanged={mockOnCwdChanged}
-        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
-      />,
-    );
+    renderTermTabs("tab-1");
 
     const addButton = screen.getByTitle("New Tab");
     fireEvent.click(addButton);
@@ -182,19 +175,7 @@ describe(TermTabs, () => {
   });
 
   it("calls onAddSideBySide when 'Side-by-side' button is clicked", () => {
-    render(
-      <TermTabs
-        tabs={mockTabs}
-        activeTabId="tab-1"
-        onTabChange={mockOnTabChange}
-        onAddTab={mockOnAddTab}
-        onAddSideBySide={mockOnAddSideBySide}
-        onRemoveTab={mockOnRemoveTab}
-        onSessionCreated={mockOnSessionCreated}
-        onCwdChanged={mockOnCwdChanged}
-        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
-      />,
-    );
+    renderTermTabs("tab-1");
 
     const sideBySideButton = screen.getByTitle("Side-by-side");
     fireEvent.click(sideBySideButton);
@@ -203,38 +184,14 @@ describe(TermTabs, () => {
   });
 
   it("disables Side-by-side button when no tab is active", () => {
-    render(
-      <TermTabs
-        tabs={mockTabs}
-        activeTabId=""
-        onTabChange={mockOnTabChange}
-        onAddTab={mockOnAddTab}
-        onAddSideBySide={mockOnAddSideBySide}
-        onRemoveTab={mockOnRemoveTab}
-        onSessionCreated={mockOnSessionCreated}
-        onCwdChanged={mockOnCwdChanged}
-        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
-      />,
-    );
+    renderTermTabs("");
 
     const button = screen.getByTitle("Side-by-side");
     expect(button).toBeDisabled();
   });
 
   it("calls onRemoveTab when tab close button is clicked", () => {
-    render(
-      <TermTabs
-        tabs={mockTabs}
-        activeTabId="tab-1"
-        onTabChange={mockOnTabChange}
-        onAddTab={mockOnAddTab}
-        onAddSideBySide={mockOnAddSideBySide}
-        onRemoveTab={mockOnRemoveTab}
-        onSessionCreated={mockOnSessionCreated}
-        onCwdChanged={mockOnCwdChanged}
-        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
-      />,
-    );
+    renderTermTabs("tab-1");
 
     const closeButtons = screen.getAllByTitle("Close Tab");
     fireEvent.click(closeButtons[0]); // Close first tab

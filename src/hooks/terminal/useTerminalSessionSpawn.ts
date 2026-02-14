@@ -12,21 +12,20 @@ const textDecoder = new TextDecoder();
  * Hook for spawning a new terminal session.
  * Feeds PTY output into FrankenTermWeb and drains reply bytes back.
  */
-export function useTerminalSessionSpawn(
-  term: FrankenTermWeb | null,
-  cols: number,
-  rows: number,
-) {
+export function useTerminalSessionSpawn(term: FrankenTermWeb | null, cols: number, rows: number) {
   const channelRef = useRef<Channel<PtyEvent> | null>(null);
   const termRef = useRef(term);
   termRef.current = term;
 
   // Cleanup listener on unmount
-  useEffect(() => () => {
+  useEffect(
+    () => () => {
       if (channelRef.current) {
         channelRef.current.onmessage = () => {};
       }
-    }, []);
+    },
+    [],
+  );
 
   const mutation = useMutation({
     mutationFn: async (options: SpawnOptions): Promise<string> => {

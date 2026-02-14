@@ -1,3 +1,4 @@
+import { useMemo, type ChangeEvent } from "react";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 import { Spinner } from "./ui/spinner";
 import { Label } from "./ui/label";
@@ -16,6 +17,14 @@ import { ProvisionStepsDialog } from "./ProvisionStepsDialog";
 import { ProvisionStepsAccordion } from "./ProvisionStepsAccordion";
 import { ProbesDialog } from "./ProbesDialog";
 import { ProbesAccordion } from "./ProbesAccordion";
+import type { CopyToHost, Image, Mount, PortForward, Probe, Provision } from "src/types/LimaConfig";
+
+const EMPTY_IMAGES: Image[] = [];
+const EMPTY_MOUNTS: Mount[] = [];
+const EMPTY_COPY_TO_HOST: CopyToHost[] = [];
+const EMPTY_PORT_FORWARDS: PortForward[] = [];
+const EMPTY_PROVISION: Provision[] = [];
+const EMPTY_PROBES: Probe[] = [];
 
 export function CreateInstanceConfigForm() {
   const { draftConfig, isLoading, updateField, instanceName, setInstanceName } =
@@ -29,6 +38,64 @@ export function CreateInstanceConfigForm() {
     );
   }
 
+  const images = draftConfig.images ?? EMPTY_IMAGES;
+  const mounts = draftConfig.mounts ?? EMPTY_MOUNTS;
+  const copyToHost = draftConfig.copyToHost ?? EMPTY_COPY_TO_HOST;
+  const portForwards = draftConfig.portForwards ?? EMPTY_PORT_FORWARDS;
+  const provision = draftConfig.provision ?? EMPTY_PROVISION;
+  const probes = draftConfig.probes ?? EMPTY_PROBES;
+
+  const handlers = useMemo(
+    () => ({
+      copyToHost: (nextRules: CopyToHost[]) => {
+        updateField("copyToHost", nextRules);
+      },
+      cpu: (event: ChangeEvent<HTMLInputElement>) => {
+        updateField("cpus", Number(event.target.value));
+      },
+      disk: (value: string) => {
+        updateField("disk", value);
+      },
+      images: (nextImages: Image[]) => {
+        updateField("images", nextImages);
+      },
+      instanceName: (event: ChangeEvent<HTMLInputElement>) => {
+        setInstanceName(event.target.value);
+      },
+      memory: (value: string) => {
+        updateField("memory", value);
+      },
+      mounts: (nextMounts: Mount[]) => {
+        updateField("mounts", nextMounts);
+      },
+      portForwards: (nextPortForwards: PortForward[]) => {
+        updateField("portForwards", nextPortForwards);
+      },
+      probes: (nextProbes: Probe[]) => {
+        updateField("probes", nextProbes);
+      },
+      provision: (nextProvision: Provision[]) => {
+        updateField("provision", nextProvision);
+      },
+      vmType: (value: string) => {
+        updateField("vmType", value);
+      },
+    }),
+    [setInstanceName, updateField],
+  );
+
+  const dialogs = useMemo(
+    () => ({
+      copyToHost: <CopyToHostDialog value={copyToHost} onChange={handlers.copyToHost} />,
+      images: <ImagesDialog value={images} onChange={handlers.images} />,
+      mounts: <MountsDialog value={mounts} onChange={handlers.mounts} />,
+      portForwards: <PortForwardsDialog value={portForwards} onChange={handlers.portForwards} />,
+      probes: <ProbesDialog value={probes} onChange={handlers.probes} />,
+      provision: <ProvisionStepsDialog value={provision} onChange={handlers.provision} />,
+    }),
+    [copyToHost, handlers, images, mounts, portForwards, probes, provision],
+  );
+
   return (
     <div className="grid grid-cols-2 gap-x-12 gap-y-4 w-full px-4 py-4 lg:px-8 lg:py-4 relative overflow-y-auto max-h-full items-start">
       <div className="flex flex-col gap-3 min-w-0">
@@ -40,7 +107,7 @@ export function CreateInstanceConfigForm() {
             type="text"
             id="instanceName"
             value={instanceName}
-            onChange={(e) => setInstanceName(e.target.value)}
+            onChange={handlers.instanceName}
             className="w-full min-w-0"
             size="sm"
           />
@@ -56,7 +123,7 @@ export function CreateInstanceConfigForm() {
             max={128}
             id="cpus"
             value={draftConfig?.cpus || ""}
-            onChange={(e) => updateField("cpus", Number(e.target.value))}
+            onChange={handlers.cpu}
             className="w-full min-w-0"
             size="sm"
           />
@@ -66,10 +133,7 @@ export function CreateInstanceConfigForm() {
           <Label htmlFor="memory" className="text-muted-foreground">
             Memory
           </Label>
-          <Select
-            value={draftConfig?.memory || "4GiB"}
-            onValueChange={(val) => updateField("memory", val)}
-          >
+          <Select value={draftConfig?.memory || "4GiB"} onValueChange={handlers.memory}>
             <SelectTrigger id="memory" className="w-full min-w-0" size="sm">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
@@ -88,10 +152,7 @@ export function CreateInstanceConfigForm() {
           <Label htmlFor="disk" className="text-muted-foreground">
             Disk
           </Label>
-          <Select
-            value={draftConfig?.disk || "100GiB"}
-            onValueChange={(val) => updateField("disk", val)}
-          >
+          <Select value={draftConfig?.disk || "100GiB"} onValueChange={handlers.disk}>
             <SelectTrigger id="disk" className="w-full min-w-0" size="sm">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
@@ -110,10 +171,7 @@ export function CreateInstanceConfigForm() {
           <Label htmlFor="vmType" className="text-muted-foreground">
             VmType
           </Label>
-          <Select
-            value={draftConfig?.vmType || "vz"}
-            onValueChange={(val) => updateField("vmType", val)}
-          >
+          <Select value={draftConfig?.vmType || "vz"} onValueChange={handlers.vmType}>
             <SelectTrigger id="vmType" className="w-full min-w-0" size="sm">
               <SelectValue placeholder="Select Type" />
             </SelectTrigger>
@@ -125,71 +183,29 @@ export function CreateInstanceConfigForm() {
           </Select>
         </div>
 
-        <ConfigSection
-          dialog={
-            <ImagesDialog
-              value={draftConfig.images || []}
-              onChange={(val) => updateField("images", val)}
-            />
-          }
-        >
-          <ImageAccordion value={draftConfig.images || []} />
+        <ConfigSection dialog={dialogs.images}>
+          <ImageAccordion value={images} />
         </ConfigSection>
 
-        <ConfigSection
-          dialog={
-            <MountsDialog
-              value={draftConfig.mounts || []}
-              onChange={(val) => updateField("mounts", val)}
-            />
-          }
-        >
-          <MountsAccordion value={draftConfig.mounts || []} />
+        <ConfigSection dialog={dialogs.mounts}>
+          <MountsAccordion value={mounts} />
         </ConfigSection>
 
-        <ConfigSection
-          dialog={
-            <CopyToHostDialog
-              value={draftConfig.copyToHost || []}
-              onChange={(val) => updateField("copyToHost", val)}
-            />
-          }
-        >
-          <CopyToHostAccordion value={draftConfig.copyToHost || []} />
+        <ConfigSection dialog={dialogs.copyToHost}>
+          <CopyToHostAccordion value={copyToHost} />
         </ConfigSection>
 
-        <ConfigSection
-          dialog={
-            <PortForwardsDialog
-              value={draftConfig.portForwards || []}
-              onChange={(val) => updateField("portForwards", val)}
-            />
-          }
-        >
-          <PortForwardsAccordion value={draftConfig.portForwards || []} />
+        <ConfigSection dialog={dialogs.portForwards}>
+          <PortForwardsAccordion value={portForwards} />
         </ConfigSection>
       </div>
 
       <div className="flex flex-col gap-3 min-w-0">
-        <ConfigSection
-          dialog={
-            <ProvisionStepsDialog
-              value={draftConfig.provision || []}
-              onChange={(val) => updateField("provision", val)}
-            />
-          }
-        >
-          <ProvisionStepsAccordion value={draftConfig.provision || []} />
+        <ConfigSection dialog={dialogs.provision}>
+          <ProvisionStepsAccordion value={provision} />
         </ConfigSection>
-        <ConfigSection
-          dialog={
-            <ProbesDialog
-              value={draftConfig.probes || []}
-              onChange={(val) => updateField("probes", val)}
-            />
-          }
-        >
-          <ProbesAccordion value={draftConfig.probes || []} />
+        <ConfigSection dialog={dialogs.probes}>
+          <ProbesAccordion value={probes} />
         </ConfigSection>
       </div>
     </div>

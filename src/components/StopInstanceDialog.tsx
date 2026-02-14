@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -16,7 +17,18 @@ interface Props {
 }
 
 export function StopInstanceDialog({ open, onOpenChange, instanceName, onConfirm }: Props) {
-  if (!instanceName) {return null;}
+  if (!instanceName) {
+    return null;
+  }
+
+  const handleCancel = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const handleConfirm = useCallback(() => {
+    onConfirm();
+    onOpenChange(false);
+  }, [onConfirm, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -28,16 +40,10 @@ export function StopInstanceDialog({ open, onOpenChange, instanceName, onConfirm
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              onConfirm();
-              onOpenChange(false);
-            }}
-          >
+          <Button variant="destructive" onClick={handleConfirm}>
             Stop Instance
           </Button>
         </DialogFooter>

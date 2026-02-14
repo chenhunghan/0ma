@@ -4,8 +4,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./
 
 export function MountsAccordion({ value: mounts }: { value: Mount[] }) {
   const truncatePath = (path: string, maxLength: number = 20) => {
-    if (!path) {return "";}
-    if (path.length <= maxLength) {return path;}
+    if (!path) {
+      return "";
+    }
+    if (path.length <= maxLength) {
+      return path;
+    }
     const half = Math.floor((maxLength - 3) / 2);
     return `${path.slice(0, half)}...${path.slice(-half)}`;
   };
@@ -14,7 +18,11 @@ export function MountsAccordion({ value: mounts }: { value: Mount[] }) {
     mounts.length > 0 && (
       <Accordion className="w-full min-w-0">
         {mounts.map((mount, idx) => (
-          <AccordionItem value={`mount-${idx}`} key={idx} className="border-border/40">
+          <AccordionItem
+            value={`mount-${mount.location ?? ""}-${mount.writable ? "true" : "false"}`}
+            key={`${mount.location ?? ""}-${mount.writable ? "true" : "false"}`}
+            className="border-border/40"
+          >
             <AccordionTrigger className="text-[11px] py-1.5 px-2 hover:bg-muted/50 hover:no-underline transition-colors tracking-tight text-muted-foreground font-semibold">
               <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
                 <span className="text-[10px] bg-muted px-1 rounded text-foreground/70 shrink-0">

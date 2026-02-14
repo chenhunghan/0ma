@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { StopInstanceDialog } from "./StopInstanceDialog";
 import { StoppingInstanceDialog } from "./StoppingInstanceDialog";
@@ -19,25 +19,37 @@ export function StopInstanceDialogs() {
   const [startInstanceDialogOpen, setStartInstanceDialogOpen] = useState(false);
   const [startingInstanceDialogOpen, setStartingInstanceDialogOpen] = useState(false);
 
-  const handleStopClick = () => {
+  const handleStopClick = useCallback(() => {
     setStopInstanceDialogOpen(true);
-  };
+  }, []);
 
-  const handleConfirmStop = () => {
-    if (!selectedName) {return;}
+  const handleConfirmStop = useCallback(() => {
+    if (!selectedName) {
+      return;
+    }
     stopInstance(selectedName);
     setStoppingInstanceDialogOpen(true);
-  };
+  }, [selectedName, stopInstance]);
 
-  const handleStartClick = () => {
+  const handleStartClick = useCallback(() => {
     setStartInstanceDialogOpen(true);
-  };
+  }, []);
 
-  const handleConfirmStart = () => {
-    if (!selectedName) {return;}
+  const handleConfirmStart = useCallback(() => {
+    if (!selectedName) {
+      return;
+    }
     startInstance(selectedName);
     setStartingInstanceDialogOpen(true);
-  };
+  }, [selectedName, startInstance]);
+
+  const handleStopSuccess = useCallback(() => {
+    setStoppingInstanceDialogOpen(false);
+  }, []);
+
+  const handleStartSuccess = useCallback(() => {
+    setStartingInstanceDialogOpen(false);
+  }, []);
 
   const isRunning = selectedInstance?.status === InstanceStatus.Running;
   const isStopped = selectedInstance?.status === InstanceStatus.Stopped;
@@ -76,9 +88,7 @@ export function StopInstanceDialogs() {
         open={stoppingInstanceDialogOpen}
         onDialogOpenChange={setStoppingInstanceDialogOpen}
         instanceName={selectedName}
-        onSuccess={() => {
-          setStoppingInstanceDialogOpen(false);
-        }}
+        onSuccess={handleStopSuccess}
       />
 
       <StartInstanceDialog
@@ -92,9 +102,7 @@ export function StopInstanceDialogs() {
         open={startingInstanceDialogOpen}
         onDialogOpenChange={setStartingInstanceDialogOpen}
         instanceName={selectedName}
-        onSuccess={() => {
-          setStartingInstanceDialogOpen(false);
-        }}
+        onSuccess={handleStartSuccess}
       />
     </>
   );

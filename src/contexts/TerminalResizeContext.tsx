@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TerminalResizeContext } from "./terminalResizeContextDef";
 
 export function TerminalResizeProvider({ children }: { children: ReactNode }) {
@@ -24,16 +24,17 @@ export function TerminalResizeProvider({ children }: { children: ReactNode }) {
     [subscribers],
   );
 
+  const contextValue = useMemo(
+    () => ({
+      isDragging,
+      onDragEnd,
+      onDragStart,
+      subscribeDragEnd,
+    }),
+    [isDragging, onDragEnd, onDragStart, subscribeDragEnd],
+  );
+
   return (
-    <TerminalResizeContext.Provider
-      value={{
-        isDragging,
-        onDragEnd,
-        onDragStart,
-        subscribeDragEnd,
-      }}
-    >
-      {children}
-    </TerminalResizeContext.Provider>
+    <TerminalResizeContext.Provider value={contextValue}>{children}</TerminalResizeContext.Provider>
   );
 }
