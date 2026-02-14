@@ -8,7 +8,7 @@ import { InstanceStatus } from "src/types/InstanceStatus";
 
 // Mock @tauri-apps/api/core
 const mockInvoke = vi.fn();
-vi.mock<typeof import("@tauri-apps/api/core")>("@tauri-apps/api/core", () => ({
+vi.mock("@tauri-apps/api/core", () => ({
   invoke: (cmd: string, args: unknown) => Promise.resolve(mockInvoke(cmd, args)),
 }));
 
@@ -27,7 +27,7 @@ const mockListen = vi.fn((event: string, handler: (event: unknown) => void) => {
   });
 });
 
-vi.mock<typeof import("@tauri-apps/api/event")>("@tauri-apps/api/event", () => ({
+vi.mock("@tauri-apps/api/event", () => ({
   listen: (event: string, handler: (event: unknown) => void) => mockListen(event, handler),
 }));
 
@@ -41,14 +41,14 @@ const emitEvent = (eventName: string, payload: unknown) => {
 
 // Mock useSelectedInstance
 const mockUseSelectedInstance = vi.fn();
-vi.mock<typeof import("src/hooks/useSelectedInstance")>("src/hooks/useSelectedInstance", () => ({
+vi.mock("src/hooks/useSelectedInstance", () => ({
   useSelectedInstance: () => mockUseSelectedInstance(),
 }));
 
 // Mock useLimaInstance
 const mockStopInstance = vi.fn();
 const mockStartInstance = vi.fn();
-vi.mock<typeof import("src/hooks/useLimaInstance")>("src/hooks/useLimaInstance", () => ({
+vi.mock("src/hooks/useLimaInstance", () => ({
   useLimaInstance: () => ({
     startInstance: mockStartInstance,
     stopInstance: mockStopInstance,

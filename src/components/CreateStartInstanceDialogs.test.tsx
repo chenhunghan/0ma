@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Mock @tauri-apps/api/core
 const mockInvoke = vi.fn();
-vi.mock<typeof import("@tauri-apps/api/core")>("@tauri-apps/api/core", () => ({
+vi.mock("@tauri-apps/api/core", () => ({
   invoke: (cmd: string, args: unknown) => Promise.resolve(mockInvoke(cmd, args)),
 }));
 
@@ -28,7 +28,7 @@ const mockListen = vi.fn((event: string, handler: (event: unknown) => void) => {
   });
 });
 
-vi.mock<typeof import("@tauri-apps/api/event")>("@tauri-apps/api/event", () => ({
+vi.mock("@tauri-apps/api/event", () => ({
   listen: (event: string, handler: (event: unknown) => void) => mockListen(event, handler),
 }));
 
@@ -42,7 +42,7 @@ const emitEvent = (eventName: string, payload: unknown) => {
 
 // Mock useLayoutStorage
 const mockSetActiveTab = vi.fn();
-vi.mock<typeof import("src/hooks/useLayoutStorage")>("src/hooks/useLayoutStorage", () => ({
+vi.mock("src/hooks/useLayoutStorage", () => ({
   useLayoutStorage: () => ({
     setActiveTab: mockSetActiveTab,
   }),
@@ -78,12 +78,9 @@ const mockUseCreateLimaInstanceDraft = vi.fn(() => ({
   instanceName: "test-instance",
 }));
 
-vi.mock<typeof import("src/hooks/useCreateLimaInstanceDraft")>(
-  "src/hooks/useCreateLimaInstanceDraft",
-  () => ({
-    useCreateLimaInstanceDraft: () => mockUseCreateLimaInstanceDraft(),
-  }),
-);
+vi.mock("src/hooks/useCreateLimaInstanceDraft", () => ({
+  useCreateLimaInstanceDraft: () => mockUseCreateLimaInstanceDraft(),
+}));
 
 // Mock ResizeObserver (needed for some UI components likely)
 // Mock ResizeObserver (needed for some UI components likely)
