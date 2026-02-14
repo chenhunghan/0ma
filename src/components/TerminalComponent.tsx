@@ -16,7 +16,6 @@ interface Props {
   initialCommand: string;
   initialArgs: string[];
   cwd: string;
-  isActive?: boolean;
 }
 
 export function TerminalComponent({

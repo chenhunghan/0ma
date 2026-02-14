@@ -10,10 +10,9 @@ interface Props {
   terminals: Terminal[];
   onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
   onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
-  isActive?: boolean;
 }
 
-export function TerminalRow({ tabId, terminals, onSessionCreated, onCwdChanged, isActive = true }: Props) {
+export function TerminalRow({ tabId, terminals, onSessionCreated, onCwdChanged }: Props) {
   const isMobile = useIsMobile();
   const { onDragStart, onDragEnd } = useTerminalResizeContext();
 
@@ -29,7 +28,6 @@ export function TerminalRow({ tabId, terminals, onSessionCreated, onCwdChanged, 
                   initialArgs={[]}
                   cwd={term.cwd ?? "~"}
                   sessionId={term.sessionId}
-                  isActive={isActive}
                   onSessionCreated={(sid) => onSessionCreated(tabId, term.id, sid)}
                   onCwdChanged={(cwd) => onCwdChanged(tabId, term.id, cwd)}
                 />

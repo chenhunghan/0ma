@@ -123,7 +123,6 @@ function TermTabsInner({
                     <TerminalRow
                       tabId={tab.id}
                       terminals={row1}
-                      isActive={isActive}
                       onSessionCreated={onSessionCreated}
                       onCwdChanged={onCwdChanged}
                     />
@@ -133,7 +132,6 @@ function TermTabsInner({
                         <TerminalRow
                           tabId={tab.id}
                           terminals={row1}
-                          isActive={isActive}
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
                         />
@@ -149,7 +147,6 @@ function TermTabsInner({
                         <TerminalRow
                           tabId={tab.id}
                           terminals={row2}
-                          isActive={isActive}
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
                         />
