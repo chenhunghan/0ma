@@ -29,10 +29,7 @@ tokio = { version = "1", features = ["full"] }
 flume = "0.11"
 sysinfo = "0.37"
 portable-pty = "0.9.0"
-tokio-tungstenite = "0.28.0"
-futures-util = "0.3.31"
 tauri-plugin-store = "2"
 uuid = { version = "1", features = ["v4"] }
 tauri-plugin-log = "2"
 log = "0.4"
-

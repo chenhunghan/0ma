@@ -3,8 +3,6 @@ use tauri::{Listener, Manager};
 mod instance_registry_handler;
 mod instance_registry_service;
 mod k8s_handler;
-mod k8s_log_handler; // Added log handler module
-mod k8s_log_service; // Added log service module
 mod k8s_service;
 mod lima_config;
 mod lima_config_handler;
@@ -14,10 +12,8 @@ mod lima_instance_handler;
 mod lima_instance_service;
 mod lima_service;
 mod state;
-mod terminal_handler;
 mod terminal_manager;
 mod terminal_persistence;
-mod terminal_service;
 mod tray_handler;
 mod yaml_handler;
 
@@ -73,8 +69,6 @@ pub fn run() {
             tray_handler::setup_tray(app)?;
             tray_handler::setup_listeners(app);
 
-            k8s_log_handler::init();
-
             // Periodic auto-save of terminal session history (every 30s)
             // Ensures history is persisted even on ungraceful exits
             let pty_for_timer = app.state::<terminal_manager::PtyManager>().inner().clone();
@@ -99,19 +93,6 @@ pub fn run() {
                 );
             });
 
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                match terminal_service::TerminalService::start().await {
-                    Ok((port, _join_handle)) => {
-                        handle.manage(terminal_handler::TerminalState {
-                            port: std::sync::Mutex::new(Some(port)),
-                        });
-                    }
-                    Err(e) => {
-                        log::error!("Failed to start terminal service: {}", e);
-                    }
-                }
-            });
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -143,7 +124,6 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             lima_handler::lima_version_cmd,
-            terminal_handler::get_terminal_port,
             lima_config_handler::read_lima_yaml_cmd,
             lima_config_handler::write_lima_yaml_cmd,
             lima_config_handler::get_lima_yaml_path_cmd,
@@ -163,7 +143,6 @@ pub fn run() {
             lima_instance_handler::delete_lima_instance_cmd,
             k8s_handler::get_k8s_pods_cmd,
             k8s_handler::get_k8s_services_cmd,
-            k8s_log_handler::get_k8s_log_port,
             terminal_manager::spawn_pty_cmd,
             terminal_manager::attach_pty_cmd,
             terminal_manager::write_pty_cmd,
