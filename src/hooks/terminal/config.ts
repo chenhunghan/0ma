@@ -6,6 +6,9 @@
 export const CELL_WIDTH = 9;
 export const CELL_HEIGHT = 18;
 
+/** Font family used by the terminal renderer. */
+export const TERMINAL_FONT_FAMILY = "FiraCode Nerd Font";
+
 /** Options passed to FrankenTermWeb.init() */
 export const FRANKENTERM_INIT_OPTIONS = {
   cellWidth: CELL_WIDTH,
@@ -14,6 +17,7 @@ export const FRANKENTERM_INIT_OPTIONS = {
   bracketedPaste: true,
   focusEvents: true,
   cursor: "block",
+  fontFamily: TERMINAL_FONT_FAMILY,
 } as const;
 
 // Re-export for backwards compat

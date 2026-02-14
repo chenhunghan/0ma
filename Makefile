@@ -1,15 +1,15 @@
 FRANKENTUI_REPO := https://github.com/chenhunghan/frankentui.git
-FRANKENTUI_BRANCH := fix/shadow-cells-resize-sync
+FRANKENTUI_BRANCH := main
 VENDOR_DIR := vendor/frankentui
 WASM_OUT := src/wasm/frankenterm-web
 
 .PHONY: setup wasm dev build icon clean
 
 ## First-time setup: clone vendor + install deps + build WASM
-setup: vendor node_modules wasm
+setup: $(VENDOR_DIR) node_modules wasm
 
 ## Build WASM from vendor source
-wasm: vendor
+wasm: $(VENDOR_DIR)
 	RUSTFLAGS="--cfg=web_sys_unstable_apis" wasm-pack build \
 		--target web \
 		--out-dir $(CURDIR)/$(WASM_OUT) \
@@ -33,7 +33,7 @@ src-tauri/icons:
 	@exit 1
 
 ## Clone frankentui into vendor/
-vendor:
+$(VENDOR_DIR):
 	git clone --branch $(FRANKENTUI_BRANCH) --single-branch --depth 1 \
 		$(FRANKENTUI_REPO) $(VENDOR_DIR)
 

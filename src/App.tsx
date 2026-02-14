@@ -178,7 +178,7 @@ export function App() {
   };
 
   return (
-    <div className="h-full w-full overflow-hidden pt-8">
+    <div className="h-full w-full overflow-hidden pt-8 pb-2">
       <Separator />
       <TopBar />
       <Separator />
