@@ -31,7 +31,6 @@ struct Osc7Parser {
     buffer: Vec<u8>,
 }
 
-#[derive(PartialEq)]
 enum Osc7State {
     Ground,
     Esc,        // saw ESC (0x1b)
@@ -381,16 +380,18 @@ impl PtyManager {
     }
 
     pub fn save_all_sessions(&self, app_data_dir: &PathBuf) -> Result<(), String> {
-        let sessions = self.sessions.lock().map_err(|e| e.to_string())?;
-        for (session_id, session) in sessions.iter() {
-            let history = session.history.lock().map_err(|e| e.to_string())?;
-            if !history.is_empty() {
-                terminal_persistence::save_session_history(
-                    app_data_dir,
-                    session_id,
-                    &history,
-                )?;
-            }
+        // Snapshot session data under the lock, then release before doing disk I/O
+        let snapshots: Vec<(String, Vec<u8>)> = {
+            let sessions = self.sessions.lock().map_err(|e| e.to_string())?;
+            sessions.iter().filter_map(|(sid, session)| {
+                let hist = session.history.lock().ok()?;
+                if hist.is_empty() { return None; }
+                Some((sid.clone(), hist.clone()))
+            }).collect()
+        };
+
+        for (session_id, history) in &snapshots {
+            terminal_persistence::save_session_history(app_data_dir, session_id, history)?;
         }
         Ok(())
     }
