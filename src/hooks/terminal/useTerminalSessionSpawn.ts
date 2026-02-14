@@ -8,6 +8,45 @@ import type { PtyEvent, SpawnOptions } from "./types";
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+function feedPendingChunks(term: FrankenTermWeb, pendingChunks: Uint8Array[]) {
+  while (pendingChunks.length > 0) {
+    const chunk = pendingChunks.shift();
+    if (chunk) {
+      term.feed(chunk);
+    }
+  }
+}
+
+function sendReplyBytes(sessionId: string, source: "spawn", term: FrankenTermWeb) {
+  const replies = term.drainReplyBytes();
+  for (let i = 0; i < replies.length; i++) {
+    const chunk = replies[i] as Uint8Array;
+    if (chunk.length > 0) {
+      const data = textDecoder.decode(chunk);
+      invoke("write_pty_cmd", { sessionId, data }).catch((e) =>
+        log.error(`[${source}] reply write failed: ${e}`),
+      );
+    }
+  }
+}
+
+function flushDeferredOutput(
+  source: "spawn",
+  sessionId: string,
+  term: FrankenTermWeb | null,
+  pendingChunks: Uint8Array[],
+) {
+  if (!term || pendingChunks.length === 0) return true;
+  try {
+    feedPendingChunks(term, pendingChunks);
+    sendReplyBytes(sessionId, source, term);
+    return true;
+  } catch (e) {
+    log.debug(`[${source}] deferred feed skipped due transient re-entry: ${e}`);
+    return false;
+  }
+}
+
 /**
  * Hook for spawning a new terminal session.
  * Feeds PTY output into FrankenTermWeb and drains reply bytes back.
@@ -45,24 +84,25 @@ export function useTerminalSessionSpawn(term: FrankenTermWeb | null, cols: numbe
 
       // 2. Create channel for output
       const channel = new Channel<PtyEvent>();
+      const pendingChunks: Uint8Array[] = [];
+      let flushScheduled = false;
+      const flushPending = () => {
+        flushScheduled = false;
+        const flushed = flushDeferredOutput("spawn", sid, termRef.current, pendingChunks);
+        if (!flushed && pendingChunks.length > 0 && !flushScheduled) {
+          flushScheduled = true;
+          queueMicrotask(flushPending);
+        }
+      };
       channel.onmessage = (msg) => {
         const t = termRef.current;
         if (!t) return;
 
-        // PtyEvent.data is String; FrankenTerm.feed() expects Uint8Array
-        const bytes = textEncoder.encode(msg.data);
-        t.feed(bytes);
-
-        // Drain terminal reply bytes (cursor position reports, etc.)
-        const replies = t.drainReplyBytes();
-        for (let i = 0; i < replies.length; i++) {
-          const chunk = replies[i] as Uint8Array;
-          if (chunk.length > 0) {
-            const data = textDecoder.decode(chunk);
-            invoke("write_pty_cmd", { sessionId: sid, data }).catch((e) =>
-              log.error(`[spawn] reply write failed: ${e}`),
-            );
-          }
+        // Defer to microtask to avoid re-entering WASM while render() is on stack.
+        pendingChunks.push(textEncoder.encode(msg.data));
+        if (!flushScheduled) {
+          flushScheduled = true;
+          queueMicrotask(flushPending);
         }
       };
 
