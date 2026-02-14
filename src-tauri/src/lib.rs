@@ -1,4 +1,4 @@
-use tauri::{Listener, Manager};
+use tauri::{Emitter, Listener, Manager};
 
 mod instance_registry_handler;
 mod instance_registry_service;
@@ -18,6 +18,7 @@ mod tray_handler;
 mod yaml_handler;
 
 pub use lima_service::find_lima_executable;
+const SESSION_AUTOSAVE_INTERVAL_SECS: u64 = 5;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -69,14 +70,32 @@ pub fn run() {
             tray_handler::setup_tray(app)?;
             tray_handler::setup_listeners(app);
 
-            // Periodic auto-save of terminal session history (every 30s)
+            // Persist terminal histories when the process is stopped from the terminal
+            // (for example `make dev` -> Ctrl+C).
+            let pty_for_signal = app.state::<terminal_manager::PtyManager>().inner().clone();
+            let app_data_for_signal = app.path().app_data_dir()
+                .expect("failed to get app data dir");
+            let app_handle_for_signal = app.handle().clone();
+            ctrlc::set_handler(move || {
+                log::info!("Termination signal received; saving terminal sessions");
+                if let Err(e) = pty_for_signal.save_all_sessions(&app_data_for_signal) {
+                    log::error!("Failed to save sessions on signal: {}", e);
+                }
+                let _ = app_handle_for_signal.emit("app-will-quit", ());
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                std::process::exit(0);
+            })?;
+
+            // Periodic auto-save of terminal session history.
             // Ensures history is persisted even on ungraceful exits
             let pty_for_timer = app.state::<terminal_manager::PtyManager>().inner().clone();
             let app_data_for_timer = app.path().app_data_dir()
                 .expect("failed to get app data dir");
             std::thread::spawn(move || {
                 loop {
-                    std::thread::sleep(std::time::Duration::from_secs(30));
+                    std::thread::sleep(std::time::Duration::from_secs(
+                        SESSION_AUTOSAVE_INTERVAL_SECS,
+                    ));
                     if let Err(e) = pty_for_timer.save_all_sessions(&app_data_for_timer) {
                         log::error!("Auto-save sessions failed: {}", e);
                     }
