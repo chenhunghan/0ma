@@ -16,6 +16,7 @@ mod lima_service;
 mod state;
 mod terminal_handler;
 mod terminal_manager;
+mod terminal_persistence;
 mod terminal_service;
 mod tray_handler;
 mod yaml_handler;
@@ -73,6 +74,30 @@ pub fn run() {
             tray_handler::setup_listeners(app);
 
             k8s_log_handler::init();
+
+            // Periodic auto-save of terminal session history (every 30s)
+            // Ensures history is persisted even on ungraceful exits
+            let pty_for_timer = app.state::<terminal_manager::PtyManager>().inner().clone();
+            let app_data_for_timer = app.path().app_data_dir()
+                .expect("failed to get app data dir");
+            std::thread::spawn(move || {
+                loop {
+                    std::thread::sleep(std::time::Duration::from_secs(30));
+                    if let Err(e) = pty_for_timer.save_all_sessions(&app_data_for_timer) {
+                        log::error!("Auto-save sessions failed: {}", e);
+                    }
+                }
+            });
+
+            // Clean up old session history files (older than 7 days)
+            let app_data_for_cleanup = app.path().app_data_dir()
+                .expect("failed to get app data dir");
+            std::thread::spawn(move || {
+                terminal_persistence::cleanup_old_histories(
+                    &app_data_for_cleanup,
+                    std::time::Duration::from_secs(7 * 24 * 3600),
+                );
+            });
 
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -143,7 +168,10 @@ pub fn run() {
             terminal_manager::attach_pty_cmd,
             terminal_manager::write_pty_cmd,
             terminal_manager::resize_pty_cmd,
-            terminal_manager::close_pty_cmd
+            terminal_manager::close_pty_cmd,
+            terminal_manager::save_all_sessions_cmd,
+            terminal_manager::load_session_history_cmd,
+            terminal_manager::delete_session_history_cmd
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

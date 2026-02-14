@@ -12,6 +12,7 @@ import { useTerminalSessionStorage } from "src/hooks/useTerminalSessionStorage";
 import { Skeleton } from "./components/ui/skeleton";
 import { Spinner } from "./components/ui/spinner";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 
 // Initial State Factory
@@ -54,6 +55,14 @@ export function App() {
   useEffect(() => {
     if (!restoredRef.current) return;
     persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
+  }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
+
+  // Force-persist state when the app is about to quit (tray → Quit)
+  useEffect(() => {
+    const unlisten = listen("app-will-quit", () => {
+      persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
+    });
+    return () => { unlisten.then((fn) => fn()); };
   }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -134,12 +143,13 @@ export function App() {
 
     const tab = currentTabs[tabIdx];
 
-    // Close all PTY sessions in the tab
+    // Close all PTY sessions in the tab and clean up persisted history
     tab.terminals.forEach((term) => {
       if (term.sessionId) {
         invoke("close_pty_cmd", { sessionId: term.sessionId }).catch((error) =>
           log.error("Failed to close PTY:", error),
         );
+        invoke("delete_session_history_cmd", { sessionId: term.sessionId }).catch(() => {});
       }
     });
 
@@ -171,6 +181,26 @@ export function App() {
           terminals: tab.terminals.map((term) => {
             if (term.id !== termId) {return term;}
             return { ...term, sessionId };
+          }),
+        };
+      }),
+    );
+  };
+
+  const handleTerminalCwdChanged = (
+    tabId: string,
+    termId: number,
+    cwd: string,
+    setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
+  ) => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id !== tabId) {return tab;}
+        return {
+          ...tab,
+          terminals: tab.terminals.map((term) => {
+            if (term.id !== termId) {return term;}
+            return { ...term, cwd };
           }),
         };
       }),
@@ -218,6 +248,9 @@ export function App() {
                   activeTabId={limaActive}
                   onSessionCreated={(tabId, termId, sid) =>
                     handleTerminalSessionCreated(tabId, termId, sid, setLimaTabs)
+                  }
+                  onCwdChanged={(tabId, termId, cwd) =>
+                    handleTerminalCwdChanged(tabId, termId, cwd, setLimaTabs)
                   }
                   onTabChange={setLimaActive}
                   onAddTab={() =>

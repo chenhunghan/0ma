@@ -5,11 +5,14 @@ import {
   useFrankenTermResize,
   useTerminalSession,
 } from "../hooks/terminal";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 
 interface Props {
   sessionId?: string;
   onSessionCreated?: (sessionId: string) => void;
+  onCwdChanged?: (cwd: string) => void;
   initialCommand: string;
   initialArgs: string[];
   cwd: string;
@@ -19,6 +22,7 @@ interface Props {
 export function TerminalComponent({
   sessionId: propsSessionId,
   onSessionCreated,
+  onCwdChanged,
   initialCommand,
   initialArgs,
   cwd,
@@ -32,8 +36,8 @@ export function TerminalComponent({
     sessionId: hookSessionId,
     spawn,
     connect,
-    isReady,
     connectError,
+    isReady,
   } = useTerminalSession(
     term,
     geometry?.cols ?? 80,
@@ -51,7 +55,7 @@ export function TerminalComponent({
     updateGeometry(dims.cols, dims.cellWidth, dims.cellHeight);
   }, [dims.cols, dims.cellWidth, dims.cellHeight, updateGeometry]);
 
-  // Spawn/connect when term is ready (fire once)
+  // Spawn or reconnect when term is ready (fire once)
   useEffect(() => {
     if (!term || !geometry || isReady || spawnedRef.current) return;
     spawnedRef.current = true;
@@ -59,7 +63,8 @@ export function TerminalComponent({
     log.debug(`[TerminalComponent] term ready: ${geometry.cols}x${geometry.rows}`);
 
     if (propsSessionId) {
-      log.debug(`[TerminalComponent] connecting to session ${propsSessionId}`);
+      // Try to re-attach to a live session (survives HMR, tab switch, etc.)
+      log.debug(`[TerminalComponent] attempting reconnect to ${propsSessionId}`);
       connect(propsSessionId);
     } else {
       log.debug(`[TerminalComponent] spawning: ${initialCommand}`);
@@ -67,20 +72,78 @@ export function TerminalComponent({
     }
   }, [term, geometry, propsSessionId, initialCommand, initialArgs, cwd, connect, spawn, isReady]);
 
-  // Fallback: if connect failed (stale session from persistence), spawn a new one
+  // If reconnect failed (session gone after app restart), restore from disk + spawn new shell
   useEffect(() => {
-    if (!connectError || !term || !geometry) return;
+    if (!connectError || !term || !propsSessionId) return;
 
-    log.warn(`[TerminalComponent] connect failed, spawning new session: ${connectError}`);
-    spawn({ args: initialArgs, command: initialCommand, cwd });
-  }, [connectError, term, geometry, spawn, initialArgs, initialCommand, cwd]);
+    log.debug(`[TerminalComponent] reconnect failed, restoring from disk`);
+    invoke<string>("load_session_history_cmd", { sessionId: propsSessionId })
+      .then((historyText) => {
+        if (historyText && term) {
+          term.feed(new TextEncoder().encode(historyText));
+        }
+      })
+      .catch((e) => log.debug(`No persisted history for ${propsSessionId}: ${e}`))
+      .finally(() => {
+        spawn({ args: initialArgs, command: initialCommand, cwd });
+        invoke("delete_session_history_cmd", { sessionId: propsSessionId }).catch(() => {});
+      });
+  }, [connectError, term, propsSessionId, spawn, initialArgs, initialCommand, cwd]);
 
-  // Lift sessionId up when created
+  // Lift sessionId up when created or replaced (e.g. after restore-spawn on restart)
   useEffect(() => {
-    if (hookSessionId && !propsSessionId && onSessionCreated) {
+    if (hookSessionId && hookSessionId !== propsSessionId && onSessionCreated) {
       onSessionCreated(hookSessionId);
     }
   }, [hookSessionId, propsSessionId, onSessionCreated]);
+
+  // Listen for CWD changes from backend (OSC 7)
+  useEffect(() => {
+    const sessionId = hookSessionId;
+    if (!sessionId || !onCwdChanged) return;
+
+    const unlisten = listen<{ sessionId: string; cwd: string }>("pty-cwd-changed", (event) => {
+      if (event.payload.sessionId === sessionId) {
+        onCwdChanged(event.payload.cwd);
+      }
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [hookSessionId, onCwdChanged]);
+
+  // Show message when the PTY process exits (e.g. user typed `exit`)
+  useEffect(() => {
+    const sessionId = hookSessionId;
+    if (!sessionId || !term) return;
+
+    const unlisten = listen<{ sessionId: string }>("pty-exited", (event) => {
+      if (event.payload.sessionId === sessionId) {
+        const msg = "\r\n\x1b[90m[Process exited]\x1b[0m\r\n";
+        term.feed(new TextEncoder().encode(msg));
+      }
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [hookSessionId, term]);
+
+  // Re-attach to live session after wake from sleep / visibility restore.
+  // This guards against edge cases where the IPC channel goes stale.
+  useEffect(() => {
+    const sessionId = hookSessionId;
+    if (!sessionId) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        connect(sessionId);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [hookSessionId, connect]);
 
   return <div ref={containerRef} className="h-full w-full min-h-0 min-w-0 overflow-hidden bg-black" />;
 }
