@@ -3,8 +3,6 @@ import { useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import * as log from "@tauri-apps/plugin-log";
 import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
-import { CELL_WIDTH, CELL_HEIGHT } from "./config";
-
 const textDecoder = new TextDecoder();
 
 /**
@@ -24,13 +22,17 @@ function flushInputBytes(term: FrankenTermWeb, sessionId: string) {
 }
 
 /**
- * Convert mouse event to cell coordinates using FrankenTerm cell dimensions.
+ * Convert mouse event to cell coordinates using actual rendered cell dimensions.
  */
-function cellCoordsFromMouse(e: MouseEvent): [number, number] {
+function cellCoordsFromMouse(
+  e: MouseEvent,
+  cellWidth: number,
+  cellHeight: number,
+): [number, number] {
   const canvas = e.target as HTMLCanvasElement;
   const rect = canvas.getBoundingClientRect();
-  const x = Math.floor((e.clientX - rect.left) / CELL_WIDTH);
-  const y = Math.floor((e.clientY - rect.top) / CELL_HEIGHT);
+  const x = Math.floor((e.clientX - rect.left) / cellWidth);
+  const y = Math.floor((e.clientY - rect.top) / cellHeight);
   return [Math.max(0, x), Math.max(0, y)];
 }
 
@@ -44,6 +46,8 @@ export function useFrankenTermInput(
   canvasRef: RefObject<HTMLCanvasElement | null>,
 ) {
   const colsRef = useRef(80);
+  const cellWidthRef = useRef(9);
+  const cellHeightRef = useRef(18);
   const selectionStartRef = useRef(-1);
   const selectingRef = useRef(false);
   const skipFocusFlushRef = useRef(true);
@@ -114,7 +118,7 @@ export function useFrankenTermInput(
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      const [x, y] = cellCoordsFromMouse(e);
+      const [x, y] = cellCoordsFromMouse(e, cellWidthRef.current, cellHeightRef.current);
       if (e.button === 0) {
         selectionStartRef.current = y * colsRef.current + x;
         selectingRef.current = true;
@@ -135,7 +139,7 @@ export function useFrankenTermInput(
     };
 
     const handleMouseUp = (e: MouseEvent) => {
-      const [x, y] = cellCoordsFromMouse(e);
+      const [x, y] = cellCoordsFromMouse(e, cellWidthRef.current, cellHeightRef.current);
       selectingRef.current = false;
       term.input({
         kind: "mouse",
@@ -152,7 +156,7 @@ export function useFrankenTermInput(
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      const [x, y] = cellCoordsFromMouse(e);
+      const [x, y] = cellCoordsFromMouse(e, cellWidthRef.current, cellHeightRef.current);
       if (selectingRef.current && e.buttons === 1) {
         const selectionEnd = y * colsRef.current + x;
         term.setSelectionRange(selectionStartRef.current, selectionEnd);
@@ -172,7 +176,7 @@ export function useFrankenTermInput(
     };
 
     const handleWheel = (e: WheelEvent) => {
-      const [x, y] = cellCoordsFromMouse(e);
+      const [x, y] = cellCoordsFromMouse(e, cellWidthRef.current, cellHeightRef.current);
       term.input({
         kind: "wheel",
         x,
@@ -234,10 +238,12 @@ export function useFrankenTermInput(
     };
   }, [term, sessionId, canvasRef]);
 
-  /** Update cols for selection offset calculation (call after resize). */
-  const updateCols = (cols: number) => {
+  /** Update grid geometry for mouse coordinate and selection calculations. */
+  const updateGeometry = (cols: number, cellWidth: number, cellHeight: number) => {
     colsRef.current = cols;
+    cellWidthRef.current = cellWidth;
+    cellHeightRef.current = cellHeight;
   };
 
-  return { updateCols };
+  return { updateGeometry };
 }

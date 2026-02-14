@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import * as log from "@tauri-apps/plugin-log";
 import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
+import { CELL_WIDTH, CELL_HEIGHT } from "./config";
 
 /**
  * Wait this long after the last ResizeObserver event before doing anything.
@@ -27,7 +28,14 @@ function tryFit(
   const dpr = window.devicePixelRatio || 1;
   try {
     const geo = term.fitToContainer(w, h, dpr);
-    return { cols: geo.cols as number, rows: geo.rows as number };
+    const cols = geo.cols as number;
+    const rows = geo.rows as number;
+    return {
+      cols,
+      rows,
+      cellWidth: w / cols,
+      cellHeight: h / rows,
+    };
   } catch (e) {
     log.error(`[useFrankenTermResize] fitToContainer error: ${e}`);
     return null;
@@ -46,7 +54,12 @@ export function useFrankenTermResize(
   containerRef: RefObject<HTMLDivElement | null>,
   sessionId: string | null,
 ) {
-  const [dims, setDims] = useState<{ cols: number; rows: number }>({ cols: 80, rows: 24 });
+  const [dims, setDims] = useState<{
+    cols: number;
+    rows: number;
+    cellWidth: number;
+    cellHeight: number;
+  }>({ cols: 80, rows: 24, cellWidth: CELL_WIDTH, cellHeight: CELL_HEIGHT });
   const timerRef = useRef(0);
   const lastPixelSize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
   const sessionIdRef = useRef(sessionId);

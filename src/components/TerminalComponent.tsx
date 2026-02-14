@@ -44,12 +44,12 @@ export function TerminalComponent({
   const dims = useFrankenTermResize(term, containerRef, hookSessionId ?? null);
 
   // Input hook: keyboard/mouse/paste → FrankenTerm → PTY
-  const { updateCols } = useFrankenTermInput(term, hookSessionId, canvasRef);
+  const { updateGeometry } = useFrankenTermInput(term, hookSessionId, canvasRef);
 
-  // Keep input hook cols in sync with resize
+  // Keep input hook geometry in sync with resize
   useEffect(() => {
-    updateCols(dims.cols);
-  }, [dims.cols, updateCols]);
+    updateGeometry(dims.cols, dims.cellWidth, dims.cellHeight);
+  }, [dims.cols, dims.cellWidth, dims.cellHeight, updateGeometry]);
 
   // Spawn/connect when term is ready (fire once)
   useEffect(() => {
