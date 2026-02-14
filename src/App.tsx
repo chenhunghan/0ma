@@ -207,6 +207,7 @@ export function App() {
     );
   };
 
+  // pt-8: reserve space for macOS traffic lights (titleBarStyle: Transparent)
   return (
     <div className="h-full w-full overflow-hidden pt-8 pb-[14px]">
       <Separator />
