@@ -1,18 +1,23 @@
 import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { Terminal } from "@xterm/xterm";
+import * as log from "@tauri-apps/plugin-log";
+import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
 import type { PtyEvent } from "./types";
 
-/**
- * Hook for connecting to an existing terminal session
- */
-export function useTerminalSessionConnect(terminal: Terminal | null) {
-  const channelRef = useRef<Channel<PtyEvent> | null>(null);
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
 
-  // Cleanup listener on unmount. We use a "soft unplug" (empty function)
-  // Because Tauri v2 Channels don't have an explicit unlisten/close on the frontend.
-  // This stops the UI from processing data while letting the PTY stay alive.
+/**
+ * Hook for connecting to an existing terminal session.
+ * Feeds PTY output into FrankenTermWeb and drains reply bytes back.
+ */
+export function useTerminalSessionConnect(term: FrankenTermWeb | null) {
+  const channelRef = useRef<Channel<PtyEvent> | null>(null);
+  const termRef = useRef(term);
+  termRef.current = term;
+
+  // Cleanup listener on unmount
   useEffect(() => () => {
       if (channelRef.current) {
         channelRef.current.onmessage = () => {};
@@ -21,10 +26,7 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
 
   const mutation = useMutation({
     mutationFn: async (targetSessionId: string): Promise<string> => {
-      if (!terminal) {throw new Error("Terminal not initialized");}
-
-      // Silence the old listener before attaching a new session to this terminal instance.
-      // This prevents "ghost output" from previous sessions appearing in the view.
+      // Silence the old listener before attaching a new session
       if (channelRef.current) {
         channelRef.current.onmessage = () => {};
       }
@@ -32,11 +34,23 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
       // 1. Create channel for output
       const channel = new Channel<PtyEvent>();
       channel.onmessage = (msg) => {
-        // Sticky scroll: only scroll if the user is already at the bottom
-        const isAtBottom = terminal.buffer.active.viewportY >= terminal.buffer.active.baseY;
-        terminal.write(msg.data);
-        if (isAtBottom) {
-          terminal.scrollToBottom();
+        const t = termRef.current;
+        if (!t) return;
+
+        // PtyEvent.data is String; FrankenTerm.feed() expects Uint8Array
+        const bytes = textEncoder.encode(msg.data);
+        t.feed(bytes);
+
+        // Drain terminal reply bytes (cursor position reports, etc.)
+        const replies = t.drainReplyBytes();
+        for (let i = 0; i < replies.length; i++) {
+          const chunk = replies[i] as Uint8Array;
+          if (chunk.length > 0) {
+            const data = textDecoder.decode(chunk);
+            invoke("write_pty_cmd", { sessionId: targetSessionId, data }).catch((e) =>
+              log.error(`[connect] reply write failed: ${e}`),
+            );
+          }
         }
       };
 

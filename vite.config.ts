@@ -13,6 +13,8 @@ export default defineConfig(async () => ({
       src: path.resolve(__dirname, "./src"),
     },
   },
+  // Include .wasm files as assets for FrankenTerm
+  assetsInclude: ["**/*.wasm"],
   test: {
     environment: "jsdom",
     globals: true,
@@ -24,6 +26,11 @@ export default defineConfig(async () => ({
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
+    // COOP/COEP headers required for SharedArrayBuffer (WebGPU multi-threading)
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
     hmr: host
       ? {
           host,

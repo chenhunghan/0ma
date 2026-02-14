@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ResizableLayout } from "./components/ResizableLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Separator } from "src/components/ui/separator";
@@ -8,30 +8,62 @@ import { TermTabs } from "src/components/TermTabs";
 import { EmptyTerminalState } from "src/components/EmptyTerminalState";
 import { LimaConfigTabContent } from "src/components/LimaConfigTabContent";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
+import { useTerminalSessionStorage } from "src/hooks/useTerminalSessionStorage";
 import { Skeleton } from "./components/ui/skeleton";
 import { Spinner } from "./components/ui/spinner";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 
+// Initial State Factory
+const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
+  id: tabId,
+  name: `${prefix} Tab 1`,
+  terminals: [
+    {
+      id: 1,
+      name: `${prefix} Terminal 1`,
+    },
+  ],
+});
+
+// oxlint-disable-next-line max-statements
 export function App() {
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
-
-  // Initial State Factory
-  const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
-    id: tabId,
-    name: `${prefix} Tab 1`,
-    terminals: [
-      {
-        id: 1,
-        name: `${prefix} Terminal 1`,
-      },
-    ],
-  });
+  const { restoredState, isFetched: isSessionsFetched, persist } = useTerminalSessionStorage();
+  const restoredRef = useRef(false);
 
   const [limaTabs, setLimaTabs] = useState<TabGroup[]>(() => [createInitialTab("Lima", "tab-1")]);
   const [limaActive, setLimaActive] = useState("tab-1");
   const [limaMaxTabId, setLimaMaxTabId] = useState(1);
   const [limaMaxTermId, setLimaMaxTermId] = useState(1);
+
+  // Restore persisted terminal state on first load
+  useEffect(() => {
+    if (!isSessionsFetched || restoredRef.current) return;
+    restoredRef.current = true;
+
+    if (restoredState?.limaTabs?.length) {
+      setLimaTabs(restoredState.limaTabs);
+      setLimaActive(restoredState.limaActive);
+      setLimaMaxTabId(restoredState.limaMaxTabId);
+      setLimaMaxTermId(restoredState.limaMaxTermId);
+    }
+  }, [isSessionsFetched, restoredState]);
+
+  // Persist terminal state whenever it changes
+  useEffect(() => {
+    if (!restoredRef.current) return;
+    persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
+  }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
+
+  // Force-persist state when the app is about to quit (tray → Quit)
+  useEffect(() => {
+    const unlisten = listen("app-will-quit", () => {
+      persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_k8sTabs, _setK8sTabs] = useState<TabGroup[]>(() => [createInitialTab("K8s", "tab-1")]);
@@ -43,6 +75,7 @@ export function App() {
   const [_k8sMaxTermId, _setK8sMaxTermId] = useState(1);
 
   // Handlers
+  // oxlint-disable-next-line max-params
   const addTab = (
     prefix: string,
     setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
@@ -110,12 +143,13 @@ export function App() {
 
     const tab = currentTabs[tabIdx];
 
-    // Close all PTY sessions in the tab
+    // Close all PTY sessions in the tab and clean up persisted history
     tab.terminals.forEach((term) => {
       if (term.sessionId) {
         invoke("close_pty_cmd", { sessionId: term.sessionId }).catch((error) =>
           log.error("Failed to close PTY:", error),
         );
+        invoke("delete_session_history_cmd", { sessionId: term.sessionId }).catch(() => {});
       }
     });
 
@@ -153,8 +187,29 @@ export function App() {
     );
   };
 
+  const handleTerminalCwdChanged = (
+    tabId: string,
+    termId: number,
+    cwd: string,
+    setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
+  ) => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id !== tabId) {return tab;}
+        return {
+          ...tab,
+          terminals: tab.terminals.map((term) => {
+            if (term.id !== termId) {return term;}
+            return { ...term, cwd };
+          }),
+        };
+      }),
+    );
+  };
+
+  // pt-8: reserve space for macOS traffic lights (titleBarStyle: Transparent)
   return (
-    <div className="h-full w-full overflow-hidden">
+    <div className="h-full w-full overflow-hidden pt-8 pb-[14px]">
       <Separator />
       <TopBar />
       <Separator />
@@ -194,6 +249,9 @@ export function App() {
                   activeTabId={limaActive}
                   onSessionCreated={(tabId, termId, sid) =>
                     handleTerminalSessionCreated(tabId, termId, sid, setLimaTabs)
+                  }
+                  onCwdChanged={(tabId, termId, cwd) =>
+                    handleTerminalCwdChanged(tabId, termId, cwd, setLimaTabs)
                   }
                   onTabChange={setLimaActive}
                   onAddTab={() =>

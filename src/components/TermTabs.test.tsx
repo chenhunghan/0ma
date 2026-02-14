@@ -22,8 +22,10 @@ const setMobile = (isMobile: boolean) => {
   });
 };
 
+// oxlint-disable-next-line jest/valid-title
 describe(TerminalRow, () => {
   const mockOnSessionCreated = vi.fn();
+  const mockOnCwdChanged = vi.fn();
   const mockTerminals: Terminal[] = [
     { id: 1, name: "Term 1" },
     { id: 2, name: "Term 2" },
@@ -34,12 +36,14 @@ describe(TerminalRow, () => {
     setMobile(false); // Default to desktop
   });
 
+  // oxlint-disable-next-line jest/expect-expect
   it("renders each terminal content in its own panel", () => {
     render(
       <TerminalRow
         tabId="tab-1"
         terminals={mockTerminals}
         onSessionCreated={mockOnSessionCreated}
+        onCwdChanged={mockOnCwdChanged}
       />,
     );
     // Since we are mocking modules, we might need to adjust expectations if TerminalComponent renders differently in test
@@ -52,6 +56,7 @@ describe(TerminalRow, () => {
         tabId="tab-1"
         terminals={mockTerminals}
         onSessionCreated={mockOnSessionCreated}
+        onCwdChanged={mockOnCwdChanged}
       />,
     );
 
@@ -67,6 +72,7 @@ describe(TerminalRow, () => {
         tabId="tab-1"
         terminals={mockTerminals}
         onSessionCreated={mockOnSessionCreated}
+        onCwdChanged={mockOnCwdChanged}
       />,
     );
 
@@ -81,6 +87,7 @@ describe(TerminalRow, () => {
         tabId="tab-1"
         terminals={mockTerminals}
         onSessionCreated={mockOnSessionCreated}
+        onCwdChanged={mockOnCwdChanged}
       />,
     );
 
@@ -95,6 +102,7 @@ describe(TerminalRow, () => {
         tabId="tab-1"
         terminals={mockTerminals}
         onSessionCreated={mockOnSessionCreated}
+        onCwdChanged={mockOnCwdChanged}
       />,
     );
 
@@ -103,12 +111,14 @@ describe(TerminalRow, () => {
   });
 });
 
+// oxlint-disable-next-line jest/valid-title
 describe(TermTabs, () => {
   const mockOnTabChange = vi.fn();
   const mockOnAddTab = vi.fn();
   const mockOnAddSideBySide = vi.fn();
   const mockOnRemoveTab = vi.fn();
   const mockOnSessionCreated = vi.fn();
+  const mockOnCwdChanged = vi.fn();
 
   const mockTabs = [
     {
@@ -138,7 +148,8 @@ describe(TermTabs, () => {
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
         onSessionCreated={mockOnSessionCreated}
-        emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
+        onCwdChanged={mockOnCwdChanged}
+        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
       />,
     );
 
@@ -159,7 +170,8 @@ describe(TermTabs, () => {
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
         onSessionCreated={mockOnSessionCreated}
-        emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
+        onCwdChanged={mockOnCwdChanged}
+        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
       />,
     );
 
@@ -179,7 +191,8 @@ describe(TermTabs, () => {
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
         onSessionCreated={mockOnSessionCreated}
-        emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
+        onCwdChanged={mockOnCwdChanged}
+        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
       />,
     );
 
@@ -199,7 +212,8 @@ describe(TermTabs, () => {
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
         onSessionCreated={mockOnSessionCreated}
-        emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
+        onCwdChanged={mockOnCwdChanged}
+        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
       />,
     );
 
@@ -217,7 +231,8 @@ describe(TermTabs, () => {
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
         onSessionCreated={mockOnSessionCreated}
-        emptyState={<EmptyTerminalState onAdd={() => mockOnAddTab()} />}
+        onCwdChanged={mockOnCwdChanged}
+        emptyState={<EmptyTerminalState onAdd={mockOnAddTab} />}
       />,
     );
 

@@ -24,6 +24,7 @@ interface Props {
   onAddSideBySide: (tabId: string) => void;
   onRemoveTab: (tabId: string) => void;
   onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
+  onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
   emptyState: ReactNode;
 }
 
@@ -35,6 +36,7 @@ function TermTabsInner({
   onAddSideBySide,
   onRemoveTab,
   onSessionCreated,
+  onCwdChanged,
   emptyState,
 }: Props) {
   const isMobile = useIsMobile();
@@ -56,8 +58,8 @@ function TermTabsInner({
               >
                 <TerminalIcon className="size-3.5" />
                 {!isMobile && <span className="text-[10px]">{tab.name}</span>}
-                <div
-                  role="button"
+                <button
+                  type="button"
                   className="rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted-foreground/20 p-0.5 transition-all ml-1"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -66,7 +68,7 @@ function TermTabsInner({
                   title="Close Tab"
                 >
                   <XIcon className="size-3" />
-                </div>
+                </button>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -121,8 +123,8 @@ function TermTabsInner({
                     <TerminalRow
                       tabId={tab.id}
                       terminals={row1}
-                      isActive={isActive}
                       onSessionCreated={onSessionCreated}
+                      onCwdChanged={onCwdChanged}
                     />
                   ) : (
                     <ResizablePanelGroup direction="vertical">
@@ -130,8 +132,8 @@ function TermTabsInner({
                         <TerminalRow
                           tabId={tab.id}
                           terminals={row1}
-                          isActive={isActive}
                           onSessionCreated={onSessionCreated}
+                          onCwdChanged={onCwdChanged}
                         />
                       </ResizablePanel>
                       <ResizableHandle
@@ -145,8 +147,8 @@ function TermTabsInner({
                         <TerminalRow
                           tabId={tab.id}
                           terminals={row2}
-                          isActive={isActive}
                           onSessionCreated={onSessionCreated}
+                          onCwdChanged={onCwdChanged}
                         />
                       </ResizablePanel>
                     </ResizablePanelGroup>

@@ -1,79 +1,74 @@
-import React, { useEffect, useRef } from "react";
-import "@xterm/xterm/css/xterm.css";
-import { error } from "@tauri-apps/plugin-log";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LogState } from "src/types/Log";
-import { useXterm } from "../hooks/terminal";
+import type { HighlighterCore } from "shiki/core";
+import { getHighlighter } from "src/lib/shiki";
+
+const CONTAINER_STYLE: React.CSSProperties = {
+  fontFamily: '"FiraCode Nerd Font", monospace',
+  fontSize: 12,
+  lineHeight: 1.15,
+};
 
 interface Props {
   logState: LogState;
 }
 
-const LOG_VIEW_TERM_CONFIG = {
-  allowProposedApi: true,
-  cursorBlink: false,
-  cursorInactiveStyle: "none" as const,
-  cursorStyle: "underline" as const,
-  disableStdin: true,
-  fontFamily: '"JetBrains Mono Variable", monospace',
-  fontSize: 11,
-  lineHeight: 1.15,
-  theme: {
-    background: "#000000",
-    foreground: "#d4d4d8", // Zinc-300
-    cursor: "transparent",
-    selectionBackground: "#27272a", // Zinc-800
-    black: "#000000",
-    red: "#ef4444",
-    green: "#10b981",
-    yellow: "#f59e0b",
-    blue: "#3b82f6",
-    magenta: "#d946ef",
-    cyan: "#06b6d4",
-    white: "#e4e4e7",
-    brightBlack: "#71717a",
-    brightRed: "#f87171",
-    brightGreen: "#34d399",
-    brightYellow: "#fbbf24",
-    brightBlue: "#60a5fa",
-    brightMagenta: "#e879f9",
-    brightCyan: "#22d3ee",
-    brightWhite: "#ffffff",
-  },
-};
-
 export const LogViewer: React.FC<Props> = ({ logState }) => {
-  const terminalContainerRef = useRef<HTMLDivElement>(null);
-  const { terminal } = useXterm(terminalContainerRef, LOG_VIEW_TERM_CONFIG);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef(true);
+  const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
 
-  // Write stdout to terminal
   useEffect(() => {
-    if (!terminal) {return;}
+    getHighlighter().then(setHighlighter);
+  }, []);
 
-    logState.stdout.forEach((log) => {
-      try {
-        terminal.writeln(log.message);
-        // Auto-scroll to bottom
-        terminal.scrollToBottom();
-      } catch (error) {
-        error(`Error writing to terminal: ${error}`);
-      }
-    });
-  }, [logState.stdout, terminal]);
-
-  // Write stderr to terminal
   useEffect(() => {
-    if (!terminal) {return;}
+    const el = containerRef.current;
+    if (el && autoScrollRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [logState.stdout, logState.stderr]);
 
-    logState.stderr.forEach((log) => {
-      try {
-        terminal.writeln(log.message);
-        // Auto-scroll to bottom
-        terminal.scrollToBottom();
-      } catch (error) {
-        error(`Error writing to terminal: ${error}`);
-      }
-    });
-  }, [logState.stderr, terminal]);
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    autoScrollRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 20;
+  }, []);
 
-  return <div className="h-full w-full overflow-hidden bg-black" ref={terminalContainerRef} />;
+  const allEntries = useMemo(() => {
+    return [
+      ...logState.stdout.map((e) => ({ ...e, stream: "stdout" as const })),
+      ...logState.stderr.map((e) => ({ ...e, stream: "stderr" as const })),
+    ];
+  }, [logState.stdout, logState.stderr]);
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className="h-64 w-full overflow-y-auto overflow-x-hidden rounded bg-transparent text-zinc-300 p-2 select-text"
+      style={CONTAINER_STYLE}
+    >
+      {allEntries.map((entry) => {
+        if (!highlighter) {
+          return (
+            <div key={entry.id} className="whitespace-pre-wrap break-all">
+              {entry.message}
+            </div>
+          );
+        }
+        const html = highlighter.codeToHtml(entry.message, {
+          lang: "log",
+          theme: "github-dark",
+        });
+        return (
+          <div
+            key={entry.id}
+            className="[&>pre]:!bg-transparent [&>pre]:!p-0 [&>pre]:!m-0 [&_code]:!bg-transparent [&>pre]:!whitespace-pre-wrap [&_code]:!whitespace-pre-wrap [&>pre]:break-all [&_code]:break-all"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
+      })}
+    </div>
+  );
 };
