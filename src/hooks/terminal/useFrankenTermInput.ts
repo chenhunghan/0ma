@@ -39,6 +39,9 @@ function cellCoordsFromMouse(
 /**
  * Hook that wires keyboard, mouse, paste, and focus events from the canvas
  * to FrankenTermWeb, then flushes encoded input bytes to the PTY.
+ *
+ * When sessionId is null (read-only mode), only mouse selection, copy, and
+ * wheel scrolling are active — no keyboard input or PTY writes.
  */
 export function useFrankenTermInput(
   term: FrankenTermWeb | null,
@@ -68,7 +71,9 @@ export function useFrankenTermInput(
   // oxlint-disable-next-line max-statements
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!term || !sessionId || !canvas) return;
+    if (!term || !canvas) return;
+
+    const readOnly = !sessionId;
 
     // Reset focus skip on new session
     skipFocusFlushRef.current = true;
@@ -83,6 +88,7 @@ export function useFrankenTermInput(
           return;
         }
       }
+      if (readOnly) return;
       // Cmd/Ctrl+V → let browser paste event fire
       if ((e.metaKey || e.ctrlKey) && e.key === "v") {
         return;
@@ -103,6 +109,7 @@ export function useFrankenTermInput(
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (readOnly) return;
       term.input({
         kind: "key",
         phase: "up",
@@ -135,7 +142,7 @@ export function useFrankenTermInput(
         altKey: e.altKey,
         metaKey: e.metaKey,
       });
-      flushInputBytes(term, sessionId);
+      if (sessionId) flushInputBytes(term, sessionId);
     };
 
     const handleMouseUp = (e: MouseEvent) => {
@@ -152,7 +159,7 @@ export function useFrankenTermInput(
         altKey: e.altKey,
         metaKey: e.metaKey,
       });
-      flushInputBytes(term, sessionId);
+      if (sessionId) flushInputBytes(term, sessionId);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -172,7 +179,7 @@ export function useFrankenTermInput(
         altKey: e.altKey,
         metaKey: e.metaKey,
       });
-      flushInputBytes(term, sessionId);
+      if (sessionId) flushInputBytes(term, sessionId);
     };
 
     const handleWheel = (e: WheelEvent) => {
@@ -188,10 +195,11 @@ export function useFrankenTermInput(
         altKey: e.altKey,
         metaKey: e.metaKey,
       });
-      flushInputBytes(term, sessionId);
+      if (sessionId) flushInputBytes(term, sessionId);
     };
 
     const handlePaste = (e: ClipboardEvent) => {
+      if (readOnly) return;
       const text = e.clipboardData?.getData("text");
       if (text) {
         term.pasteText(text);
@@ -200,6 +208,7 @@ export function useFrankenTermInput(
     };
 
     const handleFocus = () => {
+      if (readOnly) return;
       term.input({ kind: "focus", focused: true });
       if (skipFocusFlushRef.current) {
         skipFocusFlushRef.current = false;
@@ -211,6 +220,7 @@ export function useFrankenTermInput(
     };
 
     const handleBlur = () => {
+      if (readOnly) return;
       term.input({ kind: "focus", focused: false });
       flushInputBytes(term, sessionId);
     };

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import type { LogState } from "src/types/Log";
-import { useFrankenTerm } from "../hooks/terminal";
+import { useFrankenTerm, useFrankenTermInput, useFrankenTermResize } from "../hooks/terminal";
 
 const textEncoder = new TextEncoder();
 
@@ -10,7 +10,18 @@ interface Props {
 
 export const LogViewer: React.FC<Props> = ({ logState }) => {
   const terminalContainerRef = useRef<HTMLDivElement>(null);
-  const { term } = useFrankenTerm(terminalContainerRef);
+  const { term, canvasRef } = useFrankenTerm(terminalContainerRef);
+
+  // Resize: adapts to container size (no PTY to notify)
+  const dims = useFrankenTermResize(term, terminalContainerRef, null);
+
+  // Input: mouse selection, copy, wheel scrolling (read-only: no PTY session)
+  const { updateGeometry } = useFrankenTermInput(term, null, canvasRef);
+
+  // Keep input hook geometry in sync with resize
+  useEffect(() => {
+    updateGeometry(dims.cols, dims.cellWidth, dims.cellHeight);
+  }, [dims.cols, dims.cellWidth, dims.cellHeight, updateGeometry]);
 
   // Write stdout to terminal
   useEffect(() => {
