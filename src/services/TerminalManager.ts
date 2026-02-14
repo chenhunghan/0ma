@@ -1,8 +1,9 @@
-import type { ITerminalOptions } from "@xterm/xterm";
-import { Terminal } from "@xterm/xterm";
+/**
+ * Terminal instance manager — xterm.js removed.
+ * Stub retained for the replacement terminal library.
+ */
 
 export interface TerminalInstance {
-  term: Terminal;
   initialized: boolean;
   intervalId?: ReturnType<typeof setInterval>;
   cleanup?: () => void;
@@ -11,10 +12,9 @@ export interface TerminalInstance {
 class TerminalManager {
   private instances = new Map<string, TerminalInstance>();
 
-  getOrCreate(id: string, options: ITerminalOptions): TerminalInstance {
+  getOrCreate(id: string): TerminalInstance {
     if (!this.instances.has(id)) {
-      const term = new Terminal(options);
-      this.instances.set(id, { initialized: false, term });
+      this.instances.set(id, { initialized: false });
     }
     return this.instances.get(id)!;
   }
@@ -28,7 +28,6 @@ class TerminalManager {
     if (inst) {
       if (inst.intervalId) {clearInterval(inst.intervalId);}
       if (inst.cleanup) {inst.cleanup();}
-      inst.term.dispose();
       this.instances.delete(id);
     }
   }

@@ -1,7 +1,9 @@
-import type { ITerminalOptions } from "@xterm/xterm";
+/**
+ * Terminal configuration — xterm.js types removed.
+ * These values are kept as plain objects for the replacement library.
+ */
 
-export const TERM_CONFIG: ITerminalOptions = {
-  allowProposedApi: true,
+export const TERM_CONFIG = {
   cursorBlink: false,
   cursorStyle: "bar" as const,
   fontFamily: '"FiraCode Nerd Font", monospace',
@@ -32,12 +34,11 @@ export const TERM_CONFIG: ITerminalOptions = {
   },
 };
 
-// NEW: Metrics for dimension calculation
+// Metrics for dimension calculation
 export const TERMINAL_METRICS = {
-  // Reference TERM_CONFIG to stay in sync
-  fontFamily: TERM_CONFIG.fontFamily!,
-  fontSize: TERM_CONFIG.fontSize!,
-  lineHeight: TERM_CONFIG.lineHeight!,
+  fontFamily: TERM_CONFIG.fontFamily,
+  fontSize: TERM_CONFIG.fontSize,
+  lineHeight: TERM_CONFIG.lineHeight,
 
   // Layout constants (scrollbar width matches CSS in index.css)
   scrollbarWidth: 10,

@@ -1,18 +1,19 @@
 import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { Terminal } from "@xterm/xterm";
+import * as log from "@tauri-apps/plugin-log";
 import type { PtyEvent } from "./types";
 
 /**
- * Hook for connecting to an existing terminal session
+ * Hook for connecting to an existing terminal session.
+ *
+ * xterm.js removed — the channel.onmessage callback currently logs data.
+ * Wire in the replacement terminal's write method here.
  */
-export function useTerminalSessionConnect(terminal: Terminal | null) {
+export function useTerminalSessionConnect() {
   const channelRef = useRef<Channel<PtyEvent> | null>(null);
 
-  // Cleanup listener on unmount. We use a "soft unplug" (empty function)
-  // Because Tauri v2 Channels don't have an explicit unlisten/close on the frontend.
-  // This stops the UI from processing data while letting the PTY stay alive.
+  // Cleanup listener on unmount
   useEffect(() => () => {
       if (channelRef.current) {
         channelRef.current.onmessage = () => {};
@@ -21,10 +22,7 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
 
   const mutation = useMutation({
     mutationFn: async (targetSessionId: string): Promise<string> => {
-      if (!terminal) {throw new Error("Terminal not initialized");}
-
-      // Silence the old listener before attaching a new session to this terminal instance.
-      // This prevents "ghost output" from previous sessions appearing in the view.
+      // Silence the old listener before attaching a new session
       if (channelRef.current) {
         channelRef.current.onmessage = () => {};
       }
@@ -32,12 +30,8 @@ export function useTerminalSessionConnect(terminal: Terminal | null) {
       // 1. Create channel for output
       const channel = new Channel<PtyEvent>();
       channel.onmessage = (msg) => {
-        // Sticky scroll: only scroll if the user is already at the bottom
-        const isAtBottom = terminal.buffer.active.viewportY >= terminal.buffer.active.baseY;
-        terminal.write(msg.data);
-        if (isAtBottom) {
-          terminal.scrollToBottom();
-        }
+        // TODO: wire replacement terminal write here
+        log.debug(`[pty-output] ${msg.data}`);
       };
 
       // 2. Attach channel to existing session

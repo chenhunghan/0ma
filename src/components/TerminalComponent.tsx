@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useTerminalSession, useXterm } from "../hooks/terminal";
 import { useTerminalResize } from "../hooks/terminal/useTerminalResize";
 import { useTerminalResizeContext } from "src/contexts/useTerminalResizeContext";
-import "@xterm/xterm/css/xterm.css";
 import * as log from "@tauri-apps/plugin-log";
 
 interface Props {
@@ -36,29 +35,33 @@ export function TerminalComponent({
   // Subscribe to drag end events
   useEffect(() => subscribeDragEnd(onDragEnd), [subscribeDragEnd, onDragEnd]);
 
-  // Wait for terminal dimensions to be ready, then spawn/connect
+  // Spawn/connect session
   useEffect(() => {
-    log.debug(`[Terminal] useEffect: terminal=${Boolean(terminal)} isReady=${isReady}`);
-    if (!terminal || isReady) {return;}
+    log.debug(`[Terminal] useEffect: isReady=${isReady}`);
+    if (isReady) {return;}
 
     let cancelled = false;
 
-    log.debug("[Terminal] Calling waitForReady...");
-    // Wait for xterm to initialize dimensions before spawning
+    // TODO: replace waitForReady with new terminal lib readiness check
     waitForReady().then((ready) => {
       log.debug(`[Terminal] waitForReady resolved: ready=${ready} cancelled=${cancelled}`);
-      if (cancelled || !ready) {return;}
+      if (cancelled || !ready) {
+        // Fallback: spawn immediately with default dims
+        if (cancelled) {return;}
+        if (propsSessionId) {
+          connect(propsSessionId);
+        } else {
+          spawn({ args: initialArgs, command: initialCommand, cwd });
+        }
+        return;
+      }
 
       if (propsSessionId) {
         log.debug(`[Terminal] connecting to session ${propsSessionId}`);
         connect(propsSessionId);
       } else {
         log.debug(`[Terminal] spawning session ${initialCommand}`);
-        spawn({
-          args: initialArgs,
-          command: initialCommand,
-          cwd,
-        });
+        spawn({ args: initialArgs, command: initialCommand, cwd });
       }
     });
 
@@ -66,7 +69,6 @@ export function TerminalComponent({
       cancelled = true;
     };
   }, [
-    terminal,
     propsSessionId,
     initialCommand,
     initialArgs,

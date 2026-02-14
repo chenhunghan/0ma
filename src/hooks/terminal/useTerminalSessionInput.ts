@@ -1,21 +1,9 @@
-import { useEffect } from "react";
-import type { Terminal } from "@xterm/xterm";
-import { emit } from "@tauri-apps/api/event";
-import * as log from "@tauri-apps/plugin-log";
-
 /**
- * Hook for handling terminal input data (terminal -> PTY)
+ * Hook stub for handling terminal input data (terminal -> PTY).
+ *
+ * xterm.js removed — terminal.onData() no longer available.
+ * Wire in the replacement terminal's input event here.
  */
-export function useTerminalSessionInput(terminal: Terminal | null, sessionId: string | null) {
-  useEffect(() => {
-    if (!terminal || !sessionId) {return;}
-
-    const disposable = terminal.onData((data) => {
-      emit("pty-input", { data, sessionId }).catch((error) =>
-        log.error("Failed to emit pty-input:", error),
-      );
-    });
-
-    return () => disposable.dispose();
-  }, [terminal, sessionId]);
+export function useTerminalSessionInput(_sessionId: string | null) {
+  // No-op until replacement terminal is wired in
 }

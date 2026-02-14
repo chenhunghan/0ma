@@ -1,33 +1,13 @@
 import type { RefObject } from "react";
-import { useEffect, useState } from "react";
-import type { ITerminalOptions } from "@xterm/xterm";
-import { Terminal } from "@xterm/xterm";
-import { TERM_CONFIG } from "./config";
 
 /**
- * Hook for creating xterm instance.
- * FitAddon removed - resize handled by useTerminalResize.
+ * Hook stub — xterm.js has been removed.
+ * The container ref is still accepted so callers keep their layout div.
+ * A replacement terminal library will be wired in here.
  */
 export function useXterm(
-  containerRef: RefObject<HTMLDivElement | null>,
-  options: ITerminalOptions = TERM_CONFIG,
+  _containerRef: RefObject<HTMLDivElement | null>,
+  _options?: Record<string, unknown>,
 ) {
-  const [terminal, setTerminal] = useState<Terminal | null>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) {return;}
-
-    const term = new Terminal(options);
-    term.open(containerRef.current);
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTerminal(term);
-
-    return () => {
-      term.dispose();
-      setTerminal(null);
-    };
-  }, [containerRef, options]);
-
-  return { terminal };
+  return { terminal: null };
 }
