@@ -137,11 +137,6 @@ describe("ApplyResetDraftDialogs", () => {
     expect(screen.queryByLabelText("Apply configuration changes")).not.toBeInTheDocument();
   });
 
-  it("does not render Reset button when not dirty", () => {
-    renderComponent({ isDirty: false });
-    expect(screen.queryByLabelText("Reset configuration changes")).not.toBeInTheDocument();
-  });
-
   it("enables Apply button when dirty and instance is Stopped", () => {
     renderComponent({ isDirty: true, instanceStatus: InstanceStatus.Stopped });
     const applyButton = screen.getByLabelText("Apply configuration changes");
@@ -152,12 +147,6 @@ describe("ApplyResetDraftDialogs", () => {
     renderComponent({ isDirty: true, instanceStatus: InstanceStatus.Running });
     const applyButton = screen.getByLabelText("Apply configuration changes");
     expect(applyButton).not.toBeDisabled();
-  });
-
-  it("enables Reset button when dirty", () => {
-    renderComponent({ isDirty: true });
-    const resetButton = screen.getByLabelText("Reset configuration changes");
-    expect(resetButton).not.toBeDisabled();
   });
 
   it("disables Apply button when instance is in transitional state", () => {
@@ -177,9 +166,6 @@ describe("ApplyResetDraftDialogs", () => {
 
     expect(mockApplyDraftAsync).toHaveBeenCalled();
     expect(screen.getByText("Applied")).toBeInTheDocument();
-
-    // Reset button should be hidden during justApplied state
-    expect(screen.queryByLabelText("Reset configuration changes")).not.toBeInTheDocument();
 
     vi.useRealTimers();
   });
@@ -218,14 +204,6 @@ describe("ApplyResetDraftDialogs", () => {
     await waitFor(() => {
       expect(mockStopInstance).toHaveBeenCalledWith("test-instance");
     });
-  });
-
-  it("calls resetDraft when Reset is clicked", () => {
-    renderComponent({ isDirty: true });
-    const resetButton = screen.getByLabelText("Reset configuration changes");
-    fireEvent.click(resetButton);
-
-    expect(mockResetDraft).toHaveBeenCalled();
   });
 
   it("shows inline error when applyError exists", () => {

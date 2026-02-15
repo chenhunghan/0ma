@@ -2,7 +2,7 @@ import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft
 import Editor from "@monaco-editor/react";
 import { useCallback, useEffect, useState } from "react";
 import { parse, stringify } from "yaml";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, RotateCcwIcon } from "lucide-react";
 import { isEqual } from "lodash";
 import { Spinner } from "./ui/spinner";
 
@@ -25,7 +25,8 @@ const EDITOR_OPTIONS = {
 } as const;
 
 export function LimaConfigEditor() {
-  const { draftConfig, updateDraftConfig, isLoading } = useUpdateLimaInstanceDraft();
+  const { draftConfig, updateDraftConfig, isLoading, isDirty, resetDraft, isApplying } =
+    useUpdateLimaInstanceDraft();
 
   const [yamlValue, setYamlValue] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +97,18 @@ export function LimaConfigEditor() {
             </div>
           )}
         </div>
+        {isDirty && (
+          <button
+            type="button"
+            disabled={isApplying}
+            onClick={resetDraft}
+            aria-label="Reset draft configuration"
+            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            <RotateCcwIcon className="w-3 h-3" />
+            <span>Reset Draft</span>
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-hidden relative">

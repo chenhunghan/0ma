@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, CheckIcon, RotateCcwIcon } from "lucide-react";
+import { CheckCircle2, CheckIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
@@ -11,7 +11,7 @@ import { Spinner } from "./ui/spinner";
 
 export function ApplyResetDraftDialogs() {
   const { selectedInstance, selectedName } = useSelectedInstance();
-  const { isDirty, applyDraftAsync, applyError, resetDraft, isApplying } =
+  const { isDirty, applyDraftAsync, applyError, isApplying } =
     useUpdateLimaInstanceDraft();
   const {
     phase,
@@ -54,46 +54,27 @@ export function ApplyResetDraftDialogs() {
     resetApplyState();
   }, [resetApplyState]);
 
-  const handleReset = useCallback(() => {
-    resetDraft();
-  }, [resetDraft]);
-
   return (
     <>
       {(isDirty || justApplied) && (
-        <>
-          <Button
-            variant={justApplied ? "ghost" : "default"}
-            size="sm"
-            disabled={justApplied || isApplying || (!isStopped && !isRunning)}
-            onClick={handleApplyClick}
-            aria-label="Apply configuration changes"
-          >
-            {justApplied ? (
-              <CheckCircle2 className="text-green-500" />
-            ) : isApplying ? (
-              <Spinner />
-            ) : (
-              <CheckIcon className="md:hidden" />
-            )}
-            <span className="hidden md:inline">
-              {justApplied ? "Applied" : isApplying ? "Applying..." : "Apply"}
-            </span>
-          </Button>
-
-          {!justApplied && (
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={isApplying}
-              onClick={handleReset}
-              aria-label="Reset configuration changes"
-            >
-              <RotateCcwIcon className="md:hidden" />
-              <span className="hidden md:inline">Reset</span>
-            </Button>
+        <Button
+          variant={justApplied ? "ghost" : "default"}
+          size="sm"
+          disabled={justApplied || isApplying || (!isStopped && !isRunning)}
+          onClick={handleApplyClick}
+          aria-label="Apply configuration changes"
+        >
+          {justApplied ? (
+            <CheckCircle2 className="text-green-500" />
+          ) : isApplying ? (
+            <Spinner />
+          ) : (
+            <CheckIcon className="md:hidden" />
           )}
-        </>
+          <span className="hidden md:inline">
+            {justApplied ? "Applied" : isApplying ? "Applying..." : "Apply"}
+          </span>
+        </Button>
       )}
 
       {applyError && (
