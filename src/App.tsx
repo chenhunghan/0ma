@@ -7,6 +7,7 @@ import type { TabGroup } from "src/components/TermTabs";
 import { TermTabs } from "src/components/TermTabs";
 import { EmptyTerminalState } from "src/components/EmptyTerminalState";
 import { LimaConfigTabContent } from "src/components/LimaConfigTabContent";
+import { useInstanceLifecycleEvents } from "src/hooks/useInstanceLifecycleEvents";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 import { useTerminalSessionStorage } from "src/hooks/useTerminalSessionStorage";
 import { Skeleton } from "./components/ui/skeleton";
@@ -37,6 +38,7 @@ function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
 
 // oxlint-disable-next-line max-statements
 export function App() {
+  useInstanceLifecycleEvents();
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
   const { restoredState, isFetched: isSessionsFetched, persist } = useTerminalSessionStorage();
   const restoredRef = useRef(false);
