@@ -55,7 +55,7 @@ function LabelWithTooltip({
 }
 
 export function CreateInstanceConfigForm() {
-  const { draftConfig, isLoading, updateField, instanceName, setInstanceName } =
+  const { draftConfig, isLoading, updateField, updateDraftConfig, instanceName, setInstanceName } =
     useCreateLimaInstanceDraft();
   const { isKrunkitSupported, krunkitMissingReasons } = useSystemCapabilities();
   const isKrunkit = draftConfig?.vmType === "krunkit";
@@ -99,19 +99,19 @@ export function CreateInstanceConfigForm() {
         updateField("provision", nextProvision);
       },
       vmType: (value: string | null) => {
+        if (!draftConfig) return;
         const newVmType = value || "vz";
-        updateField("vmType", newVmType);
-        if (newVmType === "krunkit") {
-          updateField("rosetta" as keyof typeof draftConfig, undefined);
-        } else {
-          updateField("gpu", undefined);
-        }
+        const updates =
+          newVmType === "krunkit"
+            ? { vmType: newVmType, rosetta: undefined }
+            : { vmType: newVmType, gpu: undefined };
+        updateDraftConfig({ ...draftConfig, ...updates });
       },
       gpu: (value: string | null) => {
         updateField("gpu", value === "enabled" ? { enabled: true } : undefined);
       },
     }),
-    [draftConfig, setInstanceName, updateField],
+    [draftConfig, setInstanceName, updateDraftConfig, updateField],
   );
 
   const dialogs = useMemo(
