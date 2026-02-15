@@ -10,9 +10,12 @@ pub struct SystemCapabilities {
     /// macOS version string (e.g., "14.5")
     #[serde(rename = "macosVersion")]
     pub macos_version: String,
-    /// Whether the krunkit binary is available
+    /// Whether the krunkit binary is available on the host
     #[serde(rename = "krunkitAvailable")]
     pub krunkit_available: bool,
+    /// Whether Lima has the krunkit driver installed
+    #[serde(rename = "krunkitDriverAvailable")]
+    pub krunkit_driver_available: bool,
 }
 
 pub fn get_system_capabilities() -> SystemCapabilities {
@@ -37,10 +40,29 @@ pub fn get_system_capabilities() -> SystemCapabilities {
         .map(|o| o.status.success())
         .unwrap_or(false);
 
+    // Check if Lima has the krunkit driver via `limactl info`
+    let krunkit_driver_available = find_lima_executable()
+        .and_then(|lima_cmd| {
+            Command::new(&lima_cmd)
+                .arg("info")
+                .output()
+                .ok()
+                .and_then(|o| {
+                    if o.status.success() {
+                        String::from_utf8(o.stdout).ok()
+                    } else {
+                        None
+                    }
+                })
+        })
+        .map(|info| info.contains("krunkit"))
+        .unwrap_or(false);
+
     SystemCapabilities {
         arch,
         macos_version,
         krunkit_available,
+        krunkit_driver_available,
     }
 }
 

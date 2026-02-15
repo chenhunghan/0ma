@@ -10,7 +10,8 @@ import { useSystemCapabilities } from "src/hooks/useSystemCapabilities";
 
 export function LimaConfigResourceColumn() {
   const { draftConfig, actualConfig, isLoading, updateField } = useUpdateLimaInstanceDraft();
-  const { isKrunkitSupported } = useSystemCapabilities();
+  const { isKrunkitSupported, krunkitMissingReasons } = useSystemCapabilities();
+  const isKrunkit = draftConfig?.vmType === "krunkit";
 
   const handleCpuChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -120,12 +121,14 @@ export function LimaConfigResourceColumn() {
           </SelectContent>
         </Select>
       </div>
-      {draftConfig?.vmType === "krunkit" && !isKrunkitSupported && (
-        <p className="text-xs text-amber-500">
-          Krunkit requires macOS 14+, Apple Silicon, and the krunkit binary.
-        </p>
+      {isKrunkit && !isKrunkitSupported && krunkitMissingReasons.length > 0 && (
+        <ul className="text-xs text-amber-500 list-disc list-inside">
+          {krunkitMissingReasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
       )}
-      {draftConfig?.vmType === "krunkit" && (
+      {isKrunkit && (
         <div className="grid w-full items-center gap-1.5">
           <Label htmlFor="gpu">GPU Passthrough</Label>
           <Select

@@ -5,6 +5,7 @@ interface SystemCapabilities {
   arch: string;
   macosVersion: string;
   krunkitAvailable: boolean;
+  krunkitDriverAvailable: boolean;
 }
 
 export function useSystemCapabilities() {
@@ -14,12 +15,21 @@ export function useSystemCapabilities() {
     staleTime: Infinity,
   });
 
+  const isAppleSilicon = data?.arch === "aarch64";
+  const isMacOS14Plus = parseFloat(data?.macosVersion ?? "0") >= 14.0;
   const isKrunkitSupported = Boolean(
-    data &&
-      data.arch === "aarch64" &&
-      parseFloat(data.macosVersion) >= 14.0 &&
-      data.krunkitAvailable,
+    data && isAppleSilicon && isMacOS14Plus && data.krunkitAvailable && data.krunkitDriverAvailable,
   );
 
-  return { capabilities: data, isLoading, isKrunkitSupported };
+  const krunkitMissingReasons: string[] = [];
+  if (data && !isKrunkitSupported) {
+    if (!isAppleSilicon) krunkitMissingReasons.push("Apple Silicon required");
+    if (!isMacOS14Plus) krunkitMissingReasons.push("macOS 14+ required");
+    if (!data.krunkitAvailable)
+      krunkitMissingReasons.push("krunkit not installed (brew tap slp/krunkit && brew install krunkit)");
+    if (!data.krunkitDriverAvailable)
+      krunkitMissingReasons.push("Lima krunkit driver not found");
+  }
+
+  return { capabilities: data, isLoading, isKrunkitSupported, krunkitMissingReasons };
 }

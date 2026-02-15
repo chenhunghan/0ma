@@ -918,4 +918,39 @@ portForwards:
 
         assert_eq!(yaml.trim(), expected_whole_file.trim());
     }
+
+    #[test]
+    fn test_krunkit_vm_type_with_gpu() {
+        let config = LimaConfig {
+            vm_type: Some("krunkit".to_string()),
+            gpu: Some(GpuConfig { enabled: true }),
+            cpus: Some(4),
+            memory: Some("8GiB".to_string()),
+            ..Default::default()
+        };
+
+        let yaml = config.to_yaml().expect("Failed to serialize");
+        assert!(yaml.contains("vmType: krunkit"));
+        assert!(yaml.contains("gpu:"));
+        assert!(yaml.contains("enabled: true"));
+
+        // Round-trip
+        let deserialized = LimaConfig::from_yaml(&yaml).expect("Failed to deserialize");
+        assert_eq!(deserialized.vm_type, Some("krunkit".to_string()));
+        assert!(deserialized.gpu.is_some());
+        assert!(deserialized.gpu.unwrap().enabled);
+    }
+
+    #[test]
+    fn test_krunkit_without_gpu_omits_field() {
+        let config = LimaConfig {
+            vm_type: Some("krunkit".to_string()),
+            gpu: None,
+            ..Default::default()
+        };
+
+        let yaml = config.to_yaml().expect("Failed to serialize");
+        assert!(yaml.contains("vmType: krunkit"));
+        assert!(!yaml.contains("gpu:"));
+    }
 }
