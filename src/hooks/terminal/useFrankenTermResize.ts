@@ -23,11 +23,12 @@ function tryFit(
 
   // Skip if pixel size hasn't changed (avoids flash on tab switch)
   if (w === lastPixelSize.current.w && h === lastPixelSize.current.h) return null;
-  lastPixelSize.current = { w, h };
 
   const dpr = window.devicePixelRatio || 1;
   try {
     const geo = term.fitToContainer(w, h, dpr);
+    // Mark as handled only after a successful fit, so transient failures can retry.
+    lastPixelSize.current = { w, h };
     const cols = geo.cols as number;
     const rows = geo.rows as number;
     return {

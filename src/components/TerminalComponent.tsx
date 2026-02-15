@@ -8,6 +8,7 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
+import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
 
 interface Props {
   sessionId?: string;
@@ -29,6 +30,17 @@ function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
     .catch(() => {
       // Listener may have already been disposed
     });
+}
+
+function enqueueTermFeed(term: FrankenTermWeb, text: string) {
+  const bytes = new TextEncoder().encode(text);
+  queueMicrotask(() => {
+    try {
+      term.feed(bytes);
+    } catch (e) {
+      log.debug(`[TerminalComponent] deferred feed skipped due transient re-entry: ${e}`);
+    }
+  });
 }
 
 export function TerminalComponent({
@@ -90,7 +102,7 @@ export function TerminalComponent({
     invoke<SessionRestoreData>("load_session_restore_cmd", { sessionId: propsSessionId })
       .then((restore) => {
         if (restore.historyText && term) {
-          term.feed(new TextEncoder().encode(restore.historyText));
+          enqueueTermFeed(term, restore.historyText);
         }
         return restore.cwd ?? cwd;
       })
@@ -136,7 +148,7 @@ export function TerminalComponent({
     const unlisten = listen<{ sessionId: string }>("pty-exited", (event) => {
       if (event.payload.sessionId === sessionId) {
         const msg = "\r\n\x1b[90m[Process exited]\x1b[0m\r\n";
-        term.feed(new TextEncoder().encode(msg));
+        enqueueTermFeed(term, msg);
       }
     });
     return () => {

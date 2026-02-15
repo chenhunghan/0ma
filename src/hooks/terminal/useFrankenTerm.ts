@@ -92,7 +92,14 @@ export function useFrankenTerm(containerRef: RefObject<HTMLDivElement | null>) {
         try {
           t.render();
         } catch (e) {
-          log.error(`[useFrankenTerm] render error (loop stopped): ${e}`);
+          const message = String(e);
+          if (message.includes("recursive use of an object")) {
+            // Transient re-entrancy from async callbacks; skip this frame and continue.
+            log.debug(`[useFrankenTerm] render re-entry avoided: ${message}`);
+            rafRef.current = requestAnimationFrame(renderLoop);
+            return;
+          }
+          log.error(`[useFrankenTerm] render error (loop stopped): ${message}`);
           return;
         }
         rafRef.current = requestAnimationFrame(renderLoop);
