@@ -15,6 +15,7 @@ import {
 import { Button } from "./ui/button";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import type { Provision } from "src/types/LimaConfig";
+import { getProvisionDescription } from "src/lib/provisionDescriptions";
 import Editor from "@monaco-editor/react";
 
 interface Props {
@@ -133,9 +134,11 @@ export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props)
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-          {provisionSteps?.map((p, idx) => (
+          {provisionSteps?.map((p, idx) => {
+            const description = getProvisionDescription(p.script);
+            return (
             <div
-              key={`${p.mode}-${p.script}`}
+              key={idx}
               className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
             >
               <Button
@@ -146,6 +149,11 @@ export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props)
               >
                 <Trash2Icon className="size-3 text-destructive" />
               </Button>
+              {description && (
+                <span className="text-[10px] text-muted-foreground/70 truncate pr-6">
+                  {description}
+                </span>
+              )}
               <div className="grid gap-1">
                 <Label className="text-[10px] uppercase text-muted-foreground">Mode</Label>
                 <Select value={p.mode || "system"} onValueChange={getModeChangeHandler(idx)}>
@@ -173,7 +181,8 @@ export function ProvisionStepsDialog({ value: provisionSteps, onChange }: Props)
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
           <Button
             variant="outline"
             size="xs"
