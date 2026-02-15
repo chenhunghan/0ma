@@ -400,8 +400,10 @@ if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
 fi
 # Ensure the Lima user can access the Docker socket
-if ! id -nG "${LIMA_CIDATA_USER}" | grep -qw docker; then
-  usermod -aG docker "${LIMA_CIDATA_USER}"
+# Detect the first non-root human user (avoids referencing CIDATA env vars)
+MAIN_USER=$(awk -F: '$3 >= 500 && $3 < 65534 {print $1; exit}' /etc/passwd)
+if [ -n "$MAIN_USER" ] && ! id -nG "$MAIN_USER" | grep -qw docker; then
+  usermod -aG docker "$MAIN_USER"
 fi
 "#.to_string(),
         }]),
@@ -843,8 +845,10 @@ provision:
       curl -fsSL https://get.docker.com | sh
     fi
     # Ensure the Lima user can access the Docker socket
-    if ! id -nG "${{LIMA_CIDATA_USER}}" | grep -qw docker; then
-      usermod -aG docker "${{LIMA_CIDATA_USER}}"
+    # Detect the first non-root human user (avoids referencing CIDATA env vars)
+    MAIN_USER=$(awk -F: '$3 >= 500 && $3 < 65534 {{print $1; exit}}' /etc/passwd)
+    if [ -n "$MAIN_USER" ] && ! id -nG "$MAIN_USER" | grep -qw docker; then
+      usermod -aG docker "$MAIN_USER"
     fi
 - mode: system
   script: |
