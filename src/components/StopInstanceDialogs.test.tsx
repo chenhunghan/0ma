@@ -212,10 +212,10 @@ describe("StopInstanceDialogs", () => {
       });
     });
 
-    // 6. Verify Success State
+    // 6. Verify dialog auto-closes on success
     await waitFor(() => {
-      expect(screen.getByText("Instance Stopped")).toBeInTheDocument();
-      expect(screen.getByText("Done")).toBeInTheDocument();
+      expect(screen.queryByText("Stopping Instance...")).not.toBeInTheDocument();
+      expect(screen.queryByText("Instance Stopped")).not.toBeInTheDocument();
     });
   }, 30_000);
 

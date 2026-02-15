@@ -25,7 +25,12 @@ export function StoppingInstanceDialog({
   instanceName,
   onSuccess,
 }: Props) {
-  const logState = useOnLimaStopLogs(instanceName || "");
+  const handleSuccess = useCallback(() => {
+    onDialogOpenChange(false);
+    onSuccess?.();
+  }, [onDialogOpenChange, onSuccess]);
+
+  const logState = useOnLimaStopLogs(instanceName || "", { onSuccess: handleSuccess });
 
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
