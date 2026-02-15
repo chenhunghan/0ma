@@ -393,7 +393,34 @@ chmod 644 /var/lib/k0s/pki/external-admin.conf
         ..Default::default()
     };
 
-    // 3. Optional: Helm installation
+    // 3. Docker installation and socket forwarding
+    let docker_config = LimaConfig {
+        provision: Some(vec![Provision {
+            mode: "system".to_string(),
+            script: r#"#!/bin/bash
+set -eux -o pipefail
+if ! command -v docker >/dev/null 2>&1; then
+  curl -fsSL https://get.docker.com | sh
+fi
+"#.to_string(),
+        }]),
+        port_forwards: Some(vec![PortForward {
+            guest_ip_must_be_zero: None,
+            guest_ip: None,
+            guest_port: None,
+            guest_port_range: None,
+            guest_socket: Some("/var/run/docker.sock".to_string()),
+            host_ip: None,
+            host_port: None,
+            host_port_range: None,
+            host_socket: Some("{{.Dir}}/docker.sock".to_string()),
+            proto: None,
+            ignore: None,
+        }]),
+        ..Default::default()
+    };
+
+    // 4. Optional: Helm installation
     let mut helm_config = LimaConfig::default();
     if install_helm {
         helm_config.provision = Some(vec![Provision {
@@ -426,6 +453,7 @@ k0s kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"stor
 
     Ok(base_config
         .merge(host_access_config)
+        .merge(docker_config)
         .merge(helm_config)
         .merge(lpp_config))
 }
@@ -815,6 +843,13 @@ provision:
   script: |
     #!/bin/bash
     set -eux -o pipefail
+    if ! command -v docker >/dev/null 2>&1; then
+      curl -fsSL https://get.docker.com | sh
+    fi
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
     if ! command -v helm >/dev/null 2>&1; then
       curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
     fi
@@ -846,7 +881,9 @@ portForwards:
   guestPort: 6443
   hostIP: '127.0.0.1'
   hostPort: 6443
-  proto: tcp"#
+  proto: tcp
+- guestSocket: /var/run/docker.sock
+  hostSocket: '{{{{.Dir}}}}/docker.sock'"#
         );
 
         assert_eq!(yaml.trim(), expected_whole_file.trim());
