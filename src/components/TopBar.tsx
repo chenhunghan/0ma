@@ -1,3 +1,4 @@
+import { useCallback, useState } from "react";
 import { TrashIcon } from "lucide-react";
 import {
   Select,
@@ -9,11 +10,13 @@ import {
 } from "src/components/ui/select";
 import { Button } from "src/components/ui/button";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+import { useLimaInstance } from "src/hooks/useLimaInstance";
 import { Spinner } from "./ui/spinner";
 import type { LimaInstance } from "src/types/LimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { CreateStartInstanceDialogs } from "./CreateStartInstanceDialogs";
-
+import { DeleteInstanceDialog } from "./DeleteInstanceDialog";
+import { DeletingInstanceDialog } from "./DeletingInstanceDialog";
 import { StopInstanceDialogs } from "./StopInstanceDialogs";
 
 export function TopBar() {
@@ -73,15 +76,52 @@ export function InstanceSelector() {
 }
 
 export function DeleteInstanceButton({ className }: { className?: string }) {
+  const { selectedName, isLoading } = useSelectedInstance();
+  const { deleteInstance } = useLimaInstance();
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingOpen, setDeletingOpen] = useState(false);
+
+  const handleClick = useCallback(() => {
+    setConfirmOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (selectedName) {
+      deleteInstance(selectedName);
+      setDeletingOpen(true);
+    }
+  }, [selectedName, deleteInstance]);
+
+  const handleDeleteSuccess = useCallback(() => {
+    setDeletingOpen(false);
+  }, []);
+
   return (
-    <Button
-      variant="destructive"
-      size="icon"
-      aria-label="Delete Lima instance"
-      className={className}
-    >
-      <TrashIcon />
-    </Button>
+    <>
+      <Button
+        variant="destructive"
+        size="icon"
+        aria-label="Delete Lima instance"
+        className={className}
+        disabled={!selectedName || isLoading}
+        onClick={handleClick}
+      >
+        <TrashIcon />
+      </Button>
+      <DeleteInstanceDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        instanceName={selectedName}
+        onConfirm={handleConfirmDelete}
+      />
+      <DeletingInstanceDialog
+        open={deletingOpen}
+        onDialogOpenChange={setDeletingOpen}
+        instanceName={selectedName}
+        onSuccess={handleDeleteSuccess}
+      />
+    </>
   );
 }
 
