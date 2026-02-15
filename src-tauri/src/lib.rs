@@ -157,6 +157,8 @@ pub fn run() {
             lima_config_handler::write_env_sh_cmd,
             lima_config_handler::check_env_sh_exists_cmd,
             lima_config_handler::append_env_to_shell_profile_cmd,
+            lima_config_handler::detect_orphaned_env_entries_cmd,
+            lima_config_handler::cleanup_orphaned_env_entries_cmd,
             instance_registry_handler::get_all_lima_instances_cmd,
             instance_registry_handler::is_instance_registered_cmd,
             instance_registry_handler::get_instance_disk_usage_cmd,

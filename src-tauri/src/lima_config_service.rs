@@ -242,3 +242,113 @@ pub fn cleanup_env_on_delete<R: tauri::Runtime>(
 
     Ok(())
 }
+
+const COMMENT_PREFIX: &str = "# 0ma environment for instance ";
+
+/// Extract an instance name from a source line like:
+///   `[ -f "/Users/x/.lima/foo/env.sh" ] && source "/Users/x/.lima/foo/env.sh"`
+///   `if test -f "/Users/x/.lima/foo/env.fish"; source "/Users/x/.lima/foo/env.fish"; end`
+/// Returns the instance name ("foo") if the line matches the pattern.
+fn extract_instance_from_source_line(line: &str, lima_home: &std::path::Path) -> Option<String> {
+    let prefix = format!("{}/", lima_home.to_string_lossy());
+    // Find the lima home path in the line
+    let rest = line.find(&prefix).map(|i| &line[i + prefix.len()..])?;
+    // Extract instance name (everything before the next '/')
+    let name = rest.split('/').next()?;
+    if name.is_empty() {
+        return None;
+    }
+    Some(name.to_string())
+}
+
+/// Scan shell profiles and ~/.kube/ for orphaned 0ma entries whose Lima instance
+/// directory no longer exists. Uses three detection strategies:
+/// 1. Comment markers: `# 0ma environment for instance <name>`
+/// 2. Source lines: any line referencing `<lima_home>/<name>/env.{sh,fish}`
+/// 3. Dangling ~/.kube/ symlinks pointing into lima_home
+pub fn detect_orphaned_env_entries<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+) -> Result<Vec<String>, String> {
+    let home = app
+        .path()
+        .home_dir()
+        .map_err(|e| format!("Failed to get home directory: {}", e))?;
+
+    let lima_home = crate::yaml_handler::get_lima_home(app)?;
+
+    let profiles = [
+        home.join(".zshrc"),
+        home.join(".bashrc"),
+        home.join(".config/fish/config.fish"),
+    ];
+
+    let mut orphaned: Vec<String> = Vec::new();
+
+    let mut add_if_orphaned = |name: &str| {
+        if name.is_empty() || orphaned.iter().any(|n| n == name) {
+            return;
+        }
+        if !lima_home.join(name).exists() {
+            orphaned.push(name.to_string());
+        }
+    };
+
+    // Scan shell profiles for comment markers and source lines
+    for profile in &profiles {
+        let content = match std::fs::read_to_string(profile) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        for line in content.lines() {
+            let trimmed = line.trim();
+
+            // Strategy 1: comment marker
+            if let Some(name) = trimmed.strip_prefix(COMMENT_PREFIX) {
+                add_if_orphaned(name.trim());
+                continue;
+            }
+
+            // Strategy 2: source line containing lima_home path
+            if let Some(name) = extract_instance_from_source_line(trimmed, &lima_home) {
+                add_if_orphaned(&name);
+            }
+        }
+    }
+
+    // Strategy 3: dangling ~/.kube/ symlinks pointing into lima_home
+    let kube_dir = home.join(".kube");
+    if kube_dir.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(&kube_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if !path.is_symlink() {
+                    continue;
+                }
+                // Check if symlink target is inside lima_home
+                if let Ok(target) = std::fs::read_link(&path) {
+                    if target.starts_with(&lima_home) {
+                        // The symlink points into lima_home — check if the instance dir exists
+                        if let Some(name) = entry.file_name().to_str() {
+                            add_if_orphaned(name);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(orphaned)
+}
+
+/// Clean up orphaned env entries for the given instance names.
+/// Calls `cleanup_env_on_delete` for each name.
+pub fn cleanup_orphaned_env_entries<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    instance_names: &[String],
+) -> Result<(), String> {
+    for name in instance_names {
+        cleanup_env_on_delete(app, name)?;
+    }
+    Ok(())
+}

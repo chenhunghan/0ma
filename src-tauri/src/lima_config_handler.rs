@@ -1,9 +1,25 @@
 use crate::lima_config::{get_default_k0s_lima_config, LimaConfig};
+use crate::lima_config_service;
 use crate::lima_config_service::{
     append_to_shell_profile, check_env_sh_exists, get_kubeconfig_path, get_lima_yaml_path,
     write_env_sh, write_lima_yaml,
 };
 use tauri::AppHandle;
+
+/// Detect orphaned 0ma env entries in shell profiles (instances that no longer exist)
+#[tauri::command]
+pub fn detect_orphaned_env_entries_cmd(app: AppHandle) -> Result<Vec<String>, String> {
+    lima_config_service::detect_orphaned_env_entries(&app)
+}
+
+/// Clean up orphaned env entries for the given instance names
+#[tauri::command]
+pub fn cleanup_orphaned_env_entries_cmd(
+    app: AppHandle,
+    instance_names: Vec<String>,
+) -> Result<(), String> {
+    lima_config_service::cleanup_orphaned_env_entries(&app, &instance_names)
+}
 
 /// Read the Lima YAML configuration (LIMA_CONFIG_FILENAME) for a specific instance by instance name
 /// If the file does not exist, generate the default k0s config

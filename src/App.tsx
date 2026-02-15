@@ -7,6 +7,7 @@ import type { TabGroup } from "src/components/TermTabs";
 import { TermTabs } from "src/components/TermTabs";
 import { EmptyTerminalState } from "src/components/EmptyTerminalState";
 import { LimaConfigTabContent } from "src/components/LimaConfigTabContent";
+import { OrphanedEnvCleanupDialog } from "./components/OrphanedEnvCleanupDialog";
 import { useInstanceLifecycleEvents } from "src/hooks/useInstanceLifecycleEvents";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 import { useTerminalSessionStorage } from "src/hooks/useTerminalSessionStorage";
@@ -353,6 +354,7 @@ export function App() {
           </TabsContent>
         </Tabs>
       )}
+      <OrphanedEnvCleanupDialog />
     </div>
   );
 }
