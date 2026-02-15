@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { CheckIcon, RotateCcwIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { CheckCircle2, CheckIcon, RotateCcwIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
@@ -11,10 +11,11 @@ import { Spinner } from "./ui/spinner";
 
 export function ApplyResetDraftDialogs() {
   const { selectedInstance, selectedName } = useSelectedInstance();
-  const { isDirty, applyDraft, resetDraft, isApplying } = useUpdateLimaInstanceDraft();
+  const { isDirty, applyDraftAsync, applyError, resetDraft, isApplying } =
+    useUpdateLimaInstanceDraft();
   const {
     phase,
-    error: applyError,
+    error: restartError,
     startApply,
     reset: resetApplyState,
     stopLogs,
@@ -23,17 +24,25 @@ export function ApplyResetDraftDialogs() {
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
+  const [justApplied, setJustApplied] = useState(false);
 
   const isRunning = selectedInstance?.status === InstanceStatus.Running;
   const isStopped = selectedInstance?.status === InstanceStatus.Stopped;
 
-  const handleApplyClick = useCallback(() => {
+  useEffect(() => {
+    if (!justApplied) return;
+    const timer = setTimeout(() => setJustApplied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [justApplied]);
+
+  const handleApplyClick = useCallback(async () => {
     if (isStopped) {
-      applyDraft();
+      await applyDraftAsync();
+      setJustApplied(true);
     } else if (isRunning) {
       setConfirmDialogOpen(true);
     }
-  }, [isStopped, isRunning, applyDraft]);
+  }, [isStopped, isRunning, applyDraftAsync]);
 
   const handleConfirmApply = useCallback(() => {
     startApply();
@@ -51,30 +60,46 @@ export function ApplyResetDraftDialogs() {
 
   return (
     <>
-      {isDirty && (
+      {(isDirty || justApplied) && (
         <>
           <Button
-            variant="default"
+            variant={justApplied ? "ghost" : "default"}
             size="sm"
-            disabled={isApplying || (!isStopped && !isRunning)}
+            disabled={justApplied || isApplying || (!isStopped && !isRunning)}
             onClick={handleApplyClick}
             aria-label="Apply configuration changes"
           >
-            {isApplying ? <Spinner /> : <CheckIcon className="md:hidden" />}
-            <span className="hidden md:inline">{isApplying ? "Applying..." : "Apply"}</span>
+            {justApplied ? (
+              <CheckCircle2 className="text-green-500" />
+            ) : isApplying ? (
+              <Spinner />
+            ) : (
+              <CheckIcon className="md:hidden" />
+            )}
+            <span className="hidden md:inline">
+              {justApplied ? "Applied" : isApplying ? "Applying..." : "Apply"}
+            </span>
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={isApplying}
-            onClick={handleReset}
-            aria-label="Reset configuration changes"
-          >
-            <RotateCcwIcon className="md:hidden" />
-            <span className="hidden md:inline">Reset</span>
-          </Button>
+          {!justApplied && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={isApplying}
+              onClick={handleReset}
+              aria-label="Reset configuration changes"
+            >
+              <RotateCcwIcon className="md:hidden" />
+              <span className="hidden md:inline">Reset</span>
+            </Button>
+          )}
         </>
+      )}
+
+      {applyError && (
+        <span className="text-xs text-destructive" role="alert">
+          {applyError.message}
+        </span>
       )}
 
       <ApplyDraftConfirmDialog
@@ -88,7 +113,7 @@ export function ApplyResetDraftDialogs() {
         open={progressDialogOpen}
         onOpenChange={setProgressDialogOpen}
         phase={phase}
-        error={applyError}
+        error={restartError}
         stopLogState={stopLogs}
         startLogState={startLogs}
         onDone={handleProgressDone}

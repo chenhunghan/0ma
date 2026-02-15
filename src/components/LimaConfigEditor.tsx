@@ -40,11 +40,8 @@ export function LimaConfigEditor() {
           setYamlValue(currentYaml);
         }
       } catch {
-        // If local YAML is invalid, and draftConfig exists, we might want to sync
-        // But wait if user is typing. For now, just sync if yamlValue is empty.
-        if (!yamlValue) {
-          setYamlValue(currentYaml);
-        }
+        setYamlValue(currentYaml);
+        setError(null);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApplyResetDraftDialogs } from "./ApplyResetDraftDialogs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -48,7 +48,6 @@ vi.mock("src/hooks/useLimaInstance", () => ({
 }));
 
 // Mock useUpdateLimaInstanceDraft
-const mockApplyDraft = vi.fn();
 const mockApplyDraftAsync = vi.fn().mockResolvedValue(undefined);
 const mockResetDraft = vi.fn();
 const mockUseUpdateLimaInstanceDraft = vi.fn();
@@ -76,7 +75,6 @@ const createTestQueryClient = () =>
 
 const defaultDraftMock = {
   actualConfig: { cpus: 4 },
-  applyDraft: mockApplyDraft,
   applyDraftAsync: mockApplyDraftAsync,
   applyError: null,
   draftConfig: { cpus: 4 },
@@ -108,10 +106,12 @@ describe("ApplyResetDraftDialogs", () => {
     instanceStatus?: string;
     instanceName?: string;
     isDirty?: boolean;
+    applyError?: Error | null;
   }) => {
     const status = options?.instanceStatus ?? InstanceStatus.Running;
     const name = options?.instanceName ?? "test-instance";
     const isDirty = options?.isDirty ?? false;
+    const applyError = options?.applyError ?? null;
 
     mockUseSelectedInstance.mockReturnValue({
       isLoading: false,
@@ -121,6 +121,7 @@ describe("ApplyResetDraftDialogs", () => {
 
     mockUseUpdateLimaInstanceDraft.mockReturnValue({
       ...defaultDraftMock,
+      applyError,
       isDirty,
     });
 
@@ -165,12 +166,22 @@ describe("ApplyResetDraftDialogs", () => {
     expect(applyButton).toBeDisabled();
   });
 
-  it("calls applyDraft directly when instance is Stopped", () => {
+  it("calls applyDraftAsync when instance is Stopped and shows Applied feedback", async () => {
+    vi.useFakeTimers();
     renderComponent({ isDirty: true, instanceStatus: InstanceStatus.Stopped });
     const applyButton = screen.getByLabelText("Apply configuration changes");
-    fireEvent.click(applyButton);
 
-    expect(mockApplyDraft).toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(applyButton);
+    });
+
+    expect(mockApplyDraftAsync).toHaveBeenCalled();
+    expect(screen.getByText("Applied")).toBeInTheDocument();
+
+    // Reset button should be hidden during justApplied state
+    expect(screen.queryByLabelText("Reset configuration changes")).not.toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 
   it("opens confirmation dialog when instance is Running", () => {
@@ -215,5 +226,15 @@ describe("ApplyResetDraftDialogs", () => {
     fireEvent.click(resetButton);
 
     expect(mockResetDraft).toHaveBeenCalled();
+  });
+
+  it("shows inline error when applyError exists", () => {
+    renderComponent({
+      isDirty: true,
+      instanceStatus: InstanceStatus.Stopped,
+      applyError: new Error("Failed to write config"),
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Failed to write config");
   });
 });
