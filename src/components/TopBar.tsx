@@ -22,7 +22,7 @@ import { ApplyResetDraftDialogs } from "./ApplyResetDraftDialogs";
 
 export function TopBar() {
   return (
-    <div className="w-full px-[8px] py-[6px] flex items-center">
+    <div className="w-full px-[8px] pt-[2px] pb-[6px] flex items-center">
       {/* Left side */}
       <div className="flex items-center flex-1">
         <InstanceSelector />
