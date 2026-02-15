@@ -11,7 +11,7 @@ import { useSystemCapabilities } from "src/hooks/useSystemCapabilities";
 export function LimaConfigResourceColumn() {
   const { draftConfig, actualConfig, isLoading, updateField } = useUpdateLimaInstanceDraft();
   const { isKrunkitSupported, krunkitMissingReasons } = useSystemCapabilities();
-  const isKrunkit = draftConfig?.vmType === "krunkit";
+  const isKrunkit = actualConfig?.vmType === "krunkit";
 
   const handleCpuChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -30,26 +30,6 @@ export function LimaConfigResourceColumn() {
   const handleDiskChange = useCallback(
     (value: string | null) => {
       updateField("disk", value || "100GiB");
-    },
-    [updateField],
-  );
-
-  const handleVmTypeChange = useCallback(
-    (value: string | null) => {
-      const newVmType = value || "vz";
-      updateField("vmType", newVmType);
-      if (newVmType === "krunkit") {
-        updateField("rosetta" as keyof typeof draftConfig, undefined);
-      } else {
-        updateField("gpu", undefined);
-      }
-    },
-    [draftConfig, updateField],
-  );
-
-  const handleGpuChange = useCallback(
-    (value: string | null) => {
-      updateField("gpu", value === "enabled" ? { enabled: true } : undefined);
     },
     [updateField],
   );
@@ -108,19 +88,25 @@ export function LimaConfigResourceColumn() {
           </SelectContent>
         </Select>
       </div>
+      <Separator />
       <div className="grid w-full items-center gap-1.5">
-        <Label htmlFor="vmType">VmType</Label>
-        <Select value={draftConfig?.vmType || "vz"} onValueChange={handleVmTypeChange}>
-          <SelectTrigger id="vmType" className="w-full">
-            <SelectValue placeholder="Select VM Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="vz">VZ</SelectItem>
-            <SelectItem value="qemu">QEMU</SelectItem>
-            <SelectItem value="krunkit">Krunkit</SelectItem>
-          </SelectContent>
-        </Select>
+        <Item variant="muted">
+          <ItemContent>
+            <ItemTitle>VM Type</ItemTitle>
+            <ItemDescription>{(actualConfig?.vmType || "vz").toUpperCase()}</ItemDescription>
+          </ItemContent>
+        </Item>
       </div>
+      {isKrunkit && (
+        <div className="grid w-full items-center gap-1.5">
+          <Item variant="muted">
+            <ItemContent>
+              <ItemTitle>GPU Passthrough</ItemTitle>
+              <ItemDescription>{actualConfig?.gpu?.enabled ? "Enabled" : "Disabled"}</ItemDescription>
+            </ItemContent>
+          </Item>
+        </div>
+      )}
       {isKrunkit && !isKrunkitSupported && krunkitMissingReasons.length > 0 && (
         <ul className="text-xs text-amber-500 list-disc list-inside">
           {krunkitMissingReasons.map((reason) => (
@@ -128,25 +114,6 @@ export function LimaConfigResourceColumn() {
           ))}
         </ul>
       )}
-      {isKrunkit && (
-        <div className="grid w-full items-center gap-1.5">
-          <Label htmlFor="gpu">GPU Passthrough</Label>
-          <Select
-            value={draftConfig?.gpu?.enabled ? "enabled" : "disabled"}
-            onValueChange={handleGpuChange}
-          >
-            <SelectTrigger id="gpu" className="w-full">
-              <SelectValue placeholder="GPU Passthrough" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="enabled">Enabled</SelectItem>
-              <SelectItem value="disabled">Disabled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      <Separator />
-      {/* Read-only Lima Minimum Version */}
       <div className="grid w-full items-center gap-1.5">
         <Item variant="muted">
           <ItemContent>
