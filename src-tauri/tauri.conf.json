@@ -1,8 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "0ma",
+  "mainBinaryName": "0ma",
   "version": "0.1.0",
-  "identifier": "chh.zeroma",
+  "identifier": "chh.0ma",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
