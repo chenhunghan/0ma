@@ -155,9 +155,7 @@ pub fn append_to_shell_profile<R: tauri::Runtime>(
         let existing = std::fs::read_to_string(&profile_path)
             .map_err(|e| format!("Failed to read {}: {}", profile_display, e))?;
         if existing.contains(&source_line) {
-            return Ok(format!(
-                "Source line already present in {profile_display}"
-            ));
+            return Ok(format!("Source line already present in {profile_display}"));
         }
     }
 

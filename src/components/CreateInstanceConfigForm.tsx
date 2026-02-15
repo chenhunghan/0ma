@@ -101,14 +101,11 @@ export function CreateInstanceConfigForm() {
       vmType: (value: string | null) => {
         if (!draftConfig) return;
         const newVmType = value || "vz";
-        const updates =
-          newVmType === "krunkit"
-            ? { vmType: newVmType, rosetta: undefined }
-            : { vmType: newVmType, gpu: undefined };
-        updateDraftConfig({ ...draftConfig, ...updates });
-      },
-      gpu: (value: string | null) => {
-        updateField("gpu", value === "enabled" ? { enabled: true } : undefined);
+        if (newVmType === "krunkit") {
+          updateDraftConfig({ ...draftConfig, vmType: newVmType, rosetta: undefined });
+        } else {
+          updateField("vmType", newVmType);
+        }
       },
     }),
     [draftConfig, setInstanceName, updateDraftConfig, updateField],
@@ -234,26 +231,6 @@ export function CreateInstanceConfigForm() {
                 <li key={reason}>{reason}</li>
               ))}
             </ul>
-          )}
-
-          {isKrunkit && (
-            <div className="grid grid-cols-[60px_1fr] items-center gap-4">
-              <Label htmlFor="gpu" className="text-muted-foreground">
-                GPU
-              </Label>
-              <Select
-                value={draftConfig?.gpu?.enabled ? "enabled" : "disabled"}
-                onValueChange={handlers.gpu}
-              >
-                <SelectTrigger id="gpu" className="w-full min-w-0" size="sm">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="enabled">Enabled</SelectItem>
-                  <SelectItem value="disabled">Disabled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           )}
 
           <ConfigSection dialog={dialogs.images}>

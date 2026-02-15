@@ -137,16 +137,6 @@ export function LimaConfigResourceColumn() {
             </ItemContent>
           </Item>
         </div>
-        {isKrunkit && (
-          <div className="grid w-full items-center gap-1.5">
-            <Item variant="muted">
-              <ItemContent>
-                <ItemTitle>GPU Passthrough</ItemTitle>
-                <ItemDescription>{actualConfig?.gpu?.enabled ? "Enabled" : "Disabled"}</ItemDescription>
-              </ItemContent>
-            </Item>
-          </div>
-        )}
         {isKrunkit && !isKrunkitSupported && krunkitMissingReasons.length > 0 && (
           <ul className="text-xs text-amber-500 list-disc list-inside">
             {krunkitMissingReasons.map((reason) => (

@@ -13,6 +13,7 @@ export function useSystemCapabilities() {
     queryKey: ["system_capabilities"],
     queryFn: () => invoke<SystemCapabilities>("get_system_capabilities_cmd"),
     staleTime: Infinity,
+    refetchOnWindowFocus: "always",
   });
 
   const isAppleSilicon = data?.arch === "aarch64";
@@ -26,9 +27,10 @@ export function useSystemCapabilities() {
     if (!isAppleSilicon) krunkitMissingReasons.push("Apple Silicon required");
     if (!isMacOS14Plus) krunkitMissingReasons.push("macOS 14+ required");
     if (!data.krunkitAvailable)
-      krunkitMissingReasons.push("krunkit not installed (brew tap slp/krunkit && brew install krunkit)");
-    if (!data.krunkitDriverAvailable)
-      krunkitMissingReasons.push("Lima krunkit driver not found");
+      krunkitMissingReasons.push(
+        "krunkit not installed (brew tap slp/krunkit && brew install krunkit)",
+      );
+    if (!data.krunkitDriverAvailable) krunkitMissingReasons.push("Lima krunkit driver not found");
   }
 
   return { capabilities: data, isLoading, isKrunkitSupported, krunkitMissingReasons };

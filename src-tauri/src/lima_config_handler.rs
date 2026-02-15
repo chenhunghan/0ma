@@ -108,10 +108,7 @@ pub fn write_env_sh_cmd(app: AppHandle, instance_name: String) -> Result<String,
 
 /// Check whether env.sh already exists for the given instance
 #[tauri::command]
-pub fn check_env_sh_exists_cmd(
-    app: AppHandle,
-    instance_name: String,
-) -> Result<bool, String> {
+pub fn check_env_sh_exists_cmd(app: AppHandle, instance_name: String) -> Result<bool, String> {
     check_env_sh_exists(&app, &instance_name)
 }
 
