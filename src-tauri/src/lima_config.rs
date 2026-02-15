@@ -399,6 +399,10 @@ set -eux -o pipefail
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
 fi
+# Ensure the Lima user can access the Docker socket
+if ! id -nG "${LIMA_CIDATA_USER}" | grep -qw docker; then
+  usermod -aG docker "${LIMA_CIDATA_USER}"
+fi
 "#.to_string(),
         }]),
         port_forwards: Some(vec![PortForward {
@@ -837,6 +841,10 @@ provision:
     set -eux -o pipefail
     if ! command -v docker >/dev/null 2>&1; then
       curl -fsSL https://get.docker.com | sh
+    fi
+    # Ensure the Lima user can access the Docker socket
+    if ! id -nG "${{LIMA_CIDATA_USER}}" | grep -qw docker; then
+      usermod -aG docker "${{LIMA_CIDATA_USER}}"
     fi
 - mode: system
   script: |
