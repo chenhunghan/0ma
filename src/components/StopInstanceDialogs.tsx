@@ -11,6 +11,7 @@ import { EnvSetupDialog } from "./EnvSetupDialog";
 import { StartInstanceDialog } from "./StartInstanceDialog";
 import { StartingInstanceDialog } from "./StartingInstanceDialog";
 
+// oxlint-disable-next-line max-statements
 export function StopInstanceDialogs() {
   const { selectedInstance, selectedName, isLoading } = useSelectedInstance();
   const { stopInstance, startInstance } = useLimaInstance();
@@ -50,12 +51,15 @@ export function StopInstanceDialogs() {
     setStoppingInstanceDialogOpen(false);
   }, []);
 
-  const handleStartSuccess = useCallback(() => {
-    setStartingInstanceDialogOpen(false);
+  const handleStartReady = useCallback(() => {
     if (selectedName) {
       envSetup.triggerEnvSetup(selectedName);
     }
   }, [selectedName, envSetup]);
+
+  const handleStartSuccess = useCallback(() => {
+    setStartingInstanceDialogOpen(false);
+  }, []);
 
   const isRunning = selectedInstance?.status === InstanceStatus.Running;
   const isStopped = selectedInstance?.status === InstanceStatus.Stopped;
@@ -108,6 +112,7 @@ export function StopInstanceDialogs() {
         open={startingInstanceDialogOpen}
         onDialogOpenChange={setStartingInstanceDialogOpen}
         instanceName={selectedName}
+        onReady={handleStartReady}
         onSuccess={handleStartSuccess}
       />
       <EnvSetupDialog

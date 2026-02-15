@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react";
 interface Props {
   open: boolean;
   onDialogOpenChange: (open: boolean) => void;
+  onReady?: () => void;
   onSuccess?: () => void;
   instanceName: string | null;
 }
@@ -23,10 +24,12 @@ interface Props {
 export function StartingInstanceDialog({
   open,
   onDialogOpenChange,
+  onReady,
   onSuccess,
   instanceName,
 }: Props) {
   const logState = useOnLimaStartLogs(instanceName || "", {
+    onReady,
     onSuccess,
   });
 

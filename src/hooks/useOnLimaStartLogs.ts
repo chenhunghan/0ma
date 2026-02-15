@@ -31,10 +31,18 @@ const getStartLogsQueryKey = (instanceName: string) => ["lima", "start-logs", in
  * Tracks the logs for the "start instance" operation.
  * Similar to useOnLimaCreateLogs but for the start command.
  */
-export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?: () => void }) {
+export function useOnLimaStartLogs(
+  instanceName: string,
+  options?: { onReady?: () => void; onSuccess?: () => void },
+) {
   const queryClient = useQueryClient();
   const queryKey = getStartLogsQueryKey(instanceName);
+  const onReadyRef = useRef(options?.onReady);
   const onSuccessRef = useRef(options?.onSuccess);
+
+  useEffect(() => {
+    onReadyRef.current = options?.onReady;
+  }, [options?.onReady]);
 
   useEffect(() => {
     onSuccessRef.current = options?.onSuccess;
@@ -117,6 +125,7 @@ export function useOnLimaStartLogs(instanceName: string, options?: { onSuccess?:
           ...prev,
           isReady: true,
         }));
+        onReadyRef.current?.();
       }),
     );
 

@@ -131,16 +131,14 @@ describe("ApplyResetDraftDialogs", () => {
     );
   };
 
-  it("disables Apply button when not dirty", () => {
+  it("does not render Apply button when not dirty", () => {
     renderComponent({ isDirty: false });
-    const applyButton = screen.getByLabelText("Apply configuration changes");
-    expect(applyButton).toBeDisabled();
+    expect(screen.queryByLabelText("Apply configuration changes")).not.toBeInTheDocument();
   });
 
-  it("disables Reset button when not dirty", () => {
+  it("does not render Reset button when not dirty", () => {
     renderComponent({ isDirty: false });
-    const resetButton = screen.getByLabelText("Reset configuration changes");
-    expect(resetButton).toBeDisabled();
+    expect(screen.queryByLabelText("Reset configuration changes")).not.toBeInTheDocument();
   });
 
   it("enables Apply button when dirty and instance is Stopped", () => {

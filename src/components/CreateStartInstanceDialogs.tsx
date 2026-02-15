@@ -60,13 +60,16 @@ export function CreateStartInstanceDialogs() {
     setStartInstanceDialogOpen(true);
   }, []);
 
-  const handleStartInstanceSuccess = useCallback(() => {
-    setStartingInstanceDialogOpen(false);
-    setActiveTab("lima");
+  const handleStartInstanceReady = useCallback(() => {
     if (instanceName) {
       envSetup.triggerEnvSetup(instanceName);
     }
-  }, [setActiveTab, instanceName, envSetup]);
+  }, [instanceName, envSetup]);
+
+  const handleStartInstanceSuccess = useCallback(() => {
+    setStartingInstanceDialogOpen(false);
+    setActiveTab("lima");
+  }, [setActiveTab]);
 
   return (
     <>
@@ -92,6 +95,7 @@ export function CreateStartInstanceDialogs() {
       <StartingInstanceDialog
         open={startingInstanceDialogOpen}
         onDialogOpenChange={setStartingInstanceDialogOpen}
+        onReady={handleStartInstanceReady}
         onSuccess={handleStartInstanceSuccess}
         instanceName={instanceName}
       />

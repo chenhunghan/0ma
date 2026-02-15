@@ -51,27 +51,31 @@ export function ApplyResetDraftDialogs() {
 
   return (
     <>
-      <Button
-        variant={isDirty ? "default" : "outline"}
-        size="sm"
-        disabled={!isDirty || isApplying || (!isStopped && !isRunning)}
-        onClick={handleApplyClick}
-        aria-label="Apply configuration changes"
-      >
-        {isApplying ? <Spinner /> : <CheckIcon className="md:hidden" />}
-        <span className="hidden md:inline">{isApplying ? "Applying..." : "Apply"}</span>
-      </Button>
+      {isDirty && (
+        <>
+          <Button
+            variant="default"
+            size="sm"
+            disabled={isApplying || (!isStopped && !isRunning)}
+            onClick={handleApplyClick}
+            aria-label="Apply configuration changes"
+          >
+            {isApplying ? <Spinner /> : <CheckIcon className="md:hidden" />}
+            <span className="hidden md:inline">{isApplying ? "Applying..." : "Apply"}</span>
+          </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={!isDirty || isApplying}
-        onClick={handleReset}
-        aria-label="Reset configuration changes"
-      >
-        <RotateCcwIcon className="md:hidden" />
-        <span className="hidden md:inline">Reset</span>
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isApplying}
+            onClick={handleReset}
+            aria-label="Reset configuration changes"
+          >
+            <RotateCcwIcon className="md:hidden" />
+            <span className="hidden md:inline">Reset</span>
+          </Button>
+        </>
+      )}
 
       <ApplyDraftConfirmDialog
         open={confirmDialogOpen}
