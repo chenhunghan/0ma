@@ -1,4 +1,5 @@
 import { useLimaInstance } from "src/hooks/useLimaInstance";
+import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 import { useEnvSetup } from "src/hooks/useEnvSetup";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
@@ -11,17 +12,23 @@ import { useCallback, useState } from "react";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 
+// oxlint-disable-next-line max-statements
 export function CreateStartInstanceDialogs() {
-  const [createInstanceDialogOpen, setCreateInstanceDialogOpen] = useState(false);
+  const [createDialogUserOpen, setCreateDialogUserOpen] = useState(false);
   const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
   const [startInstanceDialogOpen, setStartInstanceDialogOpen] = useState(false);
   const [startingInstanceDialogOpen, setStartingInstanceDialogOpen] = useState(false);
 
   const { createInstance, startInstance } = useLimaInstance();
+  const { instances, isLoading: isLoadingInstances } = useLimaInstances();
   const { setActiveTab } = useLayoutStorage();
   const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
   const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
   const envSetup = useEnvSetup();
+
+  // Open create dialog when user explicitly opens it OR when no instances exist
+  const hasNoInstances = !isLoadingInstances && instances.length === 0;
+  const createInstanceDialogOpen = createDialogUserOpen || hasNoInstances;
 
   const handleCreateInstance = useCallback(() => {
     if (!draftConfig || !instanceName) {
@@ -33,7 +40,7 @@ export function CreateStartInstanceDialogs() {
 
   const handleRetry = useCallback(() => {
     resetCreateLogs();
-    setCreateInstanceDialogOpen(true);
+    setCreateDialogUserOpen(true);
   }, [resetCreateLogs]);
 
   const handleCloseError = useCallback(() => {
@@ -66,7 +73,7 @@ export function CreateStartInstanceDialogs() {
       <CreateInstanceDialog
         buttonClassName="ml-[6px]"
         open={createInstanceDialogOpen}
-        onDialogOpenChange={setCreateInstanceDialogOpen}
+        onDialogOpenChange={setCreateDialogUserOpen}
         onClickCreate={handleCreateInstance}
       />
       <CreatingInstanceDialog

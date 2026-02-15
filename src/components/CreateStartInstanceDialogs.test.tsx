@@ -9,7 +9,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Mock @tauri-apps/api/core
 const mockInvoke = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: (cmd: string, args: unknown) => Promise.resolve(mockInvoke(cmd, args)),
+  invoke: (cmd: string, args: unknown) => {
+    // Return a mock instance so the auto-open create dialog doesn't trigger
+    if (cmd === "get_all_lima_instances_cmd") {
+      return Promise.resolve([{ name: "existing-instance", status: "Running" }]);
+    }
+    return Promise.resolve(mockInvoke(cmd, args));
+  },
 }));
 
 // Mock @tauri-apps/api/event
