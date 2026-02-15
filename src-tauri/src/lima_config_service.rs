@@ -28,22 +28,11 @@ pub fn get_lima_yaml_path<R: tauri::Runtime>(
 }
 
 /// Get the kubeconfig path for a specific instance (internal)
-/// Uses standard location: ~/.kube/<instance_name>
+/// Uses Lima instance directory: ~/.lima/<instance_name>/kubeconfig.yaml
 pub fn get_kubeconfig_path<R: tauri::Runtime>(
     app: &AppHandle<R>,
     instance_name: &str,
 ) -> Result<std::path::PathBuf, String> {
-    use tauri::Manager;
-
-    let home = app
-        .path()
-        .home_dir()
-        .map_err(|e| format!("Failed to get home directory: {}", e))?;
-    let kube_dir = home.join(".kube");
-
-    // Ensure .kube directory exists
-    std::fs::create_dir_all(&kube_dir)
-        .map_err(|e| format!("Failed to create .kube directory: {}", e))?;
-
-    Ok(kube_dir.join(instance_name))
+    let instance_dir = crate::yaml_handler::get_instance_dir(app, instance_name)?;
+    Ok(instance_dir.join("kubeconfig.yaml"))
 }

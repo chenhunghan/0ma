@@ -1,4 +1,3 @@
-use crate::lima_config_service::get_kubeconfig_path;
 use serde::{Deserialize, Serialize};
 use sysinfo::System;
 
@@ -257,13 +256,11 @@ impl LimaConfig {
 
 /// Get the default k0s Lima configuration
 pub fn get_default_k0s_lima_config<R: tauri::Runtime>(
-    app: &tauri::AppHandle<R>,
+    _app: &tauri::AppHandle<R>,
     instance_name: &str,
     install_helm: bool,
     install_local_path_provisioner: bool,
 ) -> Result<LimaConfig, String> {
-    let kubeconfig_path = get_kubeconfig_path(app, instance_name)?;
-
     // Get system information
     let mut sys = System::new_all();
     sys.refresh_all();
@@ -373,8 +370,8 @@ chmod 644 /var/lib/k0s/pki/external-admin.conf
             ),
         }]),
         copy_to_host: Some(vec![CopyToHost {
-            guest: "/var/lib/k0s/pki/external-admin.conf".to_string(), // Copying original file as requested
-            host: kubeconfig_path.to_string_lossy().to_string(),
+            guest: "/var/lib/k0s/pki/external-admin.conf".to_string(),
+            host: "{{.Dir}}/kubeconfig.yaml".to_string(),
             delete_on_stop: Some(true),
         }]),
         port_forwards: Some(vec![PortForward {
@@ -764,7 +761,6 @@ probes:
         let app = tauri::test::mock_app();
         let instance_name = "test-instance";
 
-        // Mock app path for home dir used in kubeconfig_path
         let config = get_default_k0s_lima_config(app.handle(), instance_name, true, true)
             .expect("Failed to get default config");
 
@@ -773,10 +769,6 @@ probes:
         // Capture dynamic host-specific values to insert into the snapshot
         let cpus = config.cpus.unwrap();
         let memory = config.memory.clone().unwrap();
-        let kubeconfig_path = get_kubeconfig_path(app.handle(), instance_name)
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
 
         let expected_whole_file = format!(
             r#"
@@ -874,7 +866,7 @@ probes:
   hint: The k0s control plane is not ready yet.
 copyToHost:
 - guest: /var/lib/k0s/pki/external-admin.conf
-  host: {kubeconfig_path}
+  host: '{{{{.Dir}}}}/kubeconfig.yaml'
   deleteOnStop: true
 portForwards:
 - guestIPMustBeZero: true
