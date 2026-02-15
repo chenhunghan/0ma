@@ -15,6 +15,7 @@ import { CreateInstanceConfigForm } from "./CreateInstanceConfigForm";
 interface Props {
   buttonClassName?: string;
   open: boolean;
+  dismissible?: boolean;
   onDialogOpenChange: (open: boolean) => void;
   onClickCreate: () => void;
 }
@@ -22,6 +23,7 @@ interface Props {
 export function CreateInstanceDialog({
   buttonClassName,
   open,
+  dismissible = true,
   onDialogOpenChange,
   onClickCreate,
 }: Props) {
@@ -51,16 +53,18 @@ export function CreateInstanceDialog({
   return (
     <Dialog open={open} onOpenChange={onDialogOpenChange}>
       <DialogTrigger render={triggerRender} />
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl" showCloseButton={dismissible}>
         <DialogHeader>
           <DialogTitle>Create Instance</DialogTitle>
           <DialogDescription>Create a new Lima instance</DialogDescription>
         </DialogHeader>
         <CreateInstanceConfigForm />
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
-            Cancel
-          </Button>
+          {dismissible && (
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+          )}
           <Button variant="default" onClick={handleCreate}>
             Create
           </Button>

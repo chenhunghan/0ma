@@ -76,6 +76,7 @@ export function CreateStartInstanceDialogs() {
       <CreateInstanceDialog
         buttonClassName="ml-[6px]"
         open={createInstanceDialogOpen}
+        dismissible={!hasNoInstances}
         onDialogOpenChange={setCreateDialogUserOpen}
         onClickCreate={handleCreateInstance}
       />
