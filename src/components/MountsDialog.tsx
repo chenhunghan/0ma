@@ -109,7 +109,7 @@ export function MountsDialog({ value: mounts, onChange }: Props) {
         <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
           {mounts.map((mount, idx) => (
             <div
-              key={`${mount.location ?? ""}-${mount.writable ? "true" : "false"}`}
+              key={idx}
               className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
             >
               <Button
