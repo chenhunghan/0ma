@@ -1,7 +1,9 @@
 import { useLimaInstance } from "src/hooks/useLimaInstance";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
+import { useEnvSetup } from "src/hooks/useEnvSetup";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
+import { EnvSetupDialog } from "./EnvSetupDialog";
 import { ErrorCreateInstanceDialog } from "./ErrorCreateInstanceDialog";
 import { StartInstanceDialog } from "./StartInstanceDialog";
 import { StartingInstanceDialog } from "./StartingInstanceDialog";
@@ -19,6 +21,7 @@ export function CreateStartInstanceDialogs() {
   const { setActiveTab } = useLayoutStorage();
   const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
   const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
+  const envSetup = useEnvSetup();
 
   const handleCreateInstance = useCallback(() => {
     if (!draftConfig || !instanceName) {
@@ -53,7 +56,10 @@ export function CreateStartInstanceDialogs() {
   const handleStartInstanceSuccess = useCallback(() => {
     setStartingInstanceDialogOpen(false);
     setActiveTab("lima");
-  }, [setActiveTab]);
+    if (instanceName) {
+      envSetup.triggerEnvSetup(instanceName);
+    }
+  }, [setActiveTab, instanceName, envSetup]);
 
   return (
     <>
@@ -81,6 +87,17 @@ export function CreateStartInstanceDialogs() {
         onDialogOpenChange={setStartingInstanceDialogOpen}
         onSuccess={handleStartInstanceSuccess}
         instanceName={instanceName}
+      />
+      <EnvSetupDialog
+        open={envSetup.dialogOpen}
+        onOpenChange={envSetup.setDialogOpen}
+        instanceName={envSetup.instanceName}
+        envShPath={envSetup.envShPath}
+        onAddToProfile={envSetup.handleAddToProfile}
+        onClose={envSetup.handleClose}
+        profileMessage={envSetup.profileMessage}
+        profileError={envSetup.profileError}
+        isAddingToProfile={envSetup.isAddingToProfile}
       />
     </>
   );

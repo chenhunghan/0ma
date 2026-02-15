@@ -1,5 +1,8 @@
 use crate::lima_config::{get_default_k0s_lima_config, LimaConfig};
-use crate::lima_config_service::{get_kubeconfig_path, get_lima_yaml_path, write_lima_yaml};
+use crate::lima_config_service::{
+    append_to_shell_profile, check_env_sh_exists, get_kubeconfig_path, get_lima_yaml_path,
+    write_env_sh, write_lima_yaml,
+};
 use tauri::AppHandle;
 
 /// Read the Lima YAML configuration (LIMA_CONFIG_FILENAME) for a specific instance by instance name
@@ -79,4 +82,28 @@ pub fn convert_config_to_yaml_cmd(config: LimaConfig) -> Result<String, String> 
     config
         .to_yaml_pretty()
         .map_err(|e| format!("Failed to convert config to YAML: {}", e))
+}
+
+/// Write env.sh for the given instance and return its absolute path
+#[tauri::command]
+pub fn write_env_sh_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
+    write_env_sh(&app, &instance_name)
+}
+
+/// Check whether env.sh already exists for the given instance
+#[tauri::command]
+pub fn check_env_sh_exists_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<bool, String> {
+    check_env_sh_exists(&app, &instance_name)
+}
+
+/// Append env.sh source line to the user's shell profile
+#[tauri::command]
+pub fn append_env_to_shell_profile_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<String, String> {
+    append_to_shell_profile(&app, &instance_name)
 }

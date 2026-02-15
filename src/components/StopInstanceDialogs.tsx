@@ -1,17 +1,20 @@
 import { useCallback, useState } from "react";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+import { useEnvSetup } from "src/hooks/useEnvSetup";
 import { StopInstanceDialog } from "./StopInstanceDialog";
 import { StoppingInstanceDialog } from "./StoppingInstanceDialog";
 import { useLimaInstance } from "src/hooks/useLimaInstance";
 import { PlayIcon, StopCircleIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { InstanceStatus } from "src/types/InstanceStatus";
+import { EnvSetupDialog } from "./EnvSetupDialog";
 import { StartInstanceDialog } from "./StartInstanceDialog";
 import { StartingInstanceDialog } from "./StartingInstanceDialog";
 
 export function StopInstanceDialogs() {
   const { selectedInstance, selectedName, isLoading } = useSelectedInstance();
   const { stopInstance, startInstance } = useLimaInstance();
+  const envSetup = useEnvSetup();
 
   const [stopInstanceDialogOpen, setStopInstanceDialogOpen] = useState(false);
   const [stoppingInstanceDialogOpen, setStoppingInstanceDialogOpen] = useState(false);
@@ -49,7 +52,10 @@ export function StopInstanceDialogs() {
 
   const handleStartSuccess = useCallback(() => {
     setStartingInstanceDialogOpen(false);
-  }, []);
+    if (selectedName) {
+      envSetup.triggerEnvSetup(selectedName);
+    }
+  }, [selectedName, envSetup]);
 
   const isRunning = selectedInstance?.status === InstanceStatus.Running;
   const isStopped = selectedInstance?.status === InstanceStatus.Stopped;
@@ -103,6 +109,17 @@ export function StopInstanceDialogs() {
         onDialogOpenChange={setStartingInstanceDialogOpen}
         instanceName={selectedName}
         onSuccess={handleStartSuccess}
+      />
+      <EnvSetupDialog
+        open={envSetup.dialogOpen}
+        onOpenChange={envSetup.setDialogOpen}
+        instanceName={envSetup.instanceName}
+        envShPath={envSetup.envShPath}
+        onAddToProfile={envSetup.handleAddToProfile}
+        onClose={envSetup.handleClose}
+        profileMessage={envSetup.profileMessage}
+        profileError={envSetup.profileError}
+        isAddingToProfile={envSetup.isAddingToProfile}
       />
     </>
   );
