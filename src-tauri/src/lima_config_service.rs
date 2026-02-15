@@ -181,3 +181,64 @@ pub fn append_to_shell_profile<R: tauri::Runtime>(
 
     Ok(format!("Added source line to {profile_display}"))
 }
+
+/// Remove the env source lines for the given instance from the user's shell profile.
+/// Also removes the `~/.kube/<instance>` symlink if it exists.
+/// Silently succeeds if nothing needs cleaning up.
+pub fn cleanup_env_on_delete<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    instance_name: &str,
+) -> Result<(), String> {
+    let home = app
+        .path()
+        .home_dir()
+        .map_err(|e| format!("Failed to get home directory: {}", e))?;
+
+    // 1. Remove source lines from shell profiles
+    let instance_dir = get_instance_dir(app, instance_name)?;
+
+    let profiles = [
+        home.join(".zshrc"),
+        home.join(".bashrc"),
+        home.join(".config/fish/config.fish"),
+    ];
+
+    let env_sh_str = instance_dir.join("env.sh").to_string_lossy().to_string();
+    let env_fish_str = instance_dir.join("env.fish").to_string_lossy().to_string();
+    let comment_marker = format!("# 0ma environment for instance {}", instance_name);
+
+    for profile in &profiles {
+        if !profile.exists() {
+            continue;
+        }
+
+        let content = match std::fs::read_to_string(profile) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        let filtered: Vec<&str> = content
+            .lines()
+            .filter(|line| {
+                !line.contains(&env_sh_str)
+                    && !line.contains(&env_fish_str)
+                    && line.trim() != comment_marker
+            })
+            .collect();
+
+        // Only write if something changed
+        if filtered.len() < content.lines().count() {
+            // Trim trailing blank lines left over, then add a final newline
+            let new_content = filtered.join("\n").trim_end().to_string() + "\n";
+            let _ = std::fs::write(profile, new_content);
+        }
+    }
+
+    // 2. Remove ~/.kube/<instance> symlink
+    let kube_symlink = home.join(".kube").join(instance_name);
+    if kube_symlink.is_symlink() {
+        let _ = std::fs::remove_file(&kube_symlink);
+    }
+
+    Ok(())
+}

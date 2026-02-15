@@ -374,6 +374,11 @@ pub async fn delete_lima_instance(app: AppHandle, instance_name: String) -> Resu
         match child.wait().await {
             Ok(status) => {
                 if status.success() {
+                    // Clean up shell profile and ~/.kube symlink before emitting success
+                    let _ = crate::lima_config_service::cleanup_env_on_delete(
+                        &app_handle,
+                        &instance_name_clone,
+                    );
                     let _ = app_handle.emit(
                         "lima-instance-delete-success",
                         create_log_payload(instance_name_clone, "Deleted".to_string()),
