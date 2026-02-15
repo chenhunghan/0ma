@@ -15,6 +15,7 @@ import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { CreateStartInstanceDialogs } from "./CreateStartInstanceDialogs";
 
 import { StopInstanceDialogs } from "./StopInstanceDialogs";
+import { ApplyResetDraftDialogs } from "./ApplyResetDraftDialogs";
 
 export function TopBar() {
   return (
@@ -30,10 +31,12 @@ export function TopBar() {
       <InstanceName className="text-xs hidden md:block" />
 
       {/* Right side */}
-      <div className="flex items-center justify-end flex-1">
-        {/** Stop instance button and dialogs it triggers */}
+      <div className="flex items-center justify-end flex-1 gap-1">
+        {/** Apply/Reset config draft buttons and dialogs */}
+        <ApplyResetDraftDialogs />
+        {/** Stop/Start instance button and dialogs it triggers */}
         <StopInstanceDialogs />
-        <DeleteInstanceButton className="ml-[6px]" />
+        <DeleteInstanceButton />
       </div>
     </div>
   );

@@ -16,6 +16,7 @@ export function useUpdateLimaInstanceDraft() {
     limaConfig: actualConfig,
     isLoadingLima,
     writeLimaYaml,
+    writeLimaYamlAsync,
     isWritingLima,
     writeLimaError,
   } = useLimaYaml(instanceName);
@@ -74,9 +75,16 @@ export function useUpdateLimaInstanceDraft() {
     }
   }, [draftConfig, writeLimaYaml]);
 
+  const applyDraftAsync = useCallback(async () => {
+    if (draftConfig) {
+      await writeLimaYamlAsync(draftConfig);
+    }
+  }, [draftConfig, writeLimaYamlAsync]);
+
   return {
     actualConfig,
     applyDraft,
+    applyDraftAsync,
     applyError: writeLimaError,
     draftConfig,
     isApplying: isWritingLima,

@@ -65,5 +65,6 @@ export function useLimaYaml(instanceName: string | null) {
     resetLimaYaml: resetLimaYamlMutation.mutate,
     writeLimaError: writeLimaYamlMutation.error,
     writeLimaYaml: writeLimaYamlMutation.mutate,
+    writeLimaYamlAsync: writeLimaYamlMutation.mutateAsync,
   };
 }
