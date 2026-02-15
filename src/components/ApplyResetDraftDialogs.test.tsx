@@ -132,9 +132,10 @@ describe("ApplyResetDraftDialogs", () => {
     );
   };
 
-  it("does not render Apply button when not dirty", () => {
+  it("hides Apply button when not dirty", () => {
     renderComponent({ isDirty: false });
-    expect(screen.queryByLabelText("Apply configuration changes")).not.toBeInTheDocument();
+    const applyButton = screen.getByLabelText("Apply configuration changes");
+    expect(applyButton.className).toContain("invisible");
   });
 
   it("enables Apply button when dirty and instance is Stopped", () => {
@@ -155,8 +156,7 @@ describe("ApplyResetDraftDialogs", () => {
     expect(applyButton).toBeDisabled();
   });
 
-  it("calls applyDraftAsync when instance is Stopped and shows Applied feedback", async () => {
-    vi.useFakeTimers();
+  it("calls applyDraftAsync when instance is Stopped", async () => {
     renderComponent({ isDirty: true, instanceStatus: InstanceStatus.Stopped });
     const applyButton = screen.getByLabelText("Apply configuration changes");
 
@@ -165,9 +165,6 @@ describe("ApplyResetDraftDialogs", () => {
     });
 
     expect(mockApplyDraftAsync).toHaveBeenCalled();
-    expect(screen.getByText("Applied")).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 
   it("opens confirmation dialog when instance is Running", () => {

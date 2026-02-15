@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, CheckIcon } from "lucide-react";
+import { useCallback, useState } from "react";
+import { CheckIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft";
@@ -24,21 +24,13 @@ export function ApplyResetDraftDialogs() {
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
-  const [justApplied, setJustApplied] = useState(false);
 
   const isRunning = selectedInstance?.status === InstanceStatus.Running;
   const isStopped = selectedInstance?.status === InstanceStatus.Stopped;
 
-  useEffect(() => {
-    if (!justApplied) return;
-    const timer = setTimeout(() => setJustApplied(false), 1500);
-    return () => clearTimeout(timer);
-  }, [justApplied]);
-
   const handleApplyClick = useCallback(async () => {
     if (isStopped) {
       await applyDraftAsync();
-      setJustApplied(true);
     } else if (isRunning) {
       setConfirmDialogOpen(true);
     }
@@ -56,26 +48,21 @@ export function ApplyResetDraftDialogs() {
 
   return (
     <>
-      {(isDirty || justApplied) && (
-        <Button
-          variant={justApplied ? "ghost" : "default"}
-          size="sm"
-          disabled={justApplied || isApplying || (!isStopped && !isRunning)}
-          onClick={handleApplyClick}
-          aria-label="Apply configuration changes"
-        >
-          {justApplied ? (
-            <CheckCircle2 className="text-green-500" />
-          ) : isApplying ? (
-            <Spinner />
-          ) : (
-            <CheckIcon className="md:hidden" />
-          )}
-          <span className="hidden md:inline">
-            {justApplied ? "Applied" : isApplying ? "Applying..." : "Apply"}
-          </span>
-        </Button>
-      )}
+      <Button
+        disabled={isApplying || (!isStopped && !isRunning)}
+        onClick={handleApplyClick}
+        aria-label="Apply configuration changes"
+        className={!isDirty ? "invisible" : undefined}
+      >
+        {isApplying ? (
+          <Spinner />
+        ) : (
+          <CheckIcon className="md:hidden" />
+        )}
+        <span className="hidden md:inline">
+          {isApplying ? "Applying..." : "Apply"}
+        </span>
+      </Button>
 
       {applyError && (
         <span className="text-xs text-destructive" role="alert">
