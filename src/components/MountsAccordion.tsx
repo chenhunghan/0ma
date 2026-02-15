@@ -39,9 +39,15 @@ export function MountsAccordion({ value: mounts }: { value: Mount[] }) {
             <AccordionContent className="p-2 bg-muted/10">
               <div className="flex flex-col gap-1 text-[10px] font-mono text-muted-foreground/80 bg-zinc-950/50 p-2 rounded border border-border/20">
                 <div className="flex justify-between items-start">
-                  <span className="shrink-0">Location:</span>
+                  <span className="shrink-0">Host Path:</span>
                   <span className="text-foreground/70 break-all ml-4 text-right">
                     {mount.location}
+                  </span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="shrink-0">Guest Path:</span>
+                  <span className="text-foreground/70 break-all ml-4 text-right">
+                    {mount.mountPoint || mount.location || "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
