@@ -68,6 +68,9 @@ pub struct LimaConfig {
     /// Port forwarding configuration
     #[serde(rename = "portForwards", skip_serializing_if = "skip_vec_none")]
     pub port_forwards: Option<Vec<PortForward>>,
+    /// GPU passthrough configuration (krunkit only)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gpu: Option<GpuConfig>,
 }
 
 /// Mount configuration
@@ -126,6 +129,13 @@ pub struct CopyToHost {
     pub delete_on_stop: Option<bool>,
 }
 
+/// GPU passthrough configuration (krunkit only)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuConfig {
+    /// Whether GPU passthrough is enabled
+    pub enabled: bool,
+}
+
 /// Port forwarding configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PortForward {
@@ -182,6 +192,7 @@ impl Default for LimaConfig {
             cpus: None,
             memory: None,
             disk: None,
+            gpu: None,
         }
     }
 }
@@ -228,6 +239,9 @@ impl LimaConfig {
         }
         if other.containerd.is_some() {
             self.containerd = other.containerd;
+        }
+        if other.gpu.is_some() {
+            self.gpu = other.gpu;
         }
 
         // Merge vectors
@@ -511,6 +525,7 @@ mod tests {
                 delete_on_stop: Some(true),
             }]),
             port_forwards: Some(vec![]),
+            gpu: None,
         };
 
         // Mutate all fields
@@ -698,6 +713,7 @@ probes:
             probes: Some(vec![]),
             copy_to_host: Some(vec![]),
             port_forwards: Some(vec![]),
+            gpu: None,
         };
 
         let yaml = config.to_yaml().expect("Failed to serialize");

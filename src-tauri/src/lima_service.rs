@@ -1,5 +1,48 @@
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::Command;
+
+/// System capabilities relevant to VM type selection
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SystemCapabilities {
+    /// CPU architecture (e.g., "aarch64", "x86_64")
+    pub arch: String,
+    /// macOS version string (e.g., "14.5")
+    #[serde(rename = "macosVersion")]
+    pub macos_version: String,
+    /// Whether the krunkit binary is available
+    #[serde(rename = "krunkitAvailable")]
+    pub krunkit_available: bool,
+}
+
+pub fn get_system_capabilities() -> SystemCapabilities {
+    let arch = std::env::consts::ARCH.to_string();
+
+    let macos_version = Command::new("sw_vers")
+        .arg("-productVersion")
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                String::from_utf8(o.stdout).ok().map(|s| s.trim().to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_default();
+
+    let krunkit_available = Command::new("which")
+        .arg("krunkit")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+
+    SystemCapabilities {
+        arch,
+        macos_version,
+        krunkit_available,
+    }
+}
 
 // Note: We use limactl directly instead of lima wrapper script
 pub const COMMON_LIMA_EXEC_PATHS: &[&str] = &[

@@ -18,6 +18,7 @@ import { ProvisionStepsAccordion } from "./ProvisionStepsAccordion";
 import { ProbesDialog } from "./ProbesDialog";
 import { ProbesAccordion } from "./ProbesAccordion";
 import type { CopyToHost, Image, Mount, PortForward, Probe, Provision } from "src/types/LimaConfig";
+import { useSystemCapabilities } from "src/hooks/useSystemCapabilities";
 
 const EMPTY_IMAGES: Image[] = [];
 const EMPTY_MOUNTS: Mount[] = [];
@@ -29,6 +30,7 @@ const EMPTY_PROBES: Probe[] = [];
 export function CreateInstanceConfigForm() {
   const { draftConfig, isLoading, updateField, instanceName, setInstanceName } =
     useCreateLimaInstanceDraft();
+  const { isKrunkitSupported } = useSystemCapabilities();
   const images = draftConfig?.images ?? EMPTY_IMAGES;
   const mounts = draftConfig?.mounts ?? EMPTY_MOUNTS;
   const copyToHost = draftConfig?.copyToHost ?? EMPTY_COPY_TO_HOST;
@@ -69,10 +71,19 @@ export function CreateInstanceConfigForm() {
         updateField("provision", nextProvision);
       },
       vmType: (value: string | null) => {
-        updateField("vmType", value || "vz");
+        const newVmType = value || "vz";
+        updateField("vmType", newVmType);
+        if (newVmType === "krunkit") {
+          updateField("rosetta" as keyof typeof draftConfig, undefined);
+        } else {
+          updateField("gpu", undefined);
+        }
+      },
+      gpu: (value: string | null) => {
+        updateField("gpu", value === "enabled" ? { enabled: true } : undefined);
       },
     }),
-    [setInstanceName, updateField],
+    [draftConfig, setInstanceName, updateField],
   );
 
   const dialogs = useMemo(
@@ -181,6 +192,32 @@ export function CreateInstanceConfigForm() {
             </SelectContent>
           </Select>
         </div>
+
+        {draftConfig?.vmType === "krunkit" && !isKrunkitSupported && (
+          <p className="text-xs text-amber-500 ml-[76px]">
+            Krunkit requires macOS 14+, Apple Silicon, and the krunkit binary installed.
+          </p>
+        )}
+
+        {draftConfig?.vmType === "krunkit" && (
+          <div className="grid grid-cols-[60px_1fr] items-center gap-4">
+            <Label htmlFor="gpu" className="text-muted-foreground">
+              GPU
+            </Label>
+            <Select
+              value={draftConfig?.gpu?.enabled ? "enabled" : "disabled"}
+              onValueChange={handlers.gpu}
+            >
+              <SelectTrigger id="gpu" className="w-full min-w-0" size="sm">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="enabled">Enabled</SelectItem>
+                <SelectItem value="disabled">Disabled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <ConfigSection dialog={dialogs.images}>
           <ImageAccordion value={images} />
