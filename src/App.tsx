@@ -16,6 +16,7 @@ import { Spinner } from "./components/ui/spinner";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
+import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 
 // Initial State Factory
 const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
@@ -40,6 +41,8 @@ function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
 // oxlint-disable-next-line max-statements
 export function App() {
   useInstanceLifecycleEvents();
+  const { selectedName } = useSelectedInstance();
+  const hasInstance = Boolean(selectedName);
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
   const { restoredState, isFetched: isSessionsFetched, persist } = useTerminalSessionStorage();
   const restoredRef = useRef(false);
@@ -332,13 +335,13 @@ export function App() {
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full w-full">
           <TabsList>
-            <TabsTrigger value="config">Config</TabsTrigger>
+            {hasInstance && <TabsTrigger value="config">Config</TabsTrigger>}
             <TabsTrigger value="lima">Lima</TabsTrigger>
             <TabsTrigger value="k8s">K8s</TabsTrigger>
           </TabsList>
           <Separator />
 
-          <LimaConfigTabContent tabValue="config" />
+          {hasInstance && <LimaConfigTabContent tabValue="config" />}
           <TabsContent value="lima" keepMounted>
             <ResizableLayout
               autoSaveId="lima-tabs-content"
