@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type ChangeEvent } from "react";
-import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { InfoIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import type { CopyToHost } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
@@ -15,10 +15,28 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface Props {
   value: CopyToHost[];
   onChange: (rules: CopyToHost[]) => void;
+}
+
+function FieldLabel({ label, tooltip }: { label: string; tooltip: string }) {
+  return (
+    <Label className="text-[10px] uppercase text-muted-foreground gap-1">
+      {label}
+      <Tooltip>
+        <TooltipTrigger
+          className="inline-flex items-center text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          render={<span />}
+        >
+          <InfoIcon className="size-2.5" />
+        </TooltipTrigger>
+        <TooltipContent side="top">{tooltip}</TooltipContent>
+      </Tooltip>
+    </Label>
+  );
 }
 
 export function CopyToHostDialog({ value: rules, onChange }: Props) {
@@ -111,61 +129,70 @@ export function CopyToHostDialog({ value: rules, onChange }: Props) {
           <DialogTitle>Configure Copy to Host</DialogTitle>
           <DialogDescription>Copy files from the guest VM to the host machine.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-          {rules.map((rule, idx) => (
-            <div
-              key={`${rule.guest}-${rule.host}-${rule.deleteOnStop ? "true" : "false"}`}
-              className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={getRemoveRuleHandler(idx)}
+        <TooltipProvider>
+          <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
+            {rules.map((rule, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"
               >
-                <Trash2Icon className="size-3 text-destructive" />
-              </Button>
-              <div className="grid gap-1">
-                <Label className="text-[10px] uppercase text-muted-foreground">Guest Path</Label>
-                <Input
-                  value={rule.guest}
-                  onChange={getGuestChangeHandler(idx)}
-                  placeholder="/path/in/guest"
-                  className="h-7 text-[11px]"
-                />
-              </div>
-              <div className="grid gap-1">
-                <Label className="text-[10px] uppercase text-muted-foreground">Host Path</Label>
-                <Input
-                  value={rule.host}
-                  onChange={getHostChangeHandler(idx)}
-                  placeholder="/path/on/host"
-                  className="h-7 text-[11px]"
-                />
-              </div>
-              <div className="grid gap-1">
-                <Label className="text-[10px] uppercase text-muted-foreground">
-                  Delete on Stop
-                </Label>
-                <Select
-                  value={rule.deleteOnStop ? "true" : "false"}
-                  onValueChange={getDeleteOnStopChangeHandler(idx)}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={getRemoveRuleHandler(idx)}
                 >
-                  <SelectTrigger className="h-7 text-[11px] w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">True</SelectItem>
-                    <SelectItem value="false">False</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <Trash2Icon className="size-3 text-destructive" />
+                </Button>
+                <div className="grid gap-1">
+                  <FieldLabel
+                    label="Guest Path"
+                    tooltip="File path inside the guest VM to copy. Supports variables: {{.Home}}, {{.Name}}, {{.Hostname}}, {{.UID}}, {{.User}}."
+                  />
+                  <Input
+                    value={rule.guest}
+                    onChange={getGuestChangeHandler(idx)}
+                    placeholder="/path/in/guest"
+                    className="h-7 text-[11px]"
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <FieldLabel
+                    label="Host Path"
+                    tooltip="Destination path on the host. Supports variables: {{.Dir}} (instance dir ~/.lima/<name>/), {{.Home}}, {{.Name}}, {{.UID}}, {{.User}}."
+                  />
+                  <Input
+                    value={rule.host}
+                    onChange={getHostChangeHandler(idx)}
+                    placeholder="{{.Dir}}/copied-from-guest/file"
+                    className="h-7 text-[11px]"
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <FieldLabel
+                    label="Delete on Stop"
+                    tooltip="Remove the copied file from the host when the VM is stopped."
+                  />
+                  <Select
+                    value={rule.deleteOnStop ? "true" : "false"}
+                    onValueChange={getDeleteOnStopChangeHandler(idx)}
+                  >
+                    <SelectTrigger className="h-7 text-[11px] w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">True</SelectItem>
+                      <SelectItem value="false">False</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          ))}
-          <Button variant="outline" size="xs" className="border-dashed" onClick={addRule}>
-            <PlusIcon className="size-3 mr-1" /> Add Rule
-          </Button>
-        </div>
+            ))}
+            <Button variant="outline" size="xs" className="border-dashed" onClick={addRule}>
+              <PlusIcon className="size-3 mr-1" /> Add Rule
+            </Button>
+          </div>
+        </TooltipProvider>
         {hasInvalid && (
           <p className="text-[10px] text-destructive font-medium animate-pulse">
             All rules must have valid Guest and Host paths.
