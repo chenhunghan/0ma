@@ -68,6 +68,9 @@ pub struct LimaConfig {
     /// Port forwarding configuration
     #[serde(rename = "portForwards", skip_serializing_if = "skip_vec_none")]
     pub port_forwards: Option<Vec<PortForward>>,
+    /// GPU passthrough configuration (krunkit only)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gpu: Option<GpuConfig>,
 }
 
 /// Mount configuration
@@ -126,6 +129,13 @@ pub struct CopyToHost {
     pub delete_on_stop: Option<bool>,
 }
 
+/// GPU passthrough configuration (krunkit only)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuConfig {
+    /// Whether GPU passthrough is enabled
+    pub enabled: bool,
+}
+
 /// Port forwarding configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PortForward {
@@ -182,6 +192,7 @@ impl Default for LimaConfig {
             cpus: None,
             memory: None,
             disk: None,
+            gpu: None,
         }
     }
 }
@@ -228,6 +239,9 @@ impl LimaConfig {
         }
         if other.containerd.is_some() {
             self.containerd = other.containerd;
+        }
+        if other.gpu.is_some() {
+            self.gpu = other.gpu;
         }
 
         // Merge vectors
@@ -511,6 +525,7 @@ mod tests {
                 delete_on_stop: Some(true),
             }]),
             port_forwards: Some(vec![]),
+            gpu: None,
         };
 
         // Mutate all fields
@@ -698,6 +713,7 @@ probes:
             probes: Some(vec![]),
             copy_to_host: Some(vec![]),
             port_forwards: Some(vec![]),
+            gpu: None,
         };
 
         let yaml = config.to_yaml().expect("Failed to serialize");
@@ -901,5 +917,94 @@ portForwards:
         );
 
         assert_eq!(yaml.trim(), expected_whole_file.trim());
+    }
+
+    #[test]
+    fn test_krunkit_vm_type_with_gpu() {
+        let config = LimaConfig {
+            vm_type: Some("krunkit".to_string()),
+            gpu: Some(GpuConfig { enabled: true }),
+            cpus: Some(4),
+            memory: Some("8GiB".to_string()),
+            ..Default::default()
+        };
+
+        let yaml = config.to_yaml().expect("Failed to serialize");
+        assert!(yaml.contains("vmType: krunkit"));
+        assert!(yaml.contains("gpu:"));
+        assert!(yaml.contains("enabled: true"));
+
+        // Round-trip
+        let deserialized = LimaConfig::from_yaml(&yaml).expect("Failed to deserialize");
+        assert_eq!(deserialized.vm_type, Some("krunkit".to_string()));
+        assert!(deserialized.gpu.is_some());
+        assert!(deserialized.gpu.unwrap().enabled);
+    }
+
+    #[test]
+    fn test_krunkit_without_gpu_omits_field() {
+        let config = LimaConfig {
+            vm_type: Some("krunkit".to_string()),
+            gpu: None,
+            ..Default::default()
+        };
+
+        let yaml = config.to_yaml().expect("Failed to serialize");
+        assert!(yaml.contains("vmType: krunkit"));
+        assert!(!yaml.contains("gpu:"));
+    }
+
+    #[test]
+    fn test_gpu_disabled_round_trip() {
+        let config = LimaConfig {
+            vm_type: Some("krunkit".to_string()),
+            gpu: Some(GpuConfig { enabled: false }),
+            ..Default::default()
+        };
+
+        let yaml = config.to_yaml().expect("Failed to serialize");
+        assert!(yaml.contains("enabled: false"));
+
+        let deserialized = LimaConfig::from_yaml(&yaml).expect("Failed to deserialize");
+        assert!(!deserialized.gpu.unwrap().enabled);
+    }
+
+    #[test]
+    fn test_merge_gpu_config() {
+        let base = LimaConfig {
+            vm_type: Some("krunkit".to_string()),
+            gpu: None,
+            ..Default::default()
+        };
+
+        let overlay = LimaConfig {
+            gpu: Some(GpuConfig { enabled: true }),
+            ..Default::default()
+        };
+
+        let merged = base.merge(overlay);
+        assert!(merged.gpu.is_some());
+        assert!(merged.gpu.unwrap().enabled);
+        assert_eq!(merged.vm_type, Some("krunkit".to_string()));
+    }
+
+    #[test]
+    fn test_merge_does_not_override_gpu_with_none() {
+        let base = LimaConfig {
+            gpu: Some(GpuConfig { enabled: true }),
+            ..Default::default()
+        };
+
+        let overlay = LimaConfig {
+            gpu: None,
+            cpus: Some(8),
+            ..Default::default()
+        };
+
+        let merged = base.merge(overlay);
+        // gpu should remain from base since overlay has None
+        assert!(merged.gpu.is_some());
+        assert!(merged.gpu.unwrap().enabled);
+        assert_eq!(merged.cpus, Some(8));
     }
 }

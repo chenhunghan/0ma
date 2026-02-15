@@ -6,9 +6,12 @@ import { useUpdateLimaInstanceDraft } from "src/hooks/useUpdateLimaInstanceDraft
 import { Spinner } from "./ui/spinner";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "./ui/item";
 import { Separator } from "./ui/separator";
+import { useSystemCapabilities } from "src/hooks/useSystemCapabilities";
 
 export function LimaConfigResourceColumn() {
   const { draftConfig, actualConfig, isLoading, updateField } = useUpdateLimaInstanceDraft();
+  const { isKrunkitSupported, krunkitMissingReasons } = useSystemCapabilities();
+  const isKrunkit = draftConfig?.vmType === "krunkit";
 
   const handleCpuChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +36,20 @@ export function LimaConfigResourceColumn() {
 
   const handleVmTypeChange = useCallback(
     (value: string | null) => {
-      updateField("vmType", value || "vz");
+      const newVmType = value || "vz";
+      updateField("vmType", newVmType);
+      if (newVmType === "krunkit") {
+        updateField("rosetta" as keyof typeof draftConfig, undefined);
+      } else {
+        updateField("gpu", undefined);
+      }
+    },
+    [draftConfig, updateField],
+  );
+
+  const handleGpuChange = useCallback(
+    (value: string | null) => {
+      updateField("gpu", value === "enabled" ? { enabled: true } : undefined);
     },
     [updateField],
   );
@@ -105,6 +121,30 @@ export function LimaConfigResourceColumn() {
           </SelectContent>
         </Select>
       </div>
+      {isKrunkit && !isKrunkitSupported && krunkitMissingReasons.length > 0 && (
+        <ul className="text-xs text-amber-500 list-disc list-inside">
+          {krunkitMissingReasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+      )}
+      {isKrunkit && (
+        <div className="grid w-full items-center gap-1.5">
+          <Label htmlFor="gpu">GPU Passthrough</Label>
+          <Select
+            value={draftConfig?.gpu?.enabled ? "enabled" : "disabled"}
+            onValueChange={handleGpuChange}
+          >
+            <SelectTrigger id="gpu" className="w-full">
+              <SelectValue placeholder="GPU Passthrough" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="enabled">Enabled</SelectItem>
+              <SelectItem value="disabled">Disabled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <Separator />
       {/* Read-only Lima Minimum Version */}
       <div className="grid w-full items-center gap-1.5">

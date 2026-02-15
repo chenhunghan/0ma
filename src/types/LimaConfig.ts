@@ -46,6 +46,10 @@ export interface PortForward {
   ignore?: boolean;
 }
 
+export interface GpuConfig {
+  enabled: boolean;
+}
+
 export interface LimaConfig {
   minimumLimaVersion?: string;
   vmType?: string;
@@ -59,5 +63,6 @@ export interface LimaConfig {
   probes?: Probe[];
   copyToHost?: CopyToHost[];
   portForwards?: PortForward[];
+  gpu?: GpuConfig;
   [key: string]: unknown; // Allow for other fields
 }
