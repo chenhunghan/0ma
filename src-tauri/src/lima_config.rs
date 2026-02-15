@@ -391,21 +391,29 @@ chmod 644 /var/lib/k0s/pki/external-admin.conf
     };
 
     // 3. Docker installation and socket forwarding
+    let host_user = std::env::var("USER")
+        .or_else(|_| std::env::var("LOGNAME"))
+        .or_else(|_| {
+            std::process::Command::new("whoami")
+                .output()
+                .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                .map_err(|_| std::env::VarError::NotPresent)
+        })
+        .unwrap_or_default();
     let docker_config = LimaConfig {
         provision: Some(vec![Provision {
             mode: "system".to_string(),
-            script: r#"#!/bin/bash
+            script: format!(r#"#!/bin/bash
 set -eux -o pipefail
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
 fi
 # Ensure the Lima user can access the Docker socket
-# Detect the first non-root human user (avoids referencing CIDATA env vars)
-MAIN_USER=$(awk -F: '$3 >= 500 && $3 < 65534 {print $1; exit}' /etc/passwd)
-if [ -n "$MAIN_USER" ] && ! id -nG "$MAIN_USER" | grep -qw docker; then
-  usermod -aG docker "$MAIN_USER"
+# Lima creates a guest user matching the host username
+if id "{host_user}" &>/dev/null && ! id -nG "{host_user}" | grep -qw docker; then
+  usermod -aG docker "{host_user}"
 fi
-"#.to_string(),
+"#),
         }]),
         port_forwards: Some(vec![PortForward {
             guest_ip_must_be_zero: None,
@@ -775,6 +783,9 @@ probes:
         // Capture dynamic host-specific values to insert into the snapshot
         let cpus = config.cpus.unwrap();
         let memory = config.memory.clone().unwrap();
+        let host_user = std::env::var("USER")
+            .or_else(|_| std::env::var("LOGNAME"))
+            .unwrap_or_default();
 
         let expected_whole_file = format!(
             r#"
@@ -845,10 +856,9 @@ provision:
       curl -fsSL https://get.docker.com | sh
     fi
     # Ensure the Lima user can access the Docker socket
-    # Detect the first non-root human user (avoids referencing CIDATA env vars)
-    MAIN_USER=$(awk -F: '$3 >= 500 && $3 < 65534 {{print $1; exit}}' /etc/passwd)
-    if [ -n "$MAIN_USER" ] && ! id -nG "$MAIN_USER" | grep -qw docker; then
-      usermod -aG docker "$MAIN_USER"
+    # Lima creates a guest user matching the host username
+    if id "{host_user}" &>/dev/null && ! id -nG "{host_user}" | grep -qw docker; then
+      usermod -aG docker "{host_user}"
     fi
 - mode: system
   script: |
