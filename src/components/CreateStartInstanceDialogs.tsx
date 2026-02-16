@@ -13,7 +13,11 @@ import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 
 // oxlint-disable-next-line max-statements
-export function CreateStartInstanceDialogs() {
+export function CreateStartInstanceDialogs({
+  isDeletingDialogOpen,
+}: {
+  isDeletingDialogOpen?: boolean;
+}) {
   const [createDialogUserOpen, setCreateDialogUserOpen] = useState(false);
   const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
   const [startInstanceDialogOpen, setStartInstanceDialogOpen] = useState(false);
@@ -27,8 +31,10 @@ export function CreateStartInstanceDialogs() {
   const envSetup = useEnvSetup();
 
   // Open create dialog when user explicitly opens it OR when no instances exist
+  // (but not while the "Instance Deleted" dialog is still open)
   const hasNoInstances = !isLoadingInstances && instances.length === 0;
-  const createInstanceDialogOpen = createDialogUserOpen || hasNoInstances;
+  const createInstanceDialogOpen =
+    createDialogUserOpen || (hasNoInstances && !isDeletingDialogOpen);
 
   const handleCreateInstance = useCallback(() => {
     if (!draftConfig || !instanceName) {

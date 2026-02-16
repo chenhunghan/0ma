@@ -21,13 +21,15 @@ import { StopInstanceDialogs } from "./StopInstanceDialogs";
 import { ApplyResetDraftDialogs } from "./ApplyResetDraftDialogs";
 
 export function TopBar() {
+  const [isDeletingDialogOpen, setIsDeletingDialogOpen] = useState(false);
+
   return (
     <div className="w-full px-[8px] pt-[2px] pb-[6px] flex items-center">
       {/* Left side */}
       <div className="flex items-center flex-1">
         <InstanceSelector />
         {/** Create new instance button and dialogs it triggers */}
-        <CreateStartInstanceDialogs />
+        <CreateStartInstanceDialogs isDeletingDialogOpen={isDeletingDialogOpen} />
       </div>
 
       {/* Middle side - hidden on mobile */}
@@ -39,7 +41,7 @@ export function TopBar() {
         <ApplyResetDraftDialogs />
         {/** Stop/Start instance button and dialogs it triggers */}
         <StopInstanceDialogs />
-        <DeleteInstanceButton />
+        <DeleteInstanceButton onDeletingDialogOpenChange={setIsDeletingDialogOpen} />
       </div>
     </div>
   );
@@ -78,12 +80,26 @@ export function InstanceSelector() {
   );
 }
 
-export function DeleteInstanceButton({ className }: { className?: string }) {
+export function DeleteInstanceButton({
+  className,
+  onDeletingDialogOpenChange,
+}: {
+  className?: string;
+  onDeletingDialogOpenChange?: (open: boolean) => void;
+}) {
   const { selectedName, isLoading } = useSelectedInstance();
   const { deleteInstance } = useLimaInstance();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingOpen, setDeletingOpen] = useState(false);
+
+  const setDeletingDialogOpen = useCallback(
+    (open: boolean) => {
+      setDeletingOpen(open);
+      onDeletingDialogOpenChange?.(open);
+    },
+    [onDeletingDialogOpenChange],
+  );
 
   const handleClick = useCallback(() => {
     setConfirmOpen(true);
@@ -92,13 +108,13 @@ export function DeleteInstanceButton({ className }: { className?: string }) {
   const handleConfirmDelete = useCallback(() => {
     if (selectedName) {
       deleteInstance(selectedName);
-      setDeletingOpen(true);
+      setDeletingDialogOpen(true);
     }
-  }, [selectedName, deleteInstance]);
+  }, [selectedName, deleteInstance, setDeletingDialogOpen]);
 
   const handleDeleteSuccess = useCallback(() => {
-    setDeletingOpen(false);
-  }, []);
+    setDeletingDialogOpen(false);
+  }, [setDeletingDialogOpen]);
 
   return (
     <>
