@@ -98,7 +98,7 @@ describe("StopInstanceDialogs", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <StopInstanceDialogs />
+        <StopInstanceDialogs onEnvSetup={() => {}} />
       </QueryClientProvider>,
     );
   };
@@ -112,7 +112,7 @@ describe("StopInstanceDialogs", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <StopInstanceDialogs />
+        <StopInstanceDialogs onEnvSetup={() => {}} />
       </QueryClientProvider>,
     );
 
@@ -132,7 +132,7 @@ describe("StopInstanceDialogs", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <StopInstanceDialogs />
+        <StopInstanceDialogs onEnvSetup={() => {}} />
       </QueryClientProvider>,
     );
 
@@ -228,7 +228,7 @@ describe("StopInstanceDialogs", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <StopInstanceDialogs />
+        <StopInstanceDialogs onEnvSetup={() => {}} />
       </QueryClientProvider>,
     );
 

@@ -19,9 +19,12 @@ import { DeleteInstanceDialog } from "./DeleteInstanceDialog";
 import { DeletingInstanceDialog } from "./DeletingInstanceDialog";
 import { StopInstanceDialogs } from "./StopInstanceDialogs";
 import { ApplyResetDraftDialogs } from "./ApplyResetDraftDialogs";
+import { useEnvSetup } from "src/hooks/useEnvSetup";
+import { EnvSetupDialog } from "./EnvSetupDialog";
 
 export function TopBar() {
   const [isDeletingDialogOpen, setIsDeletingDialogOpen] = useState(false);
+  const envSetup = useEnvSetup();
 
   return (
     <div className="w-full px-[8px] pt-[2px] pb-[6px] flex items-center">
@@ -29,7 +32,10 @@ export function TopBar() {
       <div className="flex items-center flex-1">
         <InstanceSelector />
         {/** Create new instance button and dialogs it triggers */}
-        <CreateStartInstanceDialogs isDeletingDialogOpen={isDeletingDialogOpen} />
+        <CreateStartInstanceDialogs
+          isDeletingDialogOpen={isDeletingDialogOpen}
+          onEnvSetup={envSetup.triggerEnvSetup}
+        />
       </div>
 
       {/* Middle side - hidden on mobile */}
@@ -40,9 +46,21 @@ export function TopBar() {
         {/** Apply/Reset config draft buttons and dialogs */}
         <ApplyResetDraftDialogs />
         {/** Stop/Start instance button and dialogs it triggers */}
-        <StopInstanceDialogs />
+        <StopInstanceDialogs onEnvSetup={envSetup.triggerEnvSetup} />
         <DeleteInstanceButton onDeletingDialogOpenChange={setIsDeletingDialogOpen} />
       </div>
+
+      <EnvSetupDialog
+        open={envSetup.dialogOpen}
+        onOpenChange={envSetup.setDialogOpen}
+        instanceName={envSetup.instanceName}
+        envShPath={envSetup.envShPath}
+        onAddToProfile={envSetup.handleAddToProfile}
+        onClose={envSetup.handleClose}
+        profileMessage={envSetup.profileMessage}
+        profileError={envSetup.profileError}
+        isAddingToProfile={envSetup.isAddingToProfile}
+      />
     </div>
   );
 }

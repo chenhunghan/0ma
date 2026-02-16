@@ -126,7 +126,7 @@ describe("CreateStartInstanceDialogs", () => {
   const renderComponent = () => {
     render(
       <QueryClientProvider client={queryClient}>
-        <CreateStartInstanceDialogs />
+        <CreateStartInstanceDialogs onEnvSetup={() => {}} />
       </QueryClientProvider>,
     );
   };

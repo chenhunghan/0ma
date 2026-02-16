@@ -1,10 +1,8 @@
 import { useLimaInstance } from "src/hooks/useLimaInstance";
 import { useLimaInstances } from "src/hooks/useLimaInstances";
 import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
-import { useEnvSetup } from "src/hooks/useEnvSetup";
 import { CreateInstanceDialog } from "./CreateInstanceDialog";
 import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
-import { EnvSetupDialog } from "./EnvSetupDialog";
 import { ErrorCreateInstanceDialog } from "./ErrorCreateInstanceDialog";
 import { StartInstanceDialog } from "./StartInstanceDialog";
 import { StartingInstanceDialog } from "./StartingInstanceDialog";
@@ -15,8 +13,10 @@ import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 // oxlint-disable-next-line max-statements
 export function CreateStartInstanceDialogs({
   isDeletingDialogOpen,
+  onEnvSetup,
 }: {
   isDeletingDialogOpen?: boolean;
+  onEnvSetup: (instanceName: string) => void;
 }) {
   const [createDialogUserOpen, setCreateDialogUserOpen] = useState(false);
   const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
@@ -28,7 +28,6 @@ export function CreateStartInstanceDialogs({
   const { setActiveTab } = useLayoutStorage();
   const { draftConfig, instanceName } = useCreateLimaInstanceDraft();
   const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
-  const envSetup = useEnvSetup();
 
   // Open create dialog when user explicitly opens it OR when no instances exist
   // (but not while the "Instance Deleted" dialog is still open)
@@ -68,9 +67,9 @@ export function CreateStartInstanceDialogs({
 
   const handleStartInstanceReady = useCallback(() => {
     if (instanceName) {
-      envSetup.triggerEnvSetup(instanceName);
+      onEnvSetup(instanceName);
     }
-  }, [instanceName, envSetup]);
+  }, [instanceName, onEnvSetup]);
 
   const handleStartInstanceSuccess = useCallback(() => {
     setStartingInstanceDialogOpen(false);
@@ -105,17 +104,6 @@ export function CreateStartInstanceDialogs({
         onReady={handleStartInstanceReady}
         onSuccess={handleStartInstanceSuccess}
         instanceName={instanceName}
-      />
-      <EnvSetupDialog
-        open={envSetup.dialogOpen}
-        onOpenChange={envSetup.setDialogOpen}
-        instanceName={envSetup.instanceName}
-        envShPath={envSetup.envShPath}
-        onAddToProfile={envSetup.handleAddToProfile}
-        onClose={envSetup.handleClose}
-        profileMessage={envSetup.profileMessage}
-        profileError={envSetup.profileError}
-        isAddingToProfile={envSetup.isAddingToProfile}
       />
     </>
   );
