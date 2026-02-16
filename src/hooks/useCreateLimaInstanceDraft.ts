@@ -26,12 +26,12 @@ export function useCreateLimaInstanceDraft() {
   const { data: instanceName, isLoading: isLoadingStoreName } =
     useTauriStoreValue<string>(NEW_INSTANCE_NAME_KEY);
 
-  // If store draft is missing but default is loaded, initialize it.
+  // Always initialize the draft from the backend default config.
   useEffect(() => {
-    if (!isLoadingStoreConfig && !draftConfig && defaultConfig && !isLoadingDefault) {
+    if (!isLoadingDefault && defaultConfig) {
       set(NEW_INSTANCE_DRAFT_KEY, defaultConfig);
     }
-  }, [draftConfig, isLoadingStoreConfig, defaultConfig, isLoadingDefault, set]);
+  }, [defaultConfig, isLoadingDefault, set]);
 
   // If store name is missing, initialize it.
   useEffect(() => {
