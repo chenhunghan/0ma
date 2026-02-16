@@ -27,7 +27,7 @@ export function TopBar() {
   const envSetup = useEnvSetup();
 
   return (
-    <div className="w-full px-[8px] pt-[2px] pb-[6px] flex items-center">
+    <div className="w-full px-2 pb-2 flex items-center">
       {/* Left side */}
       <div className="flex items-center flex-1">
         <InstanceSelector />

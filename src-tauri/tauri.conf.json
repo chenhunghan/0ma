@@ -15,6 +15,7 @@
     "windows": [
       {
         "title": "",
+        "hiddenTitle": true,
         "width": 1600,
         "height": 1200,
         "minWidth": 300,
@@ -22,6 +23,7 @@
         "theme": "Dark",
         "backgroundColor": "#1a1a1a",
         "titleBarStyle": "Transparent",
+        "acceptFirstMouse": true,
         "transparent": true,
         "windowEffects": {
           "effects": ["underWindowBackground"],

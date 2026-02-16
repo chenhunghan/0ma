@@ -323,7 +323,7 @@ export function App() {
   );
 
   return (
-    <div className="h-full w-full overflow-hidden pb-[14px]">
+    <div className="h-full w-full overflow-hidden pb-[14px] pt-[18px]">
       <TopBar />
       <Separator />
       {isLoadingActiveTabs ? (
