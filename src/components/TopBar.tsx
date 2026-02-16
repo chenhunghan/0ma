@@ -110,11 +110,15 @@ export function DeleteInstanceButton({
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingOpen, setDeletingOpen] = useState(false);
+  const [deletingName, setDeletingName] = useState<string | null>(null);
 
   const setDeletingDialogOpen = useCallback(
     (open: boolean) => {
       setDeletingOpen(open);
       onDeletingDialogOpenChange?.(open);
+      if (!open) {
+        setDeletingName(null);
+      }
     },
     [onDeletingDialogOpenChange],
   );
@@ -125,6 +129,7 @@ export function DeleteInstanceButton({
 
   const handleConfirmDelete = useCallback(() => {
     if (selectedName) {
+      setDeletingName(selectedName);
       deleteInstance(selectedName);
       setDeletingDialogOpen(true);
     }
@@ -155,7 +160,7 @@ export function DeleteInstanceButton({
       <DeletingInstanceDialog
         open={deletingOpen}
         onDialogOpenChange={setDeletingOpen}
-        instanceName={selectedName}
+        instanceName={deletingName}
         onSuccess={handleDeleteSuccess}
       />
     </>

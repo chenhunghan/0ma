@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Log, LogState } from "src/types/Log";
@@ -23,7 +23,7 @@ const getDeleteLogsQueryKey = (instanceName: string) => ["lima", "delete-logs", 
 
 export function useOnLimaDeleteLogs(instanceName: string, options?: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
-  const queryKey = getDeleteLogsQueryKey(instanceName);
+  const queryKey = useMemo(() => getDeleteLogsQueryKey(instanceName), [instanceName]);
   const onSuccessRef = useRef(options?.onSuccess);
 
   useEffect(() => {
@@ -64,10 +64,13 @@ export function useOnLimaDeleteLogs(instanceName: string, options?: { onSuccess?
         if (event.payload.instance_name !== instanceName) {
           return;
         }
+        const { message, message_id, timestamp } = event.payload;
+        const newLog: Log = { id: message_id, message, timestamp };
 
         updateCache(() => ({
           ...DEFAULT_LIMA_DELETE_STATE,
           isLoading: true,
+          stdout: [newLog],
         }));
       }),
     );
