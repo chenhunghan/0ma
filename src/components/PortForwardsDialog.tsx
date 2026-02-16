@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ChangeEvent } from "react";
 import { InfoIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import type { PortForward } from "src/types/LimaConfig";
+import { isSocketForward, type PortForward } from "src/types/LimaConfig";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -42,22 +42,38 @@ function FieldLabel({ label, tooltip }: { label: string; tooltip: string }) {
 export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasInvalid = portForwards.some(
+  const { socketForwards, editableForwards } = useMemo(() => {
+    const socket: PortForward[] = [];
+    const editable: PortForward[] = [];
+    for (const pf of portForwards) {
+      (isSocketForward(pf) ? socket : editable).push(pf);
+    }
+    return { socketForwards: socket, editableForwards: editable };
+  }, [portForwards]);
+
+  const emitChange = useCallback(
+    (nextEditable: PortForward[]) => {
+      onChange([...socketForwards, ...nextEditable]);
+    },
+    [onChange, socketForwards],
+  );
+
+  const hasInvalid = editableForwards.some(
     (portForward) => !portForward.guestPort || !portForward.hostPort || !portForward.proto,
   );
 
   const updatePortForward = useCallback(
     (index: number, field: string, value: string | number) => {
-      const newPortForwards = [...portForwards];
-      newPortForwards[index] = { ...newPortForwards[index], [field]: value };
-      onChange(newPortForwards);
+      const next = [...editableForwards];
+      next[index] = { ...next[index], [field]: value };
+      emitChange(next);
     },
-    [onChange, portForwards],
+    [emitChange, editableForwards],
   );
 
   const addPortForward = useCallback(() => {
-    onChange([
-      ...portForwards,
+    emitChange([
+      ...editableForwards,
       {
         guestIPMustBeZero: true,
         guestPort: 8080,
@@ -66,15 +82,15 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
         proto: "tcp",
       },
     ]);
-  }, [onChange, portForwards]);
+  }, [emitChange, editableForwards]);
 
   const removePortForward = useCallback(
     (index: number) => {
-      const newPortForwards = [...portForwards];
-      newPortForwards.splice(index, 1);
-      onChange(newPortForwards);
+      const next = [...editableForwards];
+      next.splice(index, 1);
+      emitChange(next);
     },
-    [onChange, portForwards],
+    [emitChange, editableForwards],
   );
 
   const handleOpenChange = useCallback(
@@ -127,7 +143,7 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
       <div className="flex items-center justify-between w-full">
         <Label className="mb-0.5">Port Forwards</Label>
         <DialogTrigger render={triggerRender}>
-          {portForwards.length === 0 ? (
+          {editableForwards.length === 0 ? (
             <PlusIcon className="size-2.5 mr-[4px]" />
           ) : (
             <PencilIcon className="size-2.5 mr-[4px]" />
@@ -142,7 +158,7 @@ export function PortForwardsDialog({ value: portForwards, onChange }: Props) {
         </DialogHeader>
         <TooltipProvider>
           <div className="flex flex-col gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
-            {portForwards.map((pf, idx) => (
+            {editableForwards.map((pf, idx) => (
               <div
                 key={idx}
                 className="flex flex-col gap-2 p-3 border border-border/50 bg-muted/20 relative group"

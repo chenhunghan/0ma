@@ -46,6 +46,10 @@ export interface PortForward {
   ignore?: boolean;
 }
 
+export function isSocketForward(pf: PortForward): boolean {
+  return !!pf.guestSocket || !!pf.hostSocket;
+}
+
 export interface LimaConfig {
   minimumLimaVersion?: string;
   vmType?: string;
