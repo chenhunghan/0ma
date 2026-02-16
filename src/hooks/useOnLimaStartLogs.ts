@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Log, LogState } from "src/types/Log";
@@ -36,7 +36,7 @@ export function useOnLimaStartLogs(
   options?: { onReady?: () => void; onSuccess?: () => void },
 ) {
   const queryClient = useQueryClient();
-  const queryKey = getStartLogsQueryKey(instanceName);
+  const queryKey = useMemo(() => getStartLogsQueryKey(instanceName), [instanceName]);
   const onReadyRef = useRef(options?.onReady);
   const onSuccessRef = useRef(options?.onSuccess);
 
@@ -210,6 +210,7 @@ export function useOnLimaStartLogs(
         void Promise.allSettled(unlistenCalls);
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instanceName, queryClient, queryKey]);
 
   return {

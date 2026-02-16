@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Log, LogState } from "src/types/Log";
@@ -30,7 +30,7 @@ const getCreateLogsQueryKey = (instanceName: string) => ["lima", "create-logs", 
  */
 export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
-  const queryKey = getCreateLogsQueryKey(instanceName);
+  const queryKey = useMemo(() => getCreateLogsQueryKey(instanceName), [instanceName]);
   const onSuccessRef = useRef(options?.onSuccess);
 
   useEffect(() => {
@@ -193,6 +193,7 @@ export function useOnLimaCreateLogs(instanceName: string, options?: { onSuccess?
         void Promise.allSettled(unlistenCalls);
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instanceName, queryClient, queryKey]);
 
   return {
