@@ -413,6 +413,16 @@ fi
 if id "{host_user}" &>/dev/null && ! id -nG "{host_user}" | grep -qw docker; then
   usermod -aG docker "{host_user}"
 fi
+# Lima forwards the Docker socket over SSH, but the SSH session is established
+# before the group change takes effect. Override the socket group to the Lima
+# user's primary group, which the SSH session already has.
+mkdir -p /etc/systemd/system/docker.socket.d
+cat > /etc/systemd/system/docker.socket.d/override.conf <<UNIT
+[Socket]
+SocketGroup={host_user}
+UNIT
+systemctl daemon-reload
+systemctl restart docker.socket
 "#
             ),
         }]),
