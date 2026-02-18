@@ -14,6 +14,7 @@ const RESIZE_DEBOUNCE_MS = 200;
 /**
  * Calculate terminal dimensions following VS Code's approach:
  * all math in device-pixel space to match xterm's internal canvas rounding.
+ * Used for initial fit only.
  */
 // oxlint-disable-next-line max-statements
 function computeDimensions(term: Terminal, container: HTMLElement) {
@@ -40,7 +41,7 @@ function computeDimensions(term: Terminal, container: HTMLElement) {
   }
 
   // Available space in CSS pixels, then scale to device pixels
-  const availWidth = container.clientWidth - padH - TERMINAL_METRICS.scrollbarWidth;
+  const availWidth = container.clientWidth - padH;
   const availHeight = container.clientHeight - padV;
 
   // VS Code: getXtermScaledDimensions — all math in device pixel space
@@ -63,11 +64,36 @@ function computeDimensions(term: Terminal, container: HTMLElement) {
 }
 
 /**
+ * Lightweight resize used by ResizeObserver after initial fit.
+ * Reads cell dimensions directly from xterm's render service and
+ * does simple division — no device-pixel scaling needed for ongoing resizes.
+ */
+function safeFit(term: Terminal) {
+  const core = (term as any)._core;
+  const cellHeight: number = core._renderService?.dimensions?.css?.cell?.height;
+  const cellWidth: number = core._renderService?.dimensions?.css?.cell?.width;
+  const container = term.element?.parentElement;
+  if (!container || !cellHeight || !cellWidth) return null;
+
+  const xtermEl = term.element;
+  let padH = 0;
+  if (xtermEl) {
+    const style = getComputedStyle(xtermEl);
+    padH = parseInt(style.paddingLeft) + parseInt(style.paddingRight);
+  }
+
+  const cols = Math.max(1, Math.floor((container.clientWidth - padH) / cellWidth));
+  const rows = Math.max(1, Math.floor(container.clientHeight / cellHeight - 1.8));
+
+  return { cols, rows, cellWidth, cellHeight };
+}
+
+/**
  * Hook that observes the container for size changes and calls
  * term.resize(), then notifies the PTY backend.
  *
- * Both resize and PTY notification are deferred until resizing stops to avoid
- * intermediate reflows that corrupt the terminal display.
+ * Uses computeDimensions() (VS Code device-pixel approach) for the initial fit,
+ * and safeFit() (simple cell-dimension division) for ongoing ResizeObserver resizes.
  */
 export function useXtermResize(
   term: Terminal | null,
@@ -81,54 +107,41 @@ export function useXtermResize(
     cellHeight: number;
   }>({ cols: 80, rows: 24, cellWidth: 9, cellHeight: 18 });
   const timerRef = useRef(0);
-  const lastColsRows = useRef({ cols: 0, rows: 0 });
   const sessionIdRef = useRef(sessionId);
   sessionIdRef.current = sessionId;
 
   const fitAndNotify = useCallback(() => {
-    const container = containerRef.current;
-    if (!term || !container) return;
+    if (!term) return;
 
-    const newDims = computeDimensions(term, container);
-    if (!newDims) return;
-    if (
-      newDims.cols === lastColsRows.current.cols &&
-      newDims.rows === lastColsRows.current.rows
-    )
-      return;
+    const result = safeFit(term);
+    if (!result) return;
+    if (result.cols === term.cols && result.rows === term.rows) return;
 
-    lastColsRows.current = { cols: newDims.cols, rows: newDims.rows };
+    term.resize(result.cols, result.rows);
 
-    // Resize xterm's internal grid
-    term.resize(newDims.cols, newDims.rows);
-
-    log.debug(`[useXtermResize] Resized: ${newDims.cols}x${newDims.rows}`);
+    log.debug(`[useXtermResize] Resized: ${result.cols}x${result.rows}`);
 
     // Notify PTY backend
     const sid = sessionIdRef.current;
     if (sid) {
       invoke("resize_pty_cmd", {
         sessionId: sid,
-        cols: newDims.cols,
-        rows: newDims.rows,
+        cols: result.cols,
+        rows: result.rows,
       }).catch((e) => log.error(`[useXtermResize] resize_pty_cmd failed: ${e}`));
     }
 
-    setDims(newDims);
-  }, [term, containerRef]);
+    setDims(result);
+  }, [term]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!term || !container) return;
 
-    // Reset tracking so initial fit always runs
-    lastColsRows.current = { cols: 0, rows: 0 };
-
-    // Initial fit (synchronous, no PTY notification — spawn/connect sends initial dims)
+    // Initial fit — VS Code approach (conservative rounding in device-pixel space)
     const initial = computeDimensions(term, container);
     if (initial) {
       term.resize(initial.cols, initial.rows);
-      lastColsRows.current = { cols: initial.cols, rows: initial.rows };
       setDims(initial);
     }
 
