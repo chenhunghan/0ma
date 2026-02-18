@@ -155,12 +155,7 @@ export function useXtermResize(
       setDims(initial);
     }
 
-    let initFired = false;
     const observer = new ResizeObserver(() => {
-      if (!initFired) {
-        initFired = true;
-        return; // skip first fire — init already handled above
-      }
       clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(fitAndNotify, RESIZE_DEBOUNCE_MS);
     });
