@@ -141,6 +141,7 @@ function TermTabsInner({
                           terminals={row1}
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
+                          isUpperRow
                         />
                       </ResizablePanel>
                       <ResizableHandle withHandle onDragging={handleDragging} />

@@ -16,6 +16,7 @@ interface Props {
   initialCommand: string;
   initialArgs: string[];
   cwd: string;
+  isUpperRow?: boolean;
 }
 
 interface SessionRestoreData {
@@ -38,6 +39,7 @@ export function TerminalComponent({
   initialCommand,
   initialArgs,
   cwd,
+  isUpperRow,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { term, geometry } = useXterm(containerRef);
@@ -54,7 +56,7 @@ export function TerminalComponent({
   } = useTerminalSession(term, geometry?.cols ?? 80, geometry?.rows ?? 24);
 
   // Resize hook: observes container and notifies PTY
-  useXtermResize(term, containerRef, hookSessionId ?? null);
+  useXtermResize(term, containerRef, hookSessionId ?? null, isUpperRow);
 
   // Input hook: xterm onData → PTY
   useXtermInput(term, hookSessionId);

@@ -12,9 +12,10 @@ interface Props {
   terminals: Terminal[];
   onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
   onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
+  isUpperRow?: boolean;
 }
 
-export function TerminalRow({ tabId, terminals, onSessionCreated, onCwdChanged }: Props) {
+export function TerminalRow({ tabId, terminals, onSessionCreated, onCwdChanged, isUpperRow }: Props) {
   const isMobile = useIsMobile();
   const { onDragStart, onDragEnd } = useTerminalResizeContext();
   const handleDragging = useCallback(
@@ -40,6 +41,7 @@ export function TerminalRow({ tabId, terminals, onSessionCreated, onCwdChanged }
                   term={term}
                   onSessionCreated={onSessionCreated}
                   onCwdChanged={onCwdChanged}
+                  isUpperRow={isUpperRow}
                 />
               </div>
             </div>
@@ -58,11 +60,13 @@ function TerminalPanel({
   term,
   onSessionCreated,
   onCwdChanged,
+  isUpperRow,
 }: {
   tabId: string;
   term: Terminal;
   onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
   onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
+  isUpperRow?: boolean;
 }) {
   const handleSessionCreated = useCallback(
     (sessionId: string) => {
@@ -86,6 +90,7 @@ function TerminalPanel({
       sessionId={term.sessionId}
       onSessionCreated={handleSessionCreated}
       onCwdChanged={handleCwdChanged}
+      isUpperRow={isUpperRow}
     />
   );
 }

@@ -19,7 +19,13 @@ const RESIZE_DEBOUNCE_MS = 200;
  * boundary, clipping it. Subtracting this value (in row units) from the
  * calculated row count keeps every visible row fully within bounds.
  */
-const ROW_ROUNDING_COMPENSATION = 1.6;
+const ROW_ROUNDING_COMPENSATION_DEFAULT = 1.6;
+/**
+ * Reduced compensation for upper-row terminals in multi-row layouts (>5 panes).
+ * Upper rows have less accumulated rounding error because the resizable panel
+ * boundary absorbs some of the sub-pixel slack.
+ */
+const ROW_ROUNDING_COMPENSATION_UPPER = 0.1;
 
 /**
  * Calculate terminal dimensions following VS Code's approach:
@@ -27,7 +33,7 @@ const ROW_ROUNDING_COMPENSATION = 1.6;
  * Used for initial fit only.
  */
 // oxlint-disable-next-line max-statements
-function computeDimensions(term: Terminal, container: HTMLElement) {
+function computeDimensions(term: Terminal, container: HTMLElement, compensation: number) {
   const core = (term as any)._core;
   const cellDims = core._renderService?.dimensions?.css?.cell;
   if (!cellDims || cellDims.width === 0 || cellDims.height === 0) return null;
@@ -67,7 +73,7 @@ function computeDimensions(term: Terminal, container: HTMLElement) {
   const scaledLineHeight = Math.floor(scaledCharHeight * lineHeight);
   const rows = Math.max(
     TERMINAL_METRICS.minimumRows,
-    Math.floor(scaledHeightAvailable / scaledLineHeight - ROW_ROUNDING_COMPENSATION),
+    Math.floor(scaledHeightAvailable / scaledLineHeight - compensation),
   );
 
   return { cols, rows, cellWidth: cellDims.width, cellHeight: cellDims.height };
@@ -78,7 +84,7 @@ function computeDimensions(term: Terminal, container: HTMLElement) {
  * Reads cell dimensions directly from xterm's render service and
  * does simple division — no device-pixel scaling needed for ongoing resizes.
  */
-function safeFit(term: Terminal) {
+function safeFit(term: Terminal, compensation: number) {
   const core = (term as any)._core;
   const cellHeight: number = core._renderService?.dimensions?.css?.cell?.height;
   const cellWidth: number = core._renderService?.dimensions?.css?.cell?.width;
@@ -93,7 +99,7 @@ function safeFit(term: Terminal) {
   }
 
   const cols = Math.max(1, Math.floor((container.clientWidth - padH) / cellWidth));
-  const rows = Math.max(1, Math.floor(container.clientHeight / cellHeight - ROW_ROUNDING_COMPENSATION));
+  const rows = Math.max(1, Math.floor(container.clientHeight / cellHeight - compensation));
 
   return { cols, rows, cellWidth, cellHeight };
 }
@@ -109,7 +115,11 @@ export function useXtermResize(
   term: Terminal | null,
   containerRef: RefObject<HTMLDivElement | null>,
   sessionId: string | null,
+  isUpperRow = false,
 ) {
+  const compensation = isUpperRow
+    ? ROW_ROUNDING_COMPENSATION_UPPER
+    : ROW_ROUNDING_COMPENSATION_DEFAULT;
   const [dims, setDims] = useState<{
     cols: number;
     rows: number;
@@ -123,7 +133,7 @@ export function useXtermResize(
   const fitAndNotify = useCallback(() => {
     if (!term) return;
 
-    const result = safeFit(term);
+    const result = safeFit(term, compensation);
     if (!result) return;
     if (result.cols === term.cols && result.rows === term.rows) return;
 
@@ -142,14 +152,14 @@ export function useXtermResize(
     }
 
     setDims(result);
-  }, [term]);
+  }, [term, compensation]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!term || !container) return;
 
     // Initial fit — VS Code approach (conservative rounding in device-pixel space)
-    const initial = computeDimensions(term, container);
+    const initial = computeDimensions(term, container, compensation);
     if (initial) {
       term.resize(initial.cols, initial.rows);
       setDims(initial);
@@ -165,7 +175,7 @@ export function useXtermResize(
       clearTimeout(timerRef.current);
       observer.disconnect();
     };
-  }, [term, containerRef, fitAndNotify]);
+  }, [term, containerRef, fitAndNotify, compensation]);
 
   return dims;
 }
