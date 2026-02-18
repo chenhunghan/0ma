@@ -12,6 +12,16 @@ import { TERMINAL_METRICS } from "./config";
 const RESIZE_DEBOUNCE_MS = 200;
 
 /**
+ * Row compensation for sub-pixel rounding accumulation.
+ * The device-pixel-space math uses Math.ceil on char height and Math.floor on
+ * line height — each step adds a fraction of a pixel per row. Over 30+ rows
+ * those fractions accumulate enough to push the last row past the container
+ * boundary, clipping it. Subtracting this value (in row units) from the
+ * calculated row count keeps every visible row fully within bounds.
+ */
+const ROW_ROUNDING_COMPENSATION = 1.6;
+
+/**
  * Calculate terminal dimensions following VS Code's approach:
  * all math in device-pixel space to match xterm's internal canvas rounding.
  * Used for initial fit only.
@@ -57,7 +67,7 @@ function computeDimensions(term: Terminal, container: HTMLElement) {
   const scaledLineHeight = Math.floor(scaledCharHeight * lineHeight);
   const rows = Math.max(
     TERMINAL_METRICS.minimumRows,
-    Math.floor(scaledHeightAvailable / scaledLineHeight),
+    Math.floor(scaledHeightAvailable / scaledLineHeight - ROW_ROUNDING_COMPENSATION),
   );
 
   return { cols, rows, cellWidth: cellDims.width, cellHeight: cellDims.height };
@@ -83,7 +93,7 @@ function safeFit(term: Terminal) {
   }
 
   const cols = Math.max(1, Math.floor((container.clientWidth - padH) / cellWidth));
-  const rows = Math.max(1, Math.floor(container.clientHeight / cellHeight - 1.8));
+  const rows = Math.max(1, Math.floor(container.clientHeight / cellHeight - ROW_ROUNDING_COMPENSATION));
 
   return { cols, rows, cellWidth, cellHeight };
 }

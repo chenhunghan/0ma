@@ -9,8 +9,8 @@ export const TERMINAL_FONT_FAMILY = "FiraCode Nerd Font, monospace";
 /** Options passed to new Terminal() */
 export const XTERM_OPTIONS: ITerminalOptions = {
   fontFamily: TERMINAL_FONT_FAMILY,
-  fontSize: 12,
-  lineHeight: 1.15,
+  fontSize: 14,
+  lineHeight: 1,
   cursorStyle: "block",
   cursorBlink: true,
   scrollback: 10000,
@@ -22,8 +22,8 @@ export const XTERM_OPTIONS: ITerminalOptions = {
 
 export const TERMINAL_METRICS = {
   fontFamily: TERMINAL_FONT_FAMILY,
-  fontSize: 12,
-  lineHeight: 1.15,
+  fontSize: 14,
+  lineHeight: 1,
   scrollbarWidth: 14,
   minimumCols: 2,
   minimumRows: 1,
