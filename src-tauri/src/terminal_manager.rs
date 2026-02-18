@@ -86,6 +86,11 @@ impl PtyManager {
             .map_err(|e| e.to_string())?;
 
         let mut cmd = CommandBuilder::new(command);
+        cmd.env("TERM", "xterm-256color");
+        // Suppress zsh's partial-line indicator (%) that appears before every prompt.
+        // xterm.js correctly renders the standout attribute zsh uses for this marker,
+        // making it visible — unlike some custom terminal renderers that don't.
+        cmd.env("PROMPT_EOL_MARK", "");
         cmd.args(args);
         if let Some(ref dir) = cwd {
             cmd.cwd(dir);
