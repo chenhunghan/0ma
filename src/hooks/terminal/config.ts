@@ -1,30 +1,19 @@
 /**
- * Terminal configuration for FrankenTermWeb.
+ * Terminal configuration for @xterm/xterm.
  */
-
-/** Default cell dimensions (px). FrankenTerm derives these from its built-in font. */
-export const CELL_WIDTH = 9;
-export const CELL_HEIGHT = 18;
+import type { ITerminalOptions } from "@xterm/xterm";
 
 /** Font family used by the terminal renderer. */
-export const TERMINAL_FONT_FAMILY = "FiraCode Nerd Font";
+export const TERMINAL_FONT_FAMILY = "FiraCode Nerd Font, monospace";
 
-/** Options passed to FrankenTermWeb.init() */
-export const FRANKENTERM_INIT_OPTIONS = {
-  cellWidth: CELL_WIDTH,
-  cellHeight: CELL_HEIGHT,
-  rendererBackend: "auto",
-  bracketedPaste: true,
-  focusEvents: true,
-  cursor: "block",
+/** Options passed to new Terminal() */
+export const XTERM_OPTIONS: ITerminalOptions = {
   fontFamily: TERMINAL_FONT_FAMILY,
-} as const;
-
-// Re-export for backwards compat
-export const TERM_CONFIG = {
-  fontFamily: '"FiraCode Nerd Font", monospace',
   fontSize: 12,
   lineHeight: 1.15,
+  cursorStyle: "block",
+  cursorBlink: true,
+  scrollback: 10000,
   theme: {
     background: "#000000",
     foreground: "#d4d4d8",
@@ -32,10 +21,10 @@ export const TERM_CONFIG = {
 };
 
 export const TERMINAL_METRICS = {
-  fontFamily: TERM_CONFIG.fontFamily,
-  fontSize: TERM_CONFIG.fontSize,
-  lineHeight: TERM_CONFIG.lineHeight,
-  scrollbarWidth: 10,
+  fontFamily: TERMINAL_FONT_FAMILY,
+  fontSize: 12,
+  lineHeight: 1.15,
+  scrollbarWidth: 14,
   minimumCols: 2,
   minimumRows: 1,
 } as const;

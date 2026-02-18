@@ -1,14 +1,13 @@
 import { useEffect, useRef } from "react";
 import {
-  useFrankenTerm,
-  useFrankenTermInput,
-  useFrankenTermResize,
+  useXterm,
+  useXtermInput,
+  useXtermResize,
   useTerminalSession,
 } from "../hooks/terminal";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
-import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
 
 interface Props {
   sessionId?: string;
@@ -32,17 +31,6 @@ function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
     });
 }
 
-function enqueueTermFeed(term: FrankenTermWeb, text: string) {
-  const bytes = new TextEncoder().encode(text);
-  queueMicrotask(() => {
-    try {
-      term.feed(bytes);
-    } catch (e) {
-      log.debug(`[TerminalComponent] deferred feed skipped due transient re-entry: ${e}`);
-    }
-  });
-}
-
 export function TerminalComponent({
   sessionId: propsSessionId,
   onSessionCreated,
@@ -52,7 +40,7 @@ export function TerminalComponent({
   cwd,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { term, geometry, canvasRef } = useFrankenTerm(containerRef);
+  const { term, geometry } = useXterm(containerRef);
   const spawnedRef = useRef(false);
   const restoredRef = useRef(false);
 
@@ -66,15 +54,10 @@ export function TerminalComponent({
   } = useTerminalSession(term, geometry?.cols ?? 80, geometry?.rows ?? 24);
 
   // Resize hook: observes container and notifies PTY
-  const dims = useFrankenTermResize(term, containerRef, hookSessionId ?? null);
+  useXtermResize(term, containerRef, hookSessionId ?? null);
 
-  // Input hook: keyboard/mouse/paste → FrankenTerm → PTY
-  const { updateGeometry } = useFrankenTermInput(term, hookSessionId, canvasRef);
-
-  // Keep input hook geometry in sync with resize
-  useEffect(() => {
-    updateGeometry(dims.cols, dims.cellWidth, dims.cellHeight);
-  }, [dims.cols, dims.cellWidth, dims.cellHeight, updateGeometry]);
+  // Input hook: xterm onData → PTY
+  useXtermInput(term, hookSessionId);
 
   // Spawn or reconnect when term is ready (fire once)
   useEffect(() => {
@@ -102,7 +85,7 @@ export function TerminalComponent({
     invoke<SessionRestoreData>("load_session_restore_cmd", { sessionId: propsSessionId })
       .then((restore) => {
         if (restore.historyText && term) {
-          enqueueTermFeed(term, restore.historyText);
+          term.write(restore.historyText);
         }
         return restore.cwd ?? cwd;
       })
@@ -148,7 +131,7 @@ export function TerminalComponent({
     const unlisten = listen<{ sessionId: string }>("pty-exited", (event) => {
       if (event.payload.sessionId === sessionId) {
         const msg = "\r\n\x1b[90m[Process exited]\x1b[0m\r\n";
-        enqueueTermFeed(term, msg);
+        term.write(msg);
       }
     });
     return () => {

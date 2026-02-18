@@ -1,4 +1,4 @@
-import type { FrankenTermWeb } from "src/wasm/frankenterm-web/FrankenTerm";
+import type { Terminal } from "@xterm/xterm";
 import { useTerminalSessionSpawn } from "./useTerminalSessionSpawn";
 import { useTerminalSessionConnect } from "./useTerminalSessionConnect";
 
@@ -6,10 +6,10 @@ import { useTerminalSessionConnect } from "./useTerminalSessionConnect";
  * Combined hook for convenience, providing spawn and connect functionality.
  * Session termination is handled separately via useTerminalSessionClose.
  *
- * Input and resize are handled by useFrankenTermInput and useFrankenTermResize
- * at the component level (they need canvas/container refs).
+ * Input and resize are handled by useXtermInput and useXtermResize
+ * at the component level.
  */
-export function useTerminalSession(term: FrankenTermWeb | null, cols: number, rows: number) {
+export function useTerminalSession(term: Terminal | null, cols: number, rows: number) {
   const spawnHook = useTerminalSessionSpawn(term, cols, rows);
   const connectHook = useTerminalSessionConnect(term);
 
