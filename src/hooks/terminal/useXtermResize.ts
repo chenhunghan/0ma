@@ -38,6 +38,10 @@ function computeDimensions(term: Terminal, container: HTMLElement, compensation:
   const cellDims = core._renderService?.dimensions?.css?.cell;
   if (!cellDims || cellDims.width === 0 || cellDims.height === 0) return null;
 
+  // Ignore resizes when the container is display: none (e.g. inactive tabs)
+  // This prevents the PTY from aggressively resizing to 1x1 and destroying layout
+  if (container.clientWidth === 0 || container.clientHeight === 0) return null;
+
   const dpr = window.devicePixelRatio || 1;
   const lineHeight = term.options.lineHeight ?? 1;
   const letterSpacing = term.options.letterSpacing ?? 0;
@@ -90,6 +94,10 @@ function safeFit(term: Terminal, compensation: number) {
   const cellWidth: number = core._renderService?.dimensions?.css?.cell?.width;
   const container = term.element?.parentElement;
   if (!container || !cellHeight || !cellWidth) return null;
+
+  // Ignore resizes when the container is display: none (e.g. inactive tabs)
+  // This prevents the PTY from aggressively resizing to 1x1 and destroying layout
+  if (container.clientWidth === 0 || container.clientHeight === 0) return null;
 
   const xtermEl = term.element;
   let padH = 0;
