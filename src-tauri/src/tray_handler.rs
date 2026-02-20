@@ -24,13 +24,6 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             let id = event.id.as_ref();
             match id {
                 "quit" => {
-                    // Persist terminal session history before exit
-                    let pty_manager = app.state::<crate::terminal_manager::PtyManager>();
-                    if let Ok(app_data_dir) = app.path().app_data_dir() {
-                        if let Err(e) = pty_manager.save_all_sessions(&app_data_dir) {
-                            log::error!("Failed to save sessions on quit: {}", e);
-                        }
-                    }
                     // Notify frontend to flush its persisted state
                     let _ = tauri::Emitter::emit(app, "app-will-quit", ());
                     // Brief pause so frontend can persist

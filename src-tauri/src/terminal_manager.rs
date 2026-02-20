@@ -3,13 +3,10 @@ use serde::Serialize;
 use std::{
     collections::HashMap,
     io::{Read, Write},
-    path::PathBuf,
     sync::{Arc, Mutex},
     thread,
 };
 use tauri::{ipc::Channel, AppHandle, Emitter, Runtime};
-
-use crate::terminal_persistence;
 
 const HISTORY_SIZE: usize = 100 * 1024; // 100KB
 const CWD_POLL_INTERVAL_MS: u64 = 300;
@@ -17,13 +14,6 @@ const CWD_POLL_INTERVAL_MS: u64 = 300;
 #[derive(Clone, Serialize)]
 pub struct PtyEvent {
     pub data: String,
-}
-
-#[derive(Clone, Serialize)]
-pub struct SessionRestoreData {
-    #[serde(rename = "historyText")]
-    pub history_text: Option<String>,
-    pub cwd: Option<String>,
 }
 
 // -- PTY Session --
@@ -282,38 +272,6 @@ impl PtyManager {
             Err("Session not found".to_string())
         }
     }
-
-    pub fn save_all_sessions(&self, app_data_dir: &PathBuf) -> Result<(), String> {
-        // Snapshot session data under the lock, then release before doing disk I/O
-        let snapshots: Vec<(String, Vec<u8>, Option<String>)> = {
-            let sessions = self.sessions.lock().map_err(|e| e.to_string())?;
-            sessions
-                .iter()
-                .filter_map(|(sid, session)| {
-                    let hist = session.history.lock().ok()?;
-                    let cwd = session.cwd.lock().ok()?;
-                    if hist.is_empty() && cwd.is_none() {
-                        return None;
-                    }
-                    Some((sid.clone(), hist.clone(), cwd.clone()))
-                })
-                .collect()
-        };
-
-        for (session_id, history, cwd) in &snapshots {
-            if !history.is_empty() {
-                terminal_persistence::save_session_history(app_data_dir, session_id, history)?;
-            }
-            if cwd.is_some() {
-                terminal_persistence::save_session_metadata(
-                    app_data_dir,
-                    session_id,
-                    cwd.as_deref(),
-                )?;
-            }
-        }
-        Ok(())
-    }
 }
 
 // -- Tauri Commands --
@@ -362,45 +320,4 @@ pub fn resize_pty_cmd(
 #[tauri::command]
 pub fn close_pty_cmd(manager: tauri::State<PtyManager>, session_id: String) -> Result<(), String> {
     manager.close(&session_id)
-}
-
-#[tauri::command]
-pub fn save_all_sessions_cmd(
-    manager: tauri::State<PtyManager>,
-    app: AppHandle,
-) -> Result<(), String> {
-    use tauri::Manager;
-    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    manager.save_all_sessions(&app_data_dir)
-}
-
-#[tauri::command]
-pub fn load_session_history_cmd(app: AppHandle, session_id: String) -> Result<String, String> {
-    use tauri::Manager;
-    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    let bytes = terminal_persistence::load_session_history(&app_data_dir, &session_id)?;
-    Ok(String::from_utf8_lossy(&bytes).to_string())
-}
-
-#[tauri::command]
-pub fn load_session_restore_cmd(
-    app: AppHandle,
-    session_id: String,
-) -> Result<SessionRestoreData, String> {
-    use tauri::Manager;
-    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    let history_text = terminal_persistence::load_session_history(&app_data_dir, &session_id)
-        .ok()
-        .map(|bytes| String::from_utf8_lossy(&bytes).to_string());
-    let cwd = terminal_persistence::load_session_metadata(&app_data_dir, &session_id)
-        .ok()
-        .and_then(|metadata| metadata.cwd);
-    Ok(SessionRestoreData { history_text, cwd })
-}
-
-#[tauri::command]
-pub fn delete_session_history_cmd(app: AppHandle, session_id: String) -> Result<(), String> {
-    use tauri::Manager;
-    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    terminal_persistence::delete_session_history(&app_data_dir, &session_id)
 }

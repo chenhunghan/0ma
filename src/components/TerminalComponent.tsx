@@ -5,7 +5,6 @@ import {
   useXtermResize,
   useTerminalSession,
 } from "../hooks/terminal";
-import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 
@@ -17,11 +16,6 @@ interface Props {
   initialArgs: string[];
   cwd: string;
   isUpperRow?: boolean;
-}
-
-interface SessionRestoreData {
-  historyText: string | null;
-  cwd: string | null;
 }
 
 function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
@@ -44,14 +38,12 @@ export function TerminalComponent({
   const containerRef = useRef<HTMLDivElement>(null);
   const { term, geometry } = useXterm(containerRef);
   const spawnedRef = useRef(false);
-  const restoredRef = useRef(false);
 
   // Session management (spawn/connect) — uses initial geometry for spawn dims
   const {
     sessionId: hookSessionId,
     spawn,
     connect,
-    connectError,
     isReady,
   } = useTerminalSession(term, geometry?.cols ?? 80, geometry?.rows ?? 24);
 
@@ -77,31 +69,6 @@ export function TerminalComponent({
       spawn({ args: initialArgs, command: initialCommand, cwd });
     }
   }, [term, geometry, propsSessionId, initialCommand, initialArgs, cwd, connect, spawn, isReady]);
-
-  // If reconnect failed (session gone after app restart), restore from disk + spawn new shell
-  useEffect(() => {
-    if (!connectError || !term || !propsSessionId || restoredRef.current) return;
-    restoredRef.current = true;
-
-    log.debug(`[TerminalComponent] reconnect failed, restoring from disk`);
-    invoke<SessionRestoreData>("load_session_restore_cmd", { sessionId: propsSessionId })
-      .then((restore) => {
-        if (restore.historyText && term) {
-          term.write(restore.historyText);
-        }
-        return restore.cwd ?? cwd;
-      })
-      .catch((e) => {
-        log.debug(`No persisted restore data for ${propsSessionId}: ${e}`);
-        return cwd;
-      })
-      .then((restoredCwd) => {
-        spawn({ args: initialArgs, command: initialCommand, cwd: restoredCwd });
-      })
-      .finally(() => {
-        invoke("delete_session_history_cmd", { sessionId: propsSessionId }).catch(() => {});
-      });
-  }, [connectError, term, propsSessionId, spawn, initialArgs, initialCommand, cwd]);
 
   // Lift sessionId up when created or replaced (e.g. after restore-spawn on restart)
   useEffect(() => {
