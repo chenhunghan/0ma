@@ -162,6 +162,19 @@ export function useXtermResize(
     setDims(result);
   }, [term, compensation]);
 
+  // Sync PTY size when sessionId becomes available (e.g. after spawn or reconnect)
+  // This is crucial because the initial fit might happen before the PTY is spawned,
+  // causing the PTY to get stuck at default 80x24 dims until the user resizes.
+  useEffect(() => {
+    if (term && sessionId) {
+      invoke("resize_pty_cmd", {
+        sessionId,
+        cols: term.cols,
+        rows: term.rows,
+      }).catch((e) => log.error(`[useXtermResize] initial resize_pty_cmd failed: ${e}`));
+    }
+  }, [term, sessionId]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!term || !container) return;
