@@ -12,12 +12,13 @@ export function useTerminalSessionConnect(term: Terminal | null) {
   const channelRef = useRef<Channel<PtyEvent> | null>(null);
   const termRef = useRef(term);
   termRef.current = term;
+  const attachmentInProgressRef = useRef(false);
 
   // Cleanup listener on unmount
   useEffect(
     () => () => {
       if (channelRef.current) {
-        channelRef.current.onmessage = () => {};
+        channelRef.current.onmessage = () => { };
       }
     },
     [],
@@ -25,25 +26,36 @@ export function useTerminalSessionConnect(term: Terminal | null) {
 
   const mutation = useMutation({
     mutationFn: async (targetSessionId: string): Promise<string> => {
-      // Silence the old listener before attaching a new session
-      if (channelRef.current) {
-        channelRef.current.onmessage = () => {};
+      // Prevent concurrent attach loops (e.g. from React StrictMode double effect)
+      if (attachmentInProgressRef.current) {
+        return targetSessionId;
       }
 
-      // 1. Create channel for output
-      const channel = new Channel<PtyEvent>();
-      channel.onmessage = (msg) => {
-        const t = termRef.current;
-        if (t) {
-          t.write(msg.data);
+      attachmentInProgressRef.current = true;
+
+      try {
+        // Silence the old listener before attaching a new session
+        if (channelRef.current) {
+          channelRef.current.onmessage = () => { };
         }
-      };
 
-      // 2. Attach channel to existing session
-      await invoke("attach_pty_cmd", { channel, sessionId: targetSessionId });
-      channelRef.current = channel;
+        // 1. Create channel for output
+        const channel = new Channel<PtyEvent>();
+        channel.onmessage = (msg) => {
+          const t = termRef.current;
+          if (t) {
+            t.write(msg.data);
+          }
+        };
 
-      return targetSessionId;
+        // 2. Attach channel to existing session
+        await invoke("attach_pty_cmd", { channel, sessionId: targetSessionId });
+        channelRef.current = channel;
+
+        return targetSessionId;
+      } finally {
+        attachmentInProgressRef.current = false;
+      }
     },
   });
 
