@@ -12,12 +12,6 @@ export function EmptyTerminalState({ onAdd }: { onAdd: () => void }) {
             <TerminalIcon className="size-8 text-muted-foreground/40" />
           </div>
           <div className="text-center max-w-[240px]">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-tight">
-              No active tabs
-            </p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1.5 leading-relaxed">
-              Click the plus icon above or the button below to start
-            </p>
           </div>
         </>
       )}
