@@ -19,7 +19,7 @@ import { ProvisionStepsDialog } from "./ProvisionStepsDialog";
 import { ProvisionStepsAccordion } from "./ProvisionStepsAccordion";
 import { ProbesDialog } from "./ProbesDialog";
 import { ProbesAccordion } from "./ProbesAccordion";
-import type { CopyToHost, Image, Mount, PortForward, Probe, Provision } from "src/types/LimaConfig";
+import type { CopyToHost, Image, InstanceTemplate, Mount, PortForward, Probe, Provision } from "src/types/LimaConfig";
 import { useSystemCapabilities } from "src/hooks/useSystemCapabilities";
 
 const EMPTY_IMAGES: Image[] = [];
@@ -55,7 +55,7 @@ function LabelWithTooltip({
 }
 
 export function CreateInstanceConfigForm() {
-  const { draftConfig, isLoading, updateField, updateDraftConfig, instanceName, setInstanceName } =
+  const { draftConfig, isLoading, updateField, updateDraftConfig, instanceName, setInstanceName, template, setTemplate } =
     useCreateLimaInstanceDraft();
   const { isKrunkitSupported, krunkitMissingReasons } = useSystemCapabilities();
   const isKrunkit = draftConfig?.vmType === "krunkit";
@@ -98,9 +98,13 @@ export function CreateInstanceConfigForm() {
       provision: (nextProvision: Provision[]) => {
         updateField("provision", nextProvision);
       },
+      template: (value: string | null) => {
+        const v = (value || "Docker").toLowerCase() as InstanceTemplate;
+        setTemplate(v);
+      },
       vmType: (value: string | null) => {
         if (!draftConfig) return;
-        const newVmType = value || "vz";
+        const newVmType = (value || "VZ").toLowerCase();
         if (newVmType === "krunkit") {
           updateDraftConfig({ ...draftConfig, vmType: newVmType, rosetta: undefined });
         } else {
@@ -108,7 +112,7 @@ export function CreateInstanceConfigForm() {
         }
       },
     }),
-    [draftConfig, setInstanceName, updateDraftConfig, updateField],
+    [draftConfig, setInstanceName, setTemplate, updateDraftConfig, updateField],
   );
 
   const dialogs = useMemo(
@@ -135,7 +139,22 @@ export function CreateInstanceConfigForm() {
     <TooltipProvider>
       <div className="grid grid-cols-2 gap-x-12 gap-y-4 w-full px-4 py-4 lg:px-8 lg:py-4 relative overflow-y-auto max-h-full items-start">
         <div className="flex flex-col gap-3 min-w-0">
-          <div className="grid grid-cols-[60px_1fr] items-center gap-4">
+          <div className="grid grid-cols-[70px_1fr] items-center gap-4">
+            <Label htmlFor="template" className="text-muted-foreground">
+              Template
+            </Label>
+            <Select value={template === "kubernetes" ? "Kubernetes" : "Docker"} onValueChange={handlers.template}>
+              <SelectTrigger id="template" className="w-full min-w-0" size="sm">
+                <SelectValue placeholder="Select Template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Docker">Docker</SelectItem>
+                <SelectItem value="Kubernetes">Kubernetes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-[70px_1fr] items-center gap-4">
             <Label htmlFor="instanceName" className="text-muted-foreground">
               Name
             </Label>
@@ -149,7 +168,7 @@ export function CreateInstanceConfigForm() {
             />
           </div>
 
-          <div className="grid grid-cols-[60px_1fr] items-center gap-4">
+          <div className="grid grid-cols-[70px_1fr] items-center gap-4">
             <LabelWithTooltip
               htmlFor="cpus"
               label="CPUs"
@@ -167,7 +186,7 @@ export function CreateInstanceConfigForm() {
             />
           </div>
 
-          <div className="grid grid-cols-[60px_1fr] items-center gap-4">
+          <div className="grid grid-cols-[70px_1fr] items-center gap-4">
             <LabelWithTooltip
               htmlFor="memory"
               label="Memory"
@@ -188,7 +207,7 @@ export function CreateInstanceConfigForm() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-[60px_1fr] items-center gap-4">
+          <div className="grid grid-cols-[70px_1fr] items-center gap-4">
             <LabelWithTooltip
               htmlFor="disk"
               label="Disk"
@@ -209,24 +228,24 @@ export function CreateInstanceConfigForm() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-[60px_1fr] items-center gap-4">
+          <div className="grid grid-cols-[70px_1fr] items-center gap-4">
             <Label htmlFor="vmType" className="text-muted-foreground">
               VmType
             </Label>
-            <Select value={draftConfig?.vmType || "vz"} onValueChange={handlers.vmType}>
+            <Select value={{ vz: "VZ", qemu: "QEMU", krunkit: "Krunkit" }[draftConfig?.vmType || "vz"] || "VZ"} onValueChange={handlers.vmType}>
               <SelectTrigger id="vmType" className="w-full min-w-0" size="sm">
                 <SelectValue placeholder="Select Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="vz">VZ</SelectItem>
-                <SelectItem value="qemu">QEMU</SelectItem>
-                <SelectItem value="krunkit">Krunkit</SelectItem>
+                <SelectItem value="VZ">VZ</SelectItem>
+                <SelectItem value="QEMU">QEMU</SelectItem>
+                <SelectItem value="Krunkit">Krunkit</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {isKrunkit && !isKrunkitSupported && krunkitMissingReasons.length > 0 && (
-            <ul className="text-xs text-amber-500 ml-[76px] list-disc list-inside">
+            <ul className="text-xs text-amber-500 ml-[86px] list-disc list-inside">
               {krunkitMissingReasons.map((reason) => (
                 <li key={reason}>{reason}</li>
               ))}

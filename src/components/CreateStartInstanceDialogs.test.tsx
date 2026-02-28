@@ -79,9 +79,12 @@ const mockDraftConfig: LimaConfig = {
   video: { display: "cocoa" },
 };
 
+const mockSetTemplate = vi.fn();
 const mockUseCreateLimaInstanceDraft = vi.fn(() => ({
   draftConfig: mockDraftConfig,
   instanceName: "test-instance",
+  setTemplate: mockSetTemplate,
+  template: "docker" as const,
 }));
 
 vi.mock("src/hooks/useCreateLimaInstanceDraft", () => ({
@@ -137,6 +140,9 @@ describe("CreateStartInstanceDialogs", () => {
 
     fireEvent.click(createButton);
     expect(screen.getByText("Create Instance")).toBeInTheDocument();
+
+    // Click the Docker template card to advance to config step
+    fireEvent.click(screen.getByText("Docker"));
 
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
   };
@@ -257,15 +263,18 @@ describe("CreateStartInstanceDialogs", () => {
     // 1. Open Create Dialog
     fireEvent.click(screen.getByLabelText("Create new Lima instance"));
 
-    // 2. Click Create
+    // 2. Select template
+    fireEvent.click(screen.getByText("Docker"));
+
+    // 3. Click Create
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
-    // 3. Verify Creating Logs Dialog appears
+    // 4. Verify Creating Logs Dialog appears
     await waitFor(() => {
       expect(screen.getByText("Creating Instance")).toBeInTheDocument();
     });
 
-    // 4. Simulate Error
+    // 5. Simulate Error
     act(() => {
       emitEvent("lima-instance-create-error", {
         instance_name: "test-instance",
@@ -290,6 +299,7 @@ describe("CreateStartInstanceDialogs", () => {
 
     // 1. Create
     fireEvent.click(screen.getByLabelText("Create new Lima instance"));
+    fireEvent.click(screen.getByText("Docker"));
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     await waitFor(() => expect(screen.getByText("Creating Instance")).toBeInTheDocument());
 
