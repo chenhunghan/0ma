@@ -2,7 +2,7 @@ import { useCallback, type KeyboardEvent, type MouseEvent, type ReactNode } from
 import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Separator } from "src/components/ui/separator";
 import { Button } from "src/components/ui/button";
-import { Columns2Icon, Loader2, SquarePlusIcon, Terminal as TerminalIcon, XIcon } from "lucide-react";
+import { ActivityIcon, Columns2Icon, Loader2, SquarePlusIcon, Terminal as TerminalIcon, XIcon } from "lucide-react";
 import { useIsMobile } from "src/hooks/useMediaQuery";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "src/components/ui/resizable";
 import type { Terminal } from "src/services/Terminal";
@@ -24,6 +24,7 @@ interface Props {
   initialArgs: string[];
   onTabChange: (id: string) => void;
   onAddTab: () => void;
+  onAddBtopTab: () => void;
   onAddSideBySide: (tabId: string) => void;
   onRemoveTab: (tabId: string) => void;
   onRemoveTerminal: (tabId: string, termId: number) => void;
@@ -37,7 +38,10 @@ interface Props {
 
 function deriveTabDisplayName(tab: TabGroup): string | null {
   const titles = [...new Set(tab.terminals.map((t) => t.title).filter(Boolean))];
-  return titles.length > 0 ? titles.join(" | ") : null;
+  if (titles.length > 0) return titles.join(" | ");
+  // Fall back to tab name if it's not the generic default
+  if (tab.name !== "Terminal") return tab.name;
+  return null;
 }
 
 function TermTabsInner({
@@ -47,6 +51,7 @@ function TermTabsInner({
   initialArgs,
   onTabChange,
   onAddTab,
+  onAddBtopTab,
   onAddSideBySide,
   onRemoveTab,
   onRemoveTerminal,
@@ -108,6 +113,16 @@ function TermTabsInner({
           className="size-7 hover:bg-muted"
         >
           <SquarePlusIcon className="size-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={onAddBtopTab}
+          disabled={addDisabled || tabs.length >= 10}
+          title="Metrics (btop)"
+          className="size-7 hover:bg-muted"
+        >
+          <ActivityIcon className="size-3.5" />
         </Button>
 
         {/* Tab Header Actions */}

@@ -172,6 +172,7 @@ describe("TermTabs", () => {
         initialArgs={["shell", "default"]}
         onTabChange={mockOnTabChange}
         onAddTab={mockOnAddTab}
+        onAddBtopTab={vi.fn()}
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
         onRemoveTerminal={mockOnRemoveTerminal}

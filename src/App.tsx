@@ -72,13 +72,14 @@ export function App() {
     setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
     counter: React.RefObject<number>,
     setActive: React.Dispatch<React.SetStateAction<string>>,
+    options?: { name?: string; command?: string; args?: string[] },
   ) => {
     const tabId = nextId(counter);
     const termId = nextId(counter);
     const newTab: TabGroup = {
       id: `tab-${tabId}`,
-      name: "Terminal",
-      terminals: [{ id: termId, name: "Terminal" }],
+      name: options?.name ?? "Terminal",
+      terminals: [{ id: termId, name: options?.name ?? "Terminal", command: options?.command, args: options?.args }],
     };
     setTabs((prev) => [...prev, newTab]);
     setActive(`tab-${tabId}`);
@@ -295,6 +296,14 @@ export function App() {
     [selectedName],
   );
 
+  const handleAddLimaBtopTab = useCallback(() => {
+    addTab(setLimaTabs, limaNextId, setLimaActive, {
+      name: "btop",
+      command: limaCommand,
+      args: [...limaArgs, "btop"],
+    });
+  }, [limaCommand, limaArgs]);
+
   const limaEmptyState = useMemo(
     () => <EmptyTerminalState onAdd={handleAddLimaTab} disabled={!isInstanceRunning} />,
     [handleAddLimaTab, isInstanceRunning],
@@ -315,6 +324,7 @@ export function App() {
         onTitleChanged={handleLimaTitleChanged}
         onTabChange={setLimaActive}
         onAddTab={handleAddLimaTab}
+        onAddBtopTab={handleAddLimaBtopTab}
         onAddSideBySide={handleAddLimaSideBySide}
         onRemoveTab={handleRemoveLimaTab}
         onRemoveTerminal={handleRemoveLimaTerminal}
@@ -323,6 +333,7 @@ export function App() {
       />
     ),
     [
+      handleAddLimaBtopTab,
       handleAddLimaSideBySide,
       handleAddLimaTab,
       handleLimaCwdChanged,

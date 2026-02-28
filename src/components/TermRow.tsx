@@ -127,8 +127,8 @@ const TerminalPanel = React.memo(
 
     return (
       <TerminalComponent
-        initialCommand={initialCommand}
-        initialArgs={initialArgs}
+        initialCommand={term.command ?? initialCommand}
+        initialArgs={term.args ?? initialArgs}
         cwd={term.cwd ?? "~"}
         sessionId={term.sessionId}
         onSessionCreated={handleSessionCreated}
