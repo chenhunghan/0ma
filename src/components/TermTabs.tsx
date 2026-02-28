@@ -2,7 +2,7 @@ import { useCallback, type KeyboardEvent, type MouseEvent, type ReactNode } from
 import { Tabs, TabsList, TabsTrigger } from "src/components/ui/tabs";
 import { Separator } from "src/components/ui/separator";
 import { Button } from "src/components/ui/button";
-import { Columns2Icon, SquarePlusIcon, Terminal as TerminalIcon, XIcon } from "lucide-react";
+import { Columns2Icon, Loader2, SquarePlusIcon, Terminal as TerminalIcon, XIcon } from "lucide-react";
 import { useIsMobile } from "src/hooks/useMediaQuery";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "src/components/ui/resizable";
 import type { Terminal } from "src/services/Terminal";
@@ -31,9 +31,9 @@ interface Props {
   emptyState: ReactNode;
 }
 
-function deriveTabDisplayName(tab: TabGroup): string {
+function deriveTabDisplayName(tab: TabGroup): string | null {
   const titles = [...new Set(tab.terminals.map((t) => t.title).filter(Boolean))];
-  return titles.length > 0 ? titles.join(" | ") : tab.name;
+  return titles.length > 0 ? titles.join(" | ") : null;
 }
 
 function TermTabsInner({
@@ -79,11 +79,12 @@ function TermTabsInner({
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  title={displayName}
+                  title={displayName ?? "Loading…"}
                   className="gap-1.5 px-2.5 h-7 group relative pr-1 border-transparent! data-active:border-transparent!"
                 >
                   <TerminalIcon className="size-3.5" />
-                  {!isMobile && <span className="text-[10px]">{displayName}</span>}
+                  {!displayName && <Loader2 className="size-2.5 animate-spin" />}
+                  {!isMobile && displayName && <span className="text-[10px]">{displayName}</span>}
                   <CloseTabButton tabId={tab.id} onRemoveTab={onRemoveTab} />
                 </TabsTrigger>
               );
