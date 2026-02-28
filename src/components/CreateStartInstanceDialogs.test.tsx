@@ -80,9 +80,11 @@ const mockDraftConfig: LimaConfig = {
 };
 
 const mockSetTemplate = vi.fn();
+const mockResetDraft = vi.fn();
 const mockUseCreateLimaInstanceDraft = vi.fn(() => ({
   draftConfig: mockDraftConfig,
   instanceName: "test-instance",
+  resetDraft: mockResetDraft,
   setTemplate: mockSetTemplate,
   template: "docker" as const,
 }));
