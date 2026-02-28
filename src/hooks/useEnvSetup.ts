@@ -19,19 +19,12 @@ export function useEnvSetup(selectedName?: string | null) {
   });
 
   const writeEnvSh = useMutation({
-    mutationFn: async (name: string) => {
-      const exists = await invoke<boolean>("check_env_sh_exists_cmd", {
-        instanceName: name,
-      });
-      if (exists) return null;
-      return invoke<string>("write_env_sh_cmd", { instanceName: name });
-    },
+    mutationFn: async (name: string) =>
+      invoke<string>("write_env_sh_cmd", { instanceName: name }),
     onSuccess: (path) => {
-      if (path) {
-        setEnvShPath(path);
-        setDialogOpen(true);
-        queryClient.invalidateQueries({ queryKey: ["envShExists"] });
-      }
+      setEnvShPath(path);
+      setDialogOpen(true);
+      queryClient.invalidateQueries({ queryKey: ["envShExists"] });
     },
   });
 

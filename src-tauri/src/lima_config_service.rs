@@ -102,13 +102,48 @@ end
     Ok(result_path.to_string_lossy().to_string())
 }
 
-/// Check whether env.sh already exists for the given instance.
+/// Check whether the env source line is present in the user's shell profile.
 pub fn check_env_sh_exists<R: tauri::Runtime>(
     app: &AppHandle<R>,
     instance_name: &str,
 ) -> Result<bool, String> {
     let instance_dir = get_instance_dir(app, instance_name)?;
-    Ok(instance_dir.join("env.sh").exists())
+    let shell = std::env::var("SHELL").unwrap_or_default();
+    let is_fish = shell.contains("fish");
+
+    let env_file = if is_fish { "env.fish" } else { "env.sh" };
+    let env_path = instance_dir.join(env_file);
+    let env_path_str = env_path.to_string_lossy();
+
+    let source_line = if is_fish {
+        format!(
+            r#"if test -f "{}"; source "{}"; end"#,
+            env_path_str, env_path_str
+        )
+    } else {
+        format!(r#"[ -f "{}" ] && source "{}""#, env_path_str, env_path_str)
+    };
+
+    let home = app
+        .path()
+        .home_dir()
+        .map_err(|e| format!("Failed to get home directory: {}", e))?;
+
+    let profile_path = if is_fish {
+        home.join(".config/fish/config.fish")
+    } else if shell.contains("zsh") {
+        home.join(".zshrc")
+    } else {
+        home.join(".bashrc")
+    };
+
+    if profile_path.exists() {
+        let existing = std::fs::read_to_string(&profile_path)
+            .map_err(|e| format!("Failed to read shell profile: {}", e))?;
+        return Ok(existing.contains(&source_line));
+    }
+
+    Ok(false)
 }
 
 /// Append a `source` line for the instance's env file to the user's shell profile.
