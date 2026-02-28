@@ -1,3 +1,4 @@
+use crate::k8s_service::check_k0s_available;
 use crate::lima_config::LimaConfig;
 use crate::yaml_handler::{get_instance_dir, get_yaml_path, write_yaml};
 use std::os::unix::fs::PermissionsExt;
@@ -45,23 +46,28 @@ pub fn write_env_sh<R: tauri::Runtime>(
     instance_name: &str,
 ) -> Result<String, String> {
     let instance_dir = get_instance_dir(app, instance_name)?;
+    let k8s = check_k0s_available(instance_name).unwrap_or(false);
 
     // Write POSIX shell version (bash/zsh)
     let env_sh_path = instance_dir.join("env.sh");
-    let sh_contents = format!(
-        r#"#!/bin/bash
-# 0ma environment for instance {name}
-export KUBECONFIG="$HOME/.lima/{name}/kubeconfig.yaml"
-export DOCKER_HOST="unix://$HOME/.lima/{name}/docker.sock"
-
-# Symlink kubeconfig to ~/.kube/ for tools like Lens
-if [ ! -L "$HOME/.kube/{name}" ]; then
-  mkdir -p "$HOME/.kube"
-  ln -sf "$HOME/.lima/{name}/kubeconfig.yaml" "$HOME/.kube/{name}"
-fi
-"#,
+    let mut sh_contents = format!(
+        "#!/bin/bash\n# 0ma environment for instance {name}\nexport DOCKER_HOST=\"unix://$HOME/.lima/{name}/docker.sock\"\n",
         name = instance_name
     );
+    if k8s {
+        sh_contents.push_str(&format!(
+            concat!(
+                "export KUBECONFIG=\"$HOME/.lima/{name}/kubeconfig.yaml\"\n",
+                "\n",
+                "# Symlink kubeconfig to ~/.kube/ for tools like Lens\n",
+                "if [ ! -L \"$HOME/.kube/{name}\" ]; then\n",
+                "  mkdir -p \"$HOME/.kube\"\n",
+                "  ln -sf \"$HOME/.lima/{name}/kubeconfig.yaml\" \"$HOME/.kube/{name}\"\n",
+                "fi\n",
+            ),
+            name = instance_name
+        ));
+    }
 
     std::fs::write(&env_sh_path, &sh_contents)
         .map_err(|e| format!("Failed to write env.sh: {}", e))?;
@@ -72,19 +78,24 @@ fi
 
     // Write fish version
     let env_fish_path = instance_dir.join("env.fish");
-    let fish_contents = format!(
-        r#"# 0ma environment for instance {name}
-set -gx KUBECONFIG "$HOME/.lima/{name}/kubeconfig.yaml"
-set -gx DOCKER_HOST "unix://$HOME/.lima/{name}/docker.sock"
-
-# Symlink kubeconfig to ~/.kube/ for tools like Lens
-if not test -L "$HOME/.kube/{name}"
-  mkdir -p "$HOME/.kube"
-  ln -sf "$HOME/.lima/{name}/kubeconfig.yaml" "$HOME/.kube/{name}"
-end
-"#,
+    let mut fish_contents = format!(
+        "# 0ma environment for instance {name}\nset -gx DOCKER_HOST \"unix://$HOME/.lima/{name}/docker.sock\"\n",
         name = instance_name
     );
+    if k8s {
+        fish_contents.push_str(&format!(
+            concat!(
+                "set -gx KUBECONFIG \"$HOME/.lima/{name}/kubeconfig.yaml\"\n",
+                "\n",
+                "# Symlink kubeconfig to ~/.kube/ for tools like Lens\n",
+                "if not test -L \"$HOME/.kube/{name}\"\n",
+                "  mkdir -p \"$HOME/.kube\"\n",
+                "  ln -sf \"$HOME/.lima/{name}/kubeconfig.yaml\" \"$HOME/.kube/{name}\"\n",
+                "end\n",
+            ),
+            name = instance_name
+        ));
+    }
 
     std::fs::write(&env_fish_path, &fish_contents)
         .map_err(|e| format!("Failed to write env.fish: {}", e))?;

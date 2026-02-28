@@ -415,6 +415,7 @@ export function App() {
         profileMessage={envSetup.profileMessage}
         profileError={envSetup.profileError}
         isAddingToProfile={envSetup.isAddingToProfile}
+        isK8sAvailable={envSetup.isK8sAvailable}
       />
     </div>
   );

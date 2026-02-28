@@ -19,6 +19,7 @@ interface Props {
   profileMessage: string | null;
   profileError: Error | null;
   isAddingToProfile: boolean;
+  isK8sAvailable: boolean;
 }
 
 export function EnvSetupDialog({
@@ -31,6 +32,7 @@ export function EnvSetupDialog({
   profileMessage,
   profileError,
   isAddingToProfile,
+  isK8sAvailable,
 }: Props) {
   const sourceCommand = `source "${envShPath}"`;
 
@@ -45,7 +47,7 @@ export function EnvSetupDialog({
           <DialogTitle>Environment Setup</DialogTitle>
           <DialogDescription>
             Instance <strong>{instanceName}</strong> is running. Configure your
-            shell to use kubectl and docker against it.
+            shell to use {isK8sAvailable ? "kubectl and docker" : "docker"} against it.
           </DialogDescription>
         </DialogHeader>
         <div className="py-2 space-y-3">

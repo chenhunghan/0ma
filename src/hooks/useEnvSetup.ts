@@ -1,12 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { useK8sAvailable } from "./useK8sAvailable";
 
 export function useEnvSetup(selectedName?: string | null) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [envShPath, setEnvShPath] = useState("");
   const [instanceName, setInstanceName] = useState<string | null>(null);
+  const { data: isK8sAvailable = false } = useK8sAvailable(instanceName ?? selectedName ?? null);
 
   const { data: envShExists } = useQuery({
     queryKey: ["envShExists", selectedName],
@@ -66,5 +68,6 @@ export function useEnvSetup(selectedName?: string | null) {
     profileError: appendToProfile.error,
     isAddingToProfile: appendToProfile.isPending,
     envShExists: envShExists ?? true,
+    isK8sAvailable,
   };
 }
