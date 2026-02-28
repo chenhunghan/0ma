@@ -10,15 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 
 interface Props {
   onRetry: () => void;
   onClose: () => void;
+  instanceName: string;
 }
 
-export function ErrorCreateInstanceDialog({ onRetry, onClose }: Props) {
-  const { instanceName } = useCreateLimaInstanceDraft();
+export function ErrorCreateInstanceDialog({ onRetry, onClose, instanceName }: Props) {
   const { isSuccess: isSuccessCreatingInstance, error: errorCreatingInstance } =
     useOnLimaCreateLogs(instanceName);
   const isCreatingInstanceFailed = errorCreatingInstance.length > 0 && !isSuccessCreatingInstance;

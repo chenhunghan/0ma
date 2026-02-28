@@ -10,20 +10,20 @@ import {
 } from "./ui/dialog";
 import { LogViewer } from "./LogViewer";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
-import { useCreateLimaInstanceDraft } from "src/hooks/useCreateLimaInstanceDraft";
 
 interface Props {
   open: boolean;
   onDialogOpenChange: (open: boolean) => void;
   onCreateInstanceSuccess?: () => void;
+  instanceName: string;
 }
 
 export function CreatingInstanceDialog({
   open,
   onDialogOpenChange,
   onCreateInstanceSuccess,
+  instanceName,
 }: Props) {
-  const { instanceName } = useCreateLimaInstanceDraft();
   const logState = useOnLimaCreateLogs(instanceName, {
     onSuccess: () => {
       onCreateInstanceSuccess?.();
