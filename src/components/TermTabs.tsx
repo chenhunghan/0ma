@@ -69,7 +69,7 @@ function TermTabsInner({
   return (
     <div className="h-full w-full flex flex-col overflow-hidden bg-background">
       {/* Tab Headers */}
-      <div className="flex items-center px-1">
+      <div className="flex items-center">
         {/* Tab Header Buttons */}
         <Tabs value={activeTabId} onValueChange={onTabChange} className="shrink-0">
           <TabsList className="bg-transparent h-8">
@@ -80,7 +80,7 @@ function TermTabsInner({
                   key={tab.id}
                   value={tab.id}
                   title={displayName}
-                  className="gap-1.5 px-2.5 h-7 group relative pr-1"
+                  className="gap-1.5 px-2.5 h-7 group relative pr-1 border-transparent! data-active:border-transparent!"
                 >
                   <TerminalIcon className="size-3.5" />
                   {!isMobile && <span className="text-[10px]">{displayName}</span>}
@@ -120,7 +120,6 @@ function TermTabsInner({
 
       <Separator />
 
-      {/* Content Area: Tabs Content */}
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden relative">
         {tabs.length === 0
           ? emptyState
