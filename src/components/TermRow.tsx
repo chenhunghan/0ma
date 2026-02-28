@@ -6,11 +6,11 @@ import type { Terminal } from "src/services/Terminal";
 import { TerminalComponent } from "./TerminalComponent";
 import { useTerminalResizeContext } from "src/contexts/useTerminalResizeContext";
 
-const EMPTY_ARGS: string[] = [];
-
 interface Props {
   tabId: string;
   terminals: Terminal[];
+  initialCommand: string;
+  initialArgs: string[];
   onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
   onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
   onTitleChanged: (tabId: string, termId: number, title: string) => void;
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export const TerminalRow = React.memo(
-  function TerminalRow({ tabId, terminals, onSessionCreated, onCwdChanged, onTitleChanged, onRemoveTerminal, isUpperRow }: Props) {
+  function TerminalRow({ tabId, terminals, initialCommand, initialArgs, onSessionCreated, onCwdChanged, onTitleChanged, onRemoveTerminal, isUpperRow }: Props) {
     const isMobile = useIsMobile();
     const { onDragStart, onDragEnd } = useTerminalResizeContext();
     const handleDragging = useCallback(
@@ -51,6 +51,8 @@ export const TerminalRow = React.memo(
                   <TerminalPanel
                     tabId={tabId}
                     term={term}
+                    initialCommand={initialCommand}
+                    initialArgs={initialArgs}
                     onSessionCreated={onSessionCreated}
                     onCwdChanged={onCwdChanged}
                     onTitleChanged={onTitleChanged}
@@ -70,6 +72,8 @@ export const TerminalRow = React.memo(
   (prevProps, nextProps) => {
     return (
       prevProps.tabId === nextProps.tabId &&
+      prevProps.initialCommand === nextProps.initialCommand &&
+      prevProps.initialArgs === nextProps.initialArgs &&
       prevProps.isUpperRow === nextProps.isUpperRow &&
       prevProps.onRemoveTerminal === nextProps.onRemoveTerminal &&
       prevProps.terminals.length === nextProps.terminals.length &&
@@ -84,6 +88,8 @@ const TerminalPanel = React.memo(
   function TerminalPanel({
     tabId,
     term,
+    initialCommand,
+    initialArgs,
     onSessionCreated,
     onCwdChanged,
     onTitleChanged,
@@ -91,6 +97,8 @@ const TerminalPanel = React.memo(
   }: {
     tabId: string;
     term: Terminal;
+    initialCommand: string;
+    initialArgs: string[];
     onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
     onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
     onTitleChanged: (tabId: string, termId: number, title: string) => void;
@@ -119,8 +127,8 @@ const TerminalPanel = React.memo(
 
     return (
       <TerminalComponent
-        initialCommand="zsh"
-        initialArgs={EMPTY_ARGS}
+        initialCommand={initialCommand}
+        initialArgs={initialArgs}
         cwd={term.cwd ?? "~"}
         sessionId={term.sessionId}
         onSessionCreated={handleSessionCreated}
@@ -136,6 +144,8 @@ const TerminalPanel = React.memo(
       prevProps.term.id === nextProps.term.id &&
       prevProps.term.sessionId === nextProps.term.sessionId &&
       prevProps.term.cwd === nextProps.term.cwd &&
+      prevProps.initialCommand === nextProps.initialCommand &&
+      prevProps.initialArgs === nextProps.initialArgs &&
       prevProps.isUpperRow === nextProps.isUpperRow
     );
   }

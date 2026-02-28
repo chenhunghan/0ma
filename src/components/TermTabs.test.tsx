@@ -62,6 +62,8 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        initialCommand="zsh"
+        initialArgs={[]}
         onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
@@ -77,6 +79,8 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        initialCommand="zsh"
+        initialArgs={[]}
         onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
@@ -95,6 +99,8 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        initialCommand="zsh"
+        initialArgs={[]}
         onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
@@ -112,6 +118,8 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        initialCommand="zsh"
+        initialArgs={[]}
         onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
@@ -129,6 +137,8 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        initialCommand="zsh"
+        initialArgs={[]}
         onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
@@ -158,6 +168,8 @@ describe("TermTabs", () => {
       <TermTabs
         tabs={createMockTabs()}
         activeTabId={activeTabId}
+        initialCommand="limactl"
+        initialArgs={["shell", "default"]}
         onTabChange={mockOnTabChange}
         onAddTab={mockOnAddTab}
         onAddSideBySide={mockOnAddSideBySide}

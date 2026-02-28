@@ -263,6 +263,12 @@ export function App() {
     [limaActive, limaTabs],
   );
 
+  const limaCommand = selectedName ? "limactl" : "zsh";
+  const limaArgs = useMemo(
+    () => (selectedName ? ["shell", selectedName] : []),
+    [selectedName],
+  );
+
   const limaEmptyState = useMemo(
     () => <EmptyTerminalState onAdd={handleAddLimaTab} />,
     [handleAddLimaTab],
@@ -292,6 +298,8 @@ export function App() {
       <TermTabs
         tabs={limaTabs}
         activeTabId={limaActive}
+        initialCommand={limaCommand}
+        initialArgs={limaArgs}
         onSessionCreated={handleLimaSessionCreated}
         onCwdChanged={handleLimaCwdChanged}
         onTitleChanged={handleLimaTitleChanged}
@@ -312,6 +320,8 @@ export function App() {
       handleRemoveLimaTab,
       handleRemoveLimaTerminal,
       limaActive,
+      limaArgs,
+      limaCommand,
       limaEmptyState,
       limaTabs,
     ],

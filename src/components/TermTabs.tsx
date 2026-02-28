@@ -20,6 +20,8 @@ export interface TabGroup {
 interface Props {
   tabs: TabGroup[];
   activeTabId: string;
+  initialCommand: string;
+  initialArgs: string[];
   onTabChange: (id: string) => void;
   onAddTab: () => void;
   onAddSideBySide: (tabId: string) => void;
@@ -39,6 +41,8 @@ function deriveTabDisplayName(tab: TabGroup): string | null {
 function TermTabsInner({
   tabs,
   activeTabId,
+  initialCommand,
+  initialArgs,
   onTabChange,
   onAddTab,
   onAddSideBySide,
@@ -143,6 +147,8 @@ function TermTabsInner({
                     <TerminalRow
                       tabId={tab.id}
                       terminals={row1}
+                      initialCommand={initialCommand}
+                      initialArgs={initialArgs}
                       onSessionCreated={onSessionCreated}
                       onCwdChanged={onCwdChanged}
                       onTitleChanged={onTitleChanged}
@@ -154,6 +160,8 @@ function TermTabsInner({
                         <TerminalRow
                           tabId={tab.id}
                           terminals={row1}
+                          initialCommand={initialCommand}
+                          initialArgs={initialArgs}
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
                           onTitleChanged={onTitleChanged}
@@ -166,6 +174,8 @@ function TermTabsInner({
                         <TerminalRow
                           tabId={tab.id}
                           terminals={row2}
+                          initialCommand={initialCommand}
+                          initialArgs={initialArgs}
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
                           onTitleChanged={onTitleChanged}
