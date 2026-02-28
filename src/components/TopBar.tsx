@@ -153,7 +153,7 @@ export function DeleteInstanceButton({
       />
       <DeletingInstanceDialog
         open={deletingOpen}
-        onDialogOpenChange={setDeletingOpen}
+        onDialogOpenChange={setDeletingDialogOpen}
         instanceName={deletingName}
         onSuccess={handleDeleteSuccess}
       />
