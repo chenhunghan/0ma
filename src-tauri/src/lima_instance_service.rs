@@ -1,6 +1,8 @@
 use crate::find_lima_executable;
 use crate::lima_config::LimaConfig;
 use std::process::Stdio;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
@@ -80,13 +82,16 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
             }
         };
 
+        // Track whether the ready event has been emitted (shared across stdout/stderr tasks)
+        let ready_emitted = Arc::new(AtomicBool::new(false));
+
         // Stream stdout
         if let Some(stdout) = child.stdout.take() {
             let app_handle_stdout = app_handle.clone();
             let instance_name_stdout = instance_name_clone.clone();
+            let ready_emitted_stdout = ready_emitted.clone();
             tokio::spawn(async move {
                 let mut reader = BufReader::new(stdout).lines();
-                let mut essential_ready = false;
 
                 while let Ok(Some(line)) = reader.next_line().await {
                     let _ = app_handle_stdout.emit(
@@ -94,13 +99,13 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
                         create_log_payload(instance_name_stdout.clone(), line.clone()),
                     );
 
-                    if !essential_ready
+                    if !ready_emitted_stdout.load(Ordering::Relaxed)
                         && (line.contains("Waiting for the optional requirement")
                             || (line.contains("optional requirement") && line.contains("msg"))
                             || line.contains("The optional requirement")
                                 && line.contains("is satisfied"))
                     {
-                        essential_ready = true;
+                        ready_emitted_stdout.store(true, Ordering::Relaxed);
                         let _ = app_handle_stdout.emit(
                             "lima-instance-start-ready",
                             create_log_payload(
@@ -119,9 +124,9 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
             let app_handle_stderr = app_handle.clone();
             let instance_name_stderr = instance_name_clone.clone();
             let stderr_lines_clone = stderr_lines.clone();
+            let ready_emitted_stderr = ready_emitted.clone();
             Some(tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
-                let mut essential_ready = false;
 
                 while let Ok(Some(line)) = reader.next_line().await {
                     stderr_lines_clone.lock().await.push(line.clone());
@@ -130,13 +135,13 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
                         create_log_payload(instance_name_stderr.clone(), line.clone()),
                     );
 
-                    if !essential_ready
+                    if !ready_emitted_stderr.load(Ordering::Relaxed)
                         && (line.contains("Waiting for the optional requirement")
                             || (line.contains("optional requirement") && line.contains("msg"))
                             || line.contains("The optional requirement")
                                 && line.contains("is satisfied"))
                     {
-                        essential_ready = true;
+                        ready_emitted_stderr.store(true, Ordering::Relaxed);
                         let _ = app_handle_stderr.emit(
                             "lima-instance-start-ready",
                             create_log_payload(
@@ -159,6 +164,18 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
         match wait_result {
             Ok(status) => {
                 if status.success() {
+                    // Emit ready event if it was never emitted during startup.
+                    // This happens when the config has no probes (e.g. Docker-only
+                    // template), so Lima never outputs "optional requirement" messages.
+                    if !ready_emitted.load(Ordering::Relaxed) {
+                        let _ = app_handle.emit(
+                            "lima-instance-start-ready",
+                            create_log_payload(
+                                instance_name_clone.clone(),
+                                format!("Instance '{}' is ready for use", instance_name_clone),
+                            ),
+                        );
+                    }
                     let _ = app_handle.emit(
                         "lima-instance-start-success",
                         create_log_payload(instance_name_clone, "Started".to_string()),
