@@ -5,6 +5,7 @@
       "release-type": "rust",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
+      "include-paths": ["src-tauri", "src", "public", "index.html", "package.json", "package-lock.json", "vite.config.ts", "tsconfig.json", "tsconfig.node.json", "postcss.config.js"],
       "extra-files": [
         {
           "type": "json",
