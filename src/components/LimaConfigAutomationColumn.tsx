@@ -49,7 +49,7 @@ export function LimaConfigAutomationColumn() {
   }
 
   return (
-    <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative overflow-y-auto">
+    <div className="flex flex-col gap-4 w-full px-4 py-4 lg:px-12 lg:py-4 relative">
       <ConfigSection dialog={provisionDialog}>
         <ProvisionStepsAccordion value={provision} />
       </ConfigSection>
