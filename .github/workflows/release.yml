@@ -47,3 +47,31 @@ jobs:
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "${{ needs.release-please.outputs.tag_name }}" src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+
+  update-homebrew:
+    needs: [release-please, build]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - id: version
+        run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+
+      - id: sha
+        run: |
+          curl -fSL -o 0ma.dmg "https://github.com/chenhunghan/0ma/releases/download/v${{ steps.version.outputs.version }}/0ma_${{ steps.version.outputs.version }}_aarch64.dmg"
+          echo "sha256=$(shasum -a 256 0ma.dmg | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/chenhunghan/homebrew-tap.git"
+          cd homebrew-tap
+          sed -i "s/version \".*\"/version \"${{ steps.version.outputs.version }}\"/" Casks/0ma.rb
+          sed -i "s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha256 }}\"/" Casks/0ma.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/0ma.rb
+          git commit -m "chore: update 0ma to ${{ steps.version.outputs.version }}"
+          git push
