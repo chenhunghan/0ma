@@ -211,6 +211,39 @@ impl PtyManager {
             });
         }
 
+        // For limactl shell sessions, inject title integration commands into
+        // the remote shell via PTY stdin after a brief delay.  The delay lets
+        // limactl/SSH set raw mode on the PTY so the write is not locally
+        // echoed.  The remote shell will echo then execute the commands;
+        // `clear` at the end wipes the transient output.
+        //
+        // We wrap the zsh branch in `eval '...'` so that bash (which must
+        // parse the entire if/elif/fi) never encounters zsh-only syntax.
+        if command == "limactl" && args.first().map(|a| a.as_str()) == Some("shell") {
+            let writer = session.writer.clone();
+            thread::spawn(move || {
+                thread::sleep(std::time::Duration::from_millis(300));
+                let setup = concat!(
+                    " if [ -n \"$ZSH_VERSION\" ]; then",
+                    " eval '",
+                    "__0ma_precmd(){ print -Pn \"\\e]0;zsh\\a\" };",
+                    " __0ma_preexec(){ print -Pn \"\\e]0;${1%% *}\\a\" };",
+                    " precmd_functions+=(__0ma_precmd);",
+                    " preexec_functions+=(__0ma_preexec)';",
+                    " elif [ -n \"$BASH_VERSION\" ]; then",
+                    // Append our title to PS1 so it renders AFTER any existing
+                    // title sequence (e.g. Ubuntu's \u@\h:\w) — last one wins.
+                    " PS1=\"$PS1\\[\\e]0;bash\\a\\]\";",
+                    " trap 'printf \"\\e]0;%s\\a\" \"${BASH_COMMAND%% *}\"' DEBUG;",
+                    " fi; clear\n",
+                );
+                if let Ok(mut w) = writer.lock() {
+                    let _ = w.write_all(setup.as_bytes());
+                    let _ = w.flush();
+                }
+            });
+        }
+
         self.sessions
             .lock()
             .map_err(|e| e.to_string())?
