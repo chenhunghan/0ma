@@ -59,6 +59,10 @@ export function InstanceSelector() {
   const { instances, isLoading: isLoadingInstances } = useLimaInstances();
   const { selectedName, isLoading, setSelectedName } = useSelectedInstance();
 
+  if (!isLoading && !isLoadingInstances && instances.length === 0) {
+    return null;
+  }
+
   return (
     <Select
       value={selectedName ?? ""}
@@ -66,7 +70,7 @@ export function InstanceSelector() {
       disabled={isLoading || isLoadingInstances}
     >
       <SelectTrigger className="w-[180px]">
-        {isLoading ? (
+        {isLoading || isLoadingInstances ? (
           <div className="flex items-center gap-2">
             <Spinner />
             <span className="text-muted-foreground">Loading...</span>
