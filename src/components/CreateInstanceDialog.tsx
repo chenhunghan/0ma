@@ -105,7 +105,7 @@ export function CreateInstanceDialog({
         variant="default"
         size="icon"
         aria-label="Create new Lima instance"
-        className={buttonClassName}
+        className={`cursor-pointer ${buttonClassName}`}
       >
         <PlusIcon />
       </Button>

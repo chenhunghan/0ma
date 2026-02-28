@@ -378,7 +378,7 @@ export function App() {
                 size="icon-xs"
                 onClick={() => envSetup.triggerEnvSetup(selectedName!)}
                 title="Environment setup"
-                className="ml-auto size-7 hover:bg-muted"
+                className="ml-auto size-7 cursor-pointer hover:bg-muted"
               >
                 <FileTerminalIcon className="size-3.5" />
               </Button>

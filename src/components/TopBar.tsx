@@ -139,7 +139,7 @@ export function DeleteInstanceButton({
         variant="destructive"
         size="icon"
         aria-label="Delete Lima instance"
-        className={className}
+        className={`cursor-pointer ${className ?? ""}`}
         disabled={!selectedName || isLoading}
         onClick={handleClick}
       >

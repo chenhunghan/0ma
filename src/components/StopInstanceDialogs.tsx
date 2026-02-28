@@ -71,6 +71,7 @@ export function StopInstanceDialogs({
         <Button
           variant="outline"
           aria-label="Start Lima instance"
+          className="cursor-pointer"
           disabled={isLoading}
           onClick={handleStartClick}
         >
@@ -81,6 +82,7 @@ export function StopInstanceDialogs({
         <Button
           variant="secondary"
           aria-label="Stop Lima instance"
+          className="cursor-pointer"
           disabled={!isRunning || isLoading}
           onClick={handleStopClick}
         >
