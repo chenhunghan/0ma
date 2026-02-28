@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
+import { WebglAddon } from "@xterm/addon-webgl";
 import * as log from "@tauri-apps/plugin-log";
 import { XTERM_OPTIONS } from "./config";
 import "@xterm/xterm/css/xterm.css";
@@ -32,6 +33,19 @@ export function useXterm(containerRef: RefObject<HTMLDivElement | null>) {
 
     const t = new Terminal(XTERM_OPTIONS);
     t.open(container);
+
+    // GPU-accelerated rendering via WebGL, falls back to DOM if unavailable
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => {
+        webgl.dispose();
+        log.warn("[useXterm] WebGL context lost, falling back to DOM renderer");
+      });
+      t.loadAddon(webgl);
+      log.debug("[useXterm] WebGL renderer loaded");
+    } catch (e) {
+      log.warn(`[useXterm] WebGL unavailable, using DOM renderer: ${e}`);
+    }
 
     // Read actual cell dimensions from xterm internals (VS Code pattern)
     const core = (t as any)._core;
