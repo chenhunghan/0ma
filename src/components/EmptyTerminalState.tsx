@@ -18,11 +18,12 @@ export function EmptyTerminalState({ onAdd }: { onAdd: () => void }) {
       <Button
         variant="outline"
         size={isMobile ? "xs" : "sm"}
-        className="mt-1 h-7 px-4 text-[10px] gap-1.5"
+        className="h-7 px-4 text-[10px] gap-2"
         onClick={onAdd}
+        title="New Terminal"
       >
         <SquarePlusIcon className="size-3" />
-        New Tab
+        Terminal
       </Button>
     </div>
   );

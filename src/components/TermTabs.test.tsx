@@ -181,10 +181,10 @@ describe("TermTabs", () => {
     expect(mockOnTabChange).toHaveBeenCalledWith("tab-2");
   });
 
-  it("calls onAddTab when 'New Tab' button is clicked", () => {
+  it("calls onAddTab when 'New Terminal' button is clicked", () => {
     renderTermTabs("tab-1");
 
-    const addButton = screen.getByTitle("New Tab");
+    const addButton = screen.getByTitle("New Terminal");
     fireEvent.click(addButton);
 
     expect(mockOnAddTab).toHaveBeenCalledWith();

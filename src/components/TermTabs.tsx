@@ -97,7 +97,7 @@ function TermTabsInner({
           size="icon-xs"
           onClick={onAddTab}
           disabled={tabs.length >= 10}
-          title="New Tab"
+          title="New Terminal"
           className="size-7 hover:bg-muted"
         >
           <SquarePlusIcon className="size-3.5" />
