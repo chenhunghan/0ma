@@ -47,6 +47,7 @@ describe("TerminalRow", () => {
   const mockOnSessionCreated = vi.fn();
   const mockOnCwdChanged = vi.fn();
   const mockOnTitleChanged = vi.fn();
+  const mockOnRemoveTerminal = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,6 +62,7 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
     expect(screen.getByTestId("resizable-panel-group")).toBeInTheDocument();
@@ -75,6 +77,7 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
 
@@ -92,6 +95,7 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
 
@@ -108,6 +112,7 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
 
@@ -124,6 +129,7 @@ describe("TerminalRow", () => {
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}
+        onRemoveTerminal={mockOnRemoveTerminal}
       />,
     );
 
@@ -137,6 +143,7 @@ describe("TermTabs", () => {
   const mockOnAddTab = vi.fn();
   const mockOnAddSideBySide = vi.fn();
   const mockOnRemoveTab = vi.fn();
+  const mockOnRemoveTerminal = vi.fn();
   const mockOnSessionCreated = vi.fn();
   const mockOnCwdChanged = vi.fn();
   const mockOnTitleChanged = vi.fn();
@@ -155,6 +162,7 @@ describe("TermTabs", () => {
         onAddTab={mockOnAddTab}
         onAddSideBySide={mockOnAddSideBySide}
         onRemoveTab={mockOnRemoveTab}
+        onRemoveTerminal={mockOnRemoveTerminal}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
         onTitleChanged={mockOnTitleChanged}

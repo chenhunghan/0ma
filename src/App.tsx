@@ -165,6 +165,47 @@ export function App() {
     }
   };
 
+  const removeTerminal = (
+    tabId: string,
+    termId: number,
+    currentTabs: TabGroup[],
+    setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
+    activeTab: string,
+    setActiveTab: React.Dispatch<React.SetStateAction<string>>,
+  ) => {
+    const tab = currentTabs.find((t) => t.id === tabId);
+    if (!tab) return;
+
+    const term = tab.terminals.find((t) => t.id === termId);
+    if (term?.sessionId) {
+      invoke("close_pty_cmd", { sessionId: term.sessionId }).catch((error) =>
+        log.error("Failed to close PTY:", error),
+      );
+      invoke("delete_session_history_cmd", { sessionId: term.sessionId }).catch(() => {});
+    }
+
+    const remaining = tab.terminals.filter((t) => t.id !== termId);
+    if (remaining.length === 0) {
+      // PTY already closed above — remove the tab without re-closing sessions
+      const tabIdx = currentTabs.findIndex((t) => t.id === tabId);
+      const nextTabs = currentTabs.filter((t) => t.id !== tabId);
+      setTabs(nextTabs);
+
+      if (activeTab === tabId) {
+        if (nextTabs.length > 0) {
+          const nextActiveIdx = Math.max(0, tabIdx - 1);
+          setActiveTab(nextTabs[nextActiveIdx].id);
+        } else {
+          setActiveTab("");
+        }
+      }
+    } else {
+      setTabs((prev) =>
+        prev.map((t) => (t.id === tabId ? { ...t, terminals: remaining } : t)),
+      );
+    }
+  };
+
   const handleTerminalSessionCreated = (
     tabId: string,
     termId: number,
@@ -267,6 +308,13 @@ export function App() {
     [limaActive, limaTabs],
   );
 
+  const handleRemoveLimaTerminal = useCallback(
+    (tabId: string, termId: number) => {
+      removeTerminal(tabId, termId, limaTabs, setLimaTabs, limaActive, setLimaActive);
+    },
+    [limaActive, limaTabs],
+  );
+
   const limaEmptyState = useMemo(
     () => <EmptyTerminalState onAdd={handleAddLimaTab} />,
     [handleAddLimaTab],
@@ -303,6 +351,7 @@ export function App() {
         onAddTab={handleAddLimaTab}
         onAddSideBySide={handleAddLimaSideBySide}
         onRemoveTab={handleRemoveLimaTab}
+        onRemoveTerminal={handleRemoveLimaTerminal}
         emptyState={limaEmptyState}
       />
     ),
@@ -313,6 +362,7 @@ export function App() {
       handleLimaSessionCreated,
       handleLimaTitleChanged,
       handleRemoveLimaTab,
+      handleRemoveLimaTerminal,
       limaActive,
       limaEmptyState,
       limaTabs,

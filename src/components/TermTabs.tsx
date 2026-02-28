@@ -24,6 +24,7 @@ interface Props {
   onAddTab: () => void;
   onAddSideBySide: (tabId: string) => void;
   onRemoveTab: (tabId: string) => void;
+  onRemoveTerminal: (tabId: string, termId: number) => void;
   onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
   onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
   onTitleChanged: (tabId: string, termId: number, title: string) => void;
@@ -42,6 +43,7 @@ function TermTabsInner({
   onAddTab,
   onAddSideBySide,
   onRemoveTab,
+  onRemoveTerminal,
   onSessionCreated,
   onCwdChanged,
   onTitleChanged,
@@ -143,6 +145,7 @@ function TermTabsInner({
                       onSessionCreated={onSessionCreated}
                       onCwdChanged={onCwdChanged}
                       onTitleChanged={onTitleChanged}
+                      onRemoveTerminal={onRemoveTerminal}
                     />
                   ) : (
                     <ResizablePanelGroup direction="vertical">
@@ -153,6 +156,7 @@ function TermTabsInner({
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
                           onTitleChanged={onTitleChanged}
+                          onRemoveTerminal={onRemoveTerminal}
                           isUpperRow
                         />
                       </ResizablePanel>
@@ -164,6 +168,7 @@ function TermTabsInner({
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
                           onTitleChanged={onTitleChanged}
+                          onRemoveTerminal={onRemoveTerminal}
                         />
                       </ResizablePanel>
                     </ResizablePanelGroup>
