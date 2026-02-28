@@ -91,18 +91,19 @@ function TermTabsInner({
           </TabsList>
         </Tabs>
 
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={onAddTab}
+          disabled={tabs.length >= 10}
+          title="New Tab"
+          className="size-7 hover:bg-muted"
+        >
+          <SquarePlusIcon className="size-3.5" />
+        </Button>
+
         {/* Tab Header Actions */}
         <div className="ml-auto flex items-center pr-1 gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={onAddTab}
-            disabled={tabs.length >= 10}
-            title="New Tab"
-            className="size-7 hover:bg-muted"
-          >
-            <SquarePlusIcon className="size-3.5" />
-          </Button>
           <Button
             variant="ghost"
             size="icon-xs"
