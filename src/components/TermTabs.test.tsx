@@ -46,6 +46,7 @@ const createEmptyState = (onAdd: () => void) => createElement(EmptyTerminalState
 describe("TerminalRow", () => {
   const mockOnSessionCreated = vi.fn();
   const mockOnCwdChanged = vi.fn();
+  const mockOnTitleChanged = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,6 +60,7 @@ describe("TerminalRow", () => {
         terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
+        onTitleChanged={mockOnTitleChanged}
       />,
     );
     expect(screen.getByTestId("resizable-panel-group")).toBeInTheDocument();
@@ -72,6 +74,7 @@ describe("TerminalRow", () => {
         terminals={terminals}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
+        onTitleChanged={mockOnTitleChanged}
       />,
     );
 
@@ -88,6 +91,7 @@ describe("TerminalRow", () => {
         terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
+        onTitleChanged={mockOnTitleChanged}
       />,
     );
 
@@ -103,6 +107,7 @@ describe("TerminalRow", () => {
         terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
+        onTitleChanged={mockOnTitleChanged}
       />,
     );
 
@@ -118,6 +123,7 @@ describe("TerminalRow", () => {
         terminals={createMockTerminals()}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
+        onTitleChanged={mockOnTitleChanged}
       />,
     );
 
@@ -133,6 +139,7 @@ describe("TermTabs", () => {
   const mockOnRemoveTab = vi.fn();
   const mockOnSessionCreated = vi.fn();
   const mockOnCwdChanged = vi.fn();
+  const mockOnTitleChanged = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -150,6 +157,7 @@ describe("TermTabs", () => {
         onRemoveTab={mockOnRemoveTab}
         onSessionCreated={mockOnSessionCreated}
         onCwdChanged={mockOnCwdChanged}
+        onTitleChanged={mockOnTitleChanged}
         emptyState={createEmptyState(mockOnAddTab)}
       />,
     );

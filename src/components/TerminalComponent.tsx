@@ -12,6 +12,7 @@ interface Props {
   sessionId?: string;
   onSessionCreated?: (sessionId: string) => void;
   onCwdChanged?: (cwd: string) => void;
+  onTitleChanged?: (title: string) => void;
   initialCommand: string;
   initialArgs: string[];
   cwd: string;
@@ -30,6 +31,7 @@ export function TerminalComponent({
   sessionId: propsSessionId,
   onSessionCreated,
   onCwdChanged,
+  onTitleChanged,
   initialCommand,
   initialArgs,
   cwd,
@@ -91,6 +93,18 @@ export function TerminalComponent({
       cleanupTauriListener(unlisten);
     };
   }, [hookSessionId, onCwdChanged]);
+
+  // Listen for terminal title changes (OSC escape sequences)
+  useEffect(() => {
+    if (!term || !onTitleChanged) return;
+
+    const disposable = term.onTitleChange((title) => {
+      onTitleChanged(title);
+    });
+    return () => {
+      disposable.dispose();
+    };
+  }, [term, onTitleChanged]);
 
   // Show message when the PTY process exits (e.g. user typed `exit`)
   useEffect(() => {

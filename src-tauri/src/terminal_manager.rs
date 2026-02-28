@@ -3,10 +3,11 @@ use serde::Serialize;
 use std::{
     collections::HashMap,
     io::{Read, Write},
+    path::PathBuf,
     sync::{Arc, Mutex},
     thread,
 };
-use tauri::{ipc::Channel, AppHandle, Emitter, Runtime};
+use tauri::{ipc::Channel, AppHandle, Emitter, Manager, Runtime};
 
 const HISTORY_SIZE: usize = 100 * 1024; // 100KB
 const CWD_POLL_INTERVAL_MS: u64 = 300;
@@ -81,6 +82,19 @@ impl PtyManager {
         // xterm.js correctly renders the standout attribute zsh uses for this marker,
         // making it visible — unlike some custom terminal renderers that don't.
         cmd.env("PROMPT_EOL_MARK", "");
+
+        // Inject shell integration via ZDOTDIR so zsh emits OSC title sequences.
+        // Our custom .zshenv restores ZDOTDIR and sources the user's .zshenv,
+        // then our .zshrc sources the user's .zshrc and appends precmd/preexec hooks.
+        if command == "zsh" || command.ends_with("/zsh") {
+            if let Ok(integration_dir) = Self::ensure_zsh_integration(app) {
+                let orig = std::env::var("ZDOTDIR")
+                    .unwrap_or_else(|_| std::env::var("HOME").unwrap_or_default());
+                cmd.env("_0MA_ORIG_ZDOTDIR", &orig);
+                cmd.env("ZDOTDIR", integration_dir.to_string_lossy().as_ref());
+            }
+        }
+
         cmd.args(args);
         if let Some(ref dir) = cwd {
             cmd.cwd(dir);
@@ -202,6 +216,49 @@ impl PtyManager {
             .map_err(|e| e.to_string())?
             .insert(session_id.clone(), session);
         Ok(session_id)
+    }
+
+    /// Create the shell integration directory with `.zshenv` and `.zshrc` files.
+    /// These files make zsh emit OSC escape sequences for the terminal title
+    /// while transparently sourcing the user's own dotfiles.
+    fn ensure_zsh_integration<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+        let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+        let dir = data_dir.join("shell-integration").join("zsh");
+        std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+
+        // .zshenv: runs first — source user's .zshenv, keep ZDOTDIR pointed here
+        // so zsh continues to read our .zshrc next.
+        let zshenv_path = dir.join(".zshenv");
+        let zshenv = concat!(
+            "[[ -f \"${_0MA_ORIG_ZDOTDIR}/.zshenv\" ]] && ",
+            "builtin source \"${_0MA_ORIG_ZDOTDIR}/.zshenv\"\n",
+        );
+        std::fs::write(&zshenv_path, zshenv).map_err(|e| e.to_string())?;
+
+        // .zprofile: forward to user's .zprofile (important on macOS for PATH setup)
+        let zprofile_path = dir.join(".zprofile");
+        let zprofile = concat!(
+            "[[ -f \"${_0MA_ORIG_ZDOTDIR}/.zprofile\" ]] && ",
+            "builtin source \"${_0MA_ORIG_ZDOTDIR}/.zprofile\"\n",
+        );
+        std::fs::write(&zprofile_path, zprofile).map_err(|e| e.to_string())?;
+
+        // .zshrc: restore ZDOTDIR, source user's .zshrc, then add title hooks.
+        let zshrc_path = dir.join(".zshrc");
+        let zshrc = concat!(
+            "ZDOTDIR=\"${_0MA_ORIG_ZDOTDIR}\"\n",
+            "[[ -f \"${_0MA_ORIG_ZDOTDIR}/.zshrc\" ]] && ",
+            "builtin source \"${_0MA_ORIG_ZDOTDIR}/.zshrc\"\n",
+            "\n",
+            "# Terminal title integration\n",
+            "__0ma_precmd() { print -Pn \"\\e]0;zsh\\a\" }\n",
+            "__0ma_preexec() { print -Pn \"\\e]0;${1%% *}\\a\" }\n",
+            "precmd_functions+=(__0ma_precmd)\n",
+            "preexec_functions+=(__0ma_preexec)\n",
+        );
+        std::fs::write(&zshrc_path, zshrc).map_err(|e| e.to_string())?;
+
+        Ok(dir)
     }
 
     pub fn close(&self, session_id: &str) -> Result<(), String> {

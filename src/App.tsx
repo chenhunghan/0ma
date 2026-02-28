@@ -40,8 +40,7 @@ export function App() {
 
   const [limaTabs, setLimaTabs] = useState<TabGroup[]>([]);
   const [limaActive, setLimaActive] = useState("");
-  const [limaMaxTabId, setLimaMaxTabId] = useState(0);
-  const [limaMaxTermId, setLimaMaxTermId] = useState(0);
+  const limaNextId = useRef(0);
 
   // Restore persisted terminal state on first load
   useEffect(() => {
@@ -51,26 +50,34 @@ export function App() {
     if (restoredState?.limaTabs?.length) {
       setLimaTabs(restoredState.limaTabs);
       setLimaActive(restoredState.limaActive);
-      setLimaMaxTabId(restoredState.limaMaxTabId);
-      setLimaMaxTermId(restoredState.limaMaxTermId);
+      // Derive next ID from existing tabs/terminals to avoid collisions
+      let maxId = 0;
+      for (const tab of restoredState.limaTabs) {
+        const tabNum = Number.parseInt(tab.id.replace("tab-", ""), 10);
+        if (tabNum > maxId) maxId = tabNum;
+        for (const term of tab.terminals) {
+          if (term.id > maxId) maxId = term.id;
+        }
+      }
+      limaNextId.current = maxId;
     }
   }, [isSessionsFetched, restoredState]);
 
   // Persist terminal state whenever it changes
   useEffect(() => {
     if (!restoredRef.current) return;
-    persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
-  }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
+    persist({ limaTabs, limaActive });
+  }, [limaTabs, limaActive, persist]);
 
   // Force-persist state when the app is about to quit (tray → Quit)
   useEffect(() => {
     const unlisten = listen("app-will-quit", () => {
-      persist({ limaTabs, limaActive, limaMaxTabId, limaMaxTermId });
+      persist({ limaTabs, limaActive });
     });
     return () => {
       cleanupTauriListener(unlisten);
     };
-  }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
+  }, [limaTabs, limaActive, persist]);
 
   // Redirect away from the k8s tab when it's not available
   useEffect(() => {
@@ -80,60 +87,44 @@ export function App() {
   }, [activeTab, isK8sAvailable, setActiveTab]);
 
   // Handlers
-  // oxlint-disable-next-line max-params
+  const nextId = (counter: React.RefObject<number>) => {
+    counter.current += 1;
+    return counter.current;
+  };
+
   const addTab = (
-    prefix: string,
     setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
-    maxTabId: number,
-    setMaxTabId: React.Dispatch<React.SetStateAction<number>>,
-    maxTermId: number,
-    setMaxTermId: React.Dispatch<React.SetStateAction<number>>,
+    counter: React.RefObject<number>,
     setActive: React.Dispatch<React.SetStateAction<string>>,
   ) => {
-    const nextTabId = maxTabId + 1;
-    const nextTermId = maxTermId + 1;
+    const tabId = nextId(counter);
+    const termId = nextId(counter);
     const newTab: TabGroup = {
-      id: `tab-${nextTabId}`,
-      name: `${prefix} Tab ${nextTabId}`,
-      terminals: [
-        {
-          id: nextTermId,
-          name: `${prefix} Terminal ${nextTermId}`,
-        },
-      ],
+      id: `tab-${tabId}`,
+      name: "Terminal",
+      terminals: [{ id: termId, name: "Terminal" }],
     };
     setTabs((prev) => [...prev, newTab]);
-    setMaxTabId(nextTabId);
-    setMaxTermId(nextTermId);
-    setActive(`tab-${nextTabId}`);
+    setActive(`tab-${tabId}`);
   };
 
   const addSideBySide = (
-    prefix: string,
     tabId: string,
     setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
-    maxTermId: number,
-    setMaxTermId: React.Dispatch<React.SetStateAction<number>>,
+    counter: React.RefObject<number>,
   ) => {
-    const nextTermId = maxTermId + 1;
+    const termId = nextId(counter);
     setTabs((prev) =>
       prev.map((tab) => {
         if (tab.id === tabId && tab.terminals.length < 10) {
           return {
             ...tab,
-            terminals: [
-              ...tab.terminals,
-              {
-                id: nextTermId,
-                name: `${prefix} Terminal ${nextTermId}`,
-              },
-            ],
+            terminals: [...tab.terminals, { id: termId, name: "Terminal" }],
           };
         }
         return tab;
       }),
     );
-    setMaxTermId(nextTermId);
   };
 
   const removeTab = (
@@ -222,6 +213,30 @@ export function App() {
     );
   };
 
+  const handleTerminalTitleChanged = (
+    tabId: string,
+    termId: number,
+    title: string,
+    setTabs: React.Dispatch<React.SetStateAction<TabGroup[]>>,
+  ) => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id !== tabId) {
+          return tab;
+        }
+        return {
+          ...tab,
+          terminals: tab.terminals.map((term) => {
+            if (term.id !== termId) {
+              return term;
+            }
+            return { ...term, title };
+          }),
+        };
+      }),
+    );
+  };
+
   const handleLimaSessionCreated = useCallback(
     (tabId: string, termId: number, sessionId: string) => {
       handleTerminalSessionCreated(tabId, termId, sessionId, setLimaTabs);
@@ -233,24 +248,17 @@ export function App() {
     handleTerminalCwdChanged(tabId, termId, cwd, setLimaTabs);
   }, []);
 
-  const handleAddLimaTab = useCallback(() => {
-    addTab(
-      "Lima",
-      setLimaTabs,
-      limaMaxTabId,
-      setLimaMaxTabId,
-      limaMaxTermId,
-      setLimaMaxTermId,
-      setLimaActive,
-    );
-  }, [limaMaxTabId, limaMaxTermId]);
+  const handleLimaTitleChanged = useCallback((tabId: string, termId: number, title: string) => {
+    handleTerminalTitleChanged(tabId, termId, title, setLimaTabs);
+  }, []);
 
-  const handleAddLimaSideBySide = useCallback(
-    (tabId: string) => {
-      addSideBySide("Lima", tabId, setLimaTabs, limaMaxTermId, setLimaMaxTermId);
-    },
-    [limaMaxTermId],
-  );
+  const handleAddLimaTab = useCallback(() => {
+    addTab(setLimaTabs, limaNextId, setLimaActive);
+  }, []);
+
+  const handleAddLimaSideBySide = useCallback((tabId: string) => {
+    addSideBySide(tabId, setLimaTabs, limaNextId);
+  }, []);
 
   const handleRemoveLimaTab = useCallback(
     (tabId: string) => {
@@ -290,6 +298,7 @@ export function App() {
         activeTabId={limaActive}
         onSessionCreated={handleLimaSessionCreated}
         onCwdChanged={handleLimaCwdChanged}
+        onTitleChanged={handleLimaTitleChanged}
         onTabChange={setLimaActive}
         onAddTab={handleAddLimaTab}
         onAddSideBySide={handleAddLimaSideBySide}
@@ -302,6 +311,7 @@ export function App() {
       handleAddLimaTab,
       handleLimaCwdChanged,
       handleLimaSessionCreated,
+      handleLimaTitleChanged,
       handleRemoveLimaTab,
       limaActive,
       limaEmptyState,

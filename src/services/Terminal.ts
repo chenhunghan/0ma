@@ -3,4 +3,5 @@ export interface Terminal {
   name: string;
   sessionId?: string;
   cwd?: string;
+  title?: string;
 }

@@ -8,8 +8,6 @@ const STORE_KEY = "terminal-sessions";
 export interface PersistedTerminalState {
   limaTabs: TabGroup[];
   limaActive: string;
-  limaMaxTabId: number;
-  limaMaxTermId: number;
 }
 
 /**

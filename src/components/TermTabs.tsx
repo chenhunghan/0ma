@@ -26,7 +26,13 @@ interface Props {
   onRemoveTab: (tabId: string) => void;
   onSessionCreated: (tabId: string, termId: number, sessionId: string) => void;
   onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
+  onTitleChanged: (tabId: string, termId: number, title: string) => void;
   emptyState: ReactNode;
+}
+
+function deriveTabDisplayName(tab: TabGroup): string {
+  const titles = [...new Set(tab.terminals.map((t) => t.title).filter(Boolean))];
+  return titles.length > 0 ? titles.join(" | ") : tab.name;
 }
 
 function TermTabsInner({
@@ -38,6 +44,7 @@ function TermTabsInner({
   onRemoveTab,
   onSessionCreated,
   onCwdChanged,
+  onTitleChanged,
   emptyState,
 }: Props) {
   const isMobile = useIsMobile();
@@ -64,18 +71,21 @@ function TermTabsInner({
         {/* Tab Header Buttons */}
         <Tabs value={activeTabId} onValueChange={onTabChange} className="shrink-0">
           <TabsList className="bg-transparent h-8">
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                title={tab.name}
-                className="gap-1.5 px-2.5 h-7 group relative pr-1"
-              >
-                <TerminalIcon className="size-3.5" />
-                {!isMobile && <span className="text-[10px]">{tab.name}</span>}
-                <CloseTabButton tabId={tab.id} onRemoveTab={onRemoveTab} />
-              </TabsTrigger>
-            ))}
+            {tabs.map((tab) => {
+              const displayName = deriveTabDisplayName(tab);
+              return (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  title={displayName}
+                  className="gap-1.5 px-2.5 h-7 group relative pr-1"
+                >
+                  <TerminalIcon className="size-3.5" />
+                  {!isMobile && <span className="text-[10px]">{displayName}</span>}
+                  <CloseTabButton tabId={tab.id} onRemoveTab={onRemoveTab} />
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
         </Tabs>
 
@@ -132,6 +142,7 @@ function TermTabsInner({
                       terminals={row1}
                       onSessionCreated={onSessionCreated}
                       onCwdChanged={onCwdChanged}
+                      onTitleChanged={onTitleChanged}
                     />
                   ) : (
                     <ResizablePanelGroup direction="vertical">
@@ -141,6 +152,7 @@ function TermTabsInner({
                           terminals={row1}
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
+                          onTitleChanged={onTitleChanged}
                           isUpperRow
                         />
                       </ResizablePanel>
@@ -151,6 +163,7 @@ function TermTabsInner({
                           terminals={row2}
                           onSessionCreated={onSessionCreated}
                           onCwdChanged={onCwdChanged}
+                          onTitleChanged={onTitleChanged}
                         />
                       </ResizablePanel>
                     </ResizablePanelGroup>
