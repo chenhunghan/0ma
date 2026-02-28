@@ -10,23 +10,13 @@ import { LimaConfigTabContent } from "src/components/LimaConfigTabContent";
 import { OrphanedEnvCleanupDialog } from "./components/OrphanedEnvCleanupDialog";
 import { useInstanceLifecycleEvents } from "src/hooks/useInstanceLifecycleEvents";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
-import { useTerminalSessionStorage } from "src/hooks/useTerminalSessionStorage";
 import { Skeleton } from "./components/ui/skeleton";
 import { Spinner } from "./components/ui/spinner";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { useK8sAvailable } from "src/hooks/useK8sAvailable";
 import { LimaInstanceInfoColumn } from "src/components/LimaInstanceInfoColumn";
-
-function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
-  void unlistenPromise
-    .then((unlisten) => Promise.resolve(unlisten()))
-    .catch(() => {
-      // Listener may have already been disposed
-    });
-}
 
 // oxlint-disable-next-line max-statements
 export function App() {
@@ -35,49 +25,9 @@ export function App() {
   const hasInstance = Boolean(selectedName);
   const { data: isK8sAvailable = false } = useK8sAvailable(selectedName);
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
-  const { restoredState, isFetched: isSessionsFetched, persist } = useTerminalSessionStorage();
-  const restoredRef = useRef(false);
-
   const [limaTabs, setLimaTabs] = useState<TabGroup[]>([]);
   const [limaActive, setLimaActive] = useState("");
   const limaNextId = useRef(0);
-
-  // Restore persisted terminal state on first load
-  useEffect(() => {
-    if (!isSessionsFetched || restoredRef.current) return;
-    restoredRef.current = true;
-
-    if (restoredState?.limaTabs?.length) {
-      setLimaTabs(restoredState.limaTabs);
-      setLimaActive(restoredState.limaActive);
-      // Derive next ID from existing tabs/terminals to avoid collisions
-      let maxId = 0;
-      for (const tab of restoredState.limaTabs) {
-        const tabNum = Number.parseInt(tab.id.replace("tab-", ""), 10);
-        if (tabNum > maxId) maxId = tabNum;
-        for (const term of tab.terminals) {
-          if (term.id > maxId) maxId = term.id;
-        }
-      }
-      limaNextId.current = maxId;
-    }
-  }, [isSessionsFetched, restoredState]);
-
-  // Persist terminal state whenever it changes
-  useEffect(() => {
-    if (!restoredRef.current) return;
-    persist({ limaTabs, limaActive });
-  }, [limaTabs, limaActive, persist]);
-
-  // Force-persist state when the app is about to quit (tray → Quit)
-  useEffect(() => {
-    const unlisten = listen("app-will-quit", () => {
-      persist({ limaTabs, limaActive });
-    });
-    return () => {
-      cleanupTauriListener(unlisten);
-    };
-  }, [limaTabs, limaActive, persist]);
 
   // Redirect away from the k8s tab when it's not available
   useEffect(() => {
@@ -141,13 +91,12 @@ export function App() {
 
     const tab = currentTabs[tabIdx];
 
-    // Close all PTY sessions in the tab and clean up persisted history
+    // Close all PTY sessions in the tab
     tab.terminals.forEach((term) => {
       if (term.sessionId) {
         invoke("close_pty_cmd", { sessionId: term.sessionId }).catch((error) =>
           log.error("Failed to close PTY:", error),
         );
-        invoke("delete_session_history_cmd", { sessionId: term.sessionId }).catch(() => {});
       }
     });
 
@@ -181,7 +130,6 @@ export function App() {
       invoke("close_pty_cmd", { sessionId: term.sessionId }).catch((error) =>
         log.error("Failed to close PTY:", error),
       );
-      invoke("delete_session_history_cmd", { sessionId: term.sessionId }).catch(() => {});
     }
 
     const remaining = tab.terminals.filter((t) => t.id !== termId);
