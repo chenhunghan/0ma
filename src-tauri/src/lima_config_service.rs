@@ -1,4 +1,3 @@
-use crate::k8s_service::check_k0s_available;
 use crate::lima_config::LimaConfig;
 use crate::yaml_handler::{get_instance_dir, get_yaml_path, write_yaml};
 use std::os::unix::fs::PermissionsExt;
@@ -44,9 +43,9 @@ pub fn get_kubeconfig_path<R: tauri::Runtime>(
 pub fn write_env_sh<R: tauri::Runtime>(
     app: &AppHandle<R>,
     instance_name: &str,
+    k8s: bool,
 ) -> Result<String, String> {
     let instance_dir = get_instance_dir(app, instance_name)?;
-    let k8s = check_k0s_available(instance_name).unwrap_or(false);
 
     // Write POSIX shell version (bash/zsh)
     let env_sh_path = instance_dir.join("env.sh");

@@ -111,8 +111,12 @@ pub fn convert_config_to_yaml_cmd(config: LimaConfig) -> Result<String, String> 
 
 /// Write env.sh for the given instance and return its absolute path
 #[tauri::command]
-pub fn write_env_sh_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
-    write_env_sh(&app, &instance_name)
+pub fn write_env_sh_cmd(
+    app: AppHandle,
+    instance_name: String,
+    k8s_available: bool,
+) -> Result<String, String> {
+    write_env_sh(&app, &instance_name, k8s_available)
 }
 
 /// Check whether env.sh already exists for the given instance
