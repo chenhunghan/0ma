@@ -1,4 +1,4 @@
-use crate::lima_config::{get_default_k0s_lima_config, LimaConfig};
+use crate::lima_config::{get_default_docker_lima_config, get_default_k0s_lima_config, LimaConfig};
 use crate::lima_config_service;
 use crate::lima_config_service::{
     append_to_shell_profile, check_env_sh_exists, get_kubeconfig_path, get_lima_yaml_path,
@@ -83,6 +83,15 @@ pub fn get_default_k0s_lima_config_yaml_cmd(
         install_helm.unwrap_or(true),
         install_local_path_provisioner.unwrap_or(true),
     )
+}
+
+/// Get the default Docker-only Lima configuration for an instance (no k0s/Kubernetes)
+#[tauri::command]
+pub fn get_default_docker_lima_config_yaml_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<LimaConfig, String> {
+    get_default_docker_lima_config(&app, &instance_name)
 }
 
 /// Get the kubeconfig path for a specific instance

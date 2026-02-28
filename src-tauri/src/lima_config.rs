@@ -480,6 +480,111 @@ k0s kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"stor
         .merge(lpp_config))
 }
 
+/// Get the default Docker-only Lima configuration (no k0s/Kubernetes)
+pub fn get_default_docker_lima_config<R: tauri::Runtime>(
+    _app: &tauri::AppHandle<R>,
+    _instance_name: &str,
+) -> Result<LimaConfig, String> {
+    // Get system information
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    // Calculate 1/2 of host CPU cores (minimum 1)
+    let host_cpus = sys.cpus().len() as u32;
+    let vm_cpus = std::cmp::max(1, host_cpus / 2);
+
+    // Calculate 1/2 of host memory in GiB (minimum 1 GiB)
+    let host_memory_bytes = sys.total_memory();
+    let vm_memory_gib = std::cmp::max(1, (host_memory_bytes / 2) / (1024 * 1024 * 1024));
+    let vm_memory = format!("{}GiB", vm_memory_gib);
+
+    // 1. Base Configuration (VM specs + btop only)
+    let base_config = LimaConfig {
+        minimum_lima_version: Some("2.0.0".to_string()),
+        vm_type: Some("vz".to_string()),
+        cpus: Some(vm_cpus),
+        memory: Some(vm_memory),
+        disk: Some("40GiB".to_string()),
+        images: Some(vec![Image {
+            location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
+            arch: Some("aarch64".to_string()),
+            digest: None,
+        }]),
+        mounts: Some(vec![]),
+        containerd: Some(ContainerdConfig {
+            system: false,
+            user: false,
+        }),
+        provision: Some(vec![Provision {
+            mode: "system".to_string(),
+            script: r#"#!/bin/bash
+set -eux -o pipefail
+if ! command -v btop >/dev/null 2>&1; then
+  apt-get update && apt-get install -y btop
+fi
+"#.to_string(),
+        }]),
+        probes: Some(vec![]),
+        copy_to_host: Some(vec![]),
+        ..Default::default()
+    };
+
+    // 2. Docker installation and socket forwarding
+    let host_user = std::env::var("USER")
+        .or_else(|_| std::env::var("LOGNAME"))
+        .or_else(|_| {
+            std::process::Command::new("whoami")
+                .output()
+                .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                .map_err(|_| std::env::VarError::NotPresent)
+        })
+        .unwrap_or_default();
+    let docker_config = LimaConfig {
+        provision: Some(vec![Provision {
+            mode: "system".to_string(),
+            script: format!(
+                r#"#!/bin/bash
+set -eux -o pipefail
+if ! command -v docker >/dev/null 2>&1; then
+  curl -fsSL https://get.docker.com | sh
+fi
+# Ensure the Lima user can access the Docker socket
+# Lima creates a guest user matching the host username
+if id "{host_user}" &>/dev/null && ! id -nG "{host_user}" | grep -qw docker; then
+  usermod -aG docker "{host_user}"
+fi
+# Lima forwards the Docker socket over SSH, but the SSH session is established
+# before the group change takes effect. Override the socket group to the Lima
+# user's primary group, which the SSH session already has.
+mkdir -p /etc/systemd/system/docker.socket.d
+cat > /etc/systemd/system/docker.socket.d/override.conf <<UNIT
+[Socket]
+SocketGroup={host_user}
+UNIT
+systemctl daemon-reload
+systemctl restart docker.socket
+"#
+            ),
+        }]),
+        port_forwards: Some(vec![PortForward {
+            guest_ip_must_be_zero: None,
+            guest_ip: None,
+            guest_port: None,
+            guest_port_range: None,
+            guest_socket: Some("/var/run/docker.sock".to_string()),
+            host_ip: None,
+            host_port: None,
+            host_port_range: None,
+            host_socket: Some("{{.Dir}}/docker.sock".to_string()),
+            proto: None,
+            ignore: None,
+        }]),
+        ..Default::default()
+    };
+
+    Ok(base_config.merge(docker_config))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
