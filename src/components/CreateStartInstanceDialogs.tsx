@@ -6,7 +6,7 @@ import { CreatingInstanceDialog } from "./CreatingInstanceDialog";
 import { ErrorCreateInstanceDialog } from "./ErrorCreateInstanceDialog";
 import { StartInstanceDialog } from "./StartInstanceDialog";
 import { StartingInstanceDialog } from "./StartingInstanceDialog";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useOnLimaCreateLogs } from "src/hooks/useOnLimaCreateLogs";
 import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 
@@ -27,10 +27,11 @@ export function CreateStartInstanceDialogs({
   const { instances, isLoading: isLoadingInstances } = useLimaInstances();
   const { setActiveTab } = useLayoutStorage();
   const { draftConfig, instanceName, resetDraft } = useCreateLimaInstanceDraft();
-  const { reset: resetCreateLogs } = useOnLimaCreateLogs(instanceName);
 
   // Track the name of the instance being created/started so it survives resetDraft()
-  const createdNameRef = useRef("");
+  // and the name-regeneration effect in useCreateLimaInstanceDraft.
+  const [createdName, setCreatedName] = useState("");
+  const { reset: resetCreateLogs } = useOnLimaCreateLogs(createdName);
 
   // Open create dialog when user explicitly opens it OR when no instances exist
   // (but not while the "Instance Deleted" dialog is still open)
@@ -42,7 +43,7 @@ export function CreateStartInstanceDialogs({
     if (!draftConfig || !instanceName) {
       return;
     }
-    createdNameRef.current = instanceName;
+    setCreatedName(instanceName);
     setCreatingInstanceDialogOpen(true);
     createInstance({ config: draftConfig, instanceName });
   }, [createInstance, draftConfig, instanceName]);
@@ -57,13 +58,12 @@ export function CreateStartInstanceDialogs({
   }, [resetCreateLogs]);
 
   const handleStartInstance = useCallback(() => {
-    const name = createdNameRef.current;
-    if (name) {
-      startInstance(name);
+    if (createdName) {
+      startInstance(createdName);
       setStartInstanceDialogOpen(false);
       setStartingInstanceDialogOpen(true);
     }
-  }, [startInstance]);
+  }, [createdName, startInstance]);
 
   const handleCreateInstanceSuccess = useCallback(() => {
     setCreatingInstanceDialogOpen(false);
@@ -72,11 +72,10 @@ export function CreateStartInstanceDialogs({
   }, [resetDraft]);
 
   const handleStartInstanceReady = useCallback(() => {
-    const name = createdNameRef.current;
-    if (name) {
-      onEnvSetup(name);
+    if (createdName) {
+      onEnvSetup(createdName);
     }
-  }, [onEnvSetup]);
+  }, [createdName, onEnvSetup]);
 
   const handleStartInstanceSuccess = useCallback(() => {
     setStartingInstanceDialogOpen(false);
@@ -96,13 +95,18 @@ export function CreateStartInstanceDialogs({
         open={creatingInstanceDialogOpen}
         onDialogOpenChange={setCreatingInstanceDialogOpen}
         onCreateInstanceSuccess={handleCreateInstanceSuccess}
+        instanceName={createdName}
       />
-      <ErrorCreateInstanceDialog onRetry={handleRetry} onClose={handleCloseError} />
+      <ErrorCreateInstanceDialog
+        onRetry={handleRetry}
+        onClose={handleCloseError}
+        instanceName={createdName}
+      />
       <StartInstanceDialog
         open={startInstanceDialogOpen}
         onOpenChange={setStartInstanceDialogOpen}
         onStart={handleStartInstance}
-        instanceName={createdNameRef.current}
+        instanceName={createdName}
         variant="created"
       />
       <StartingInstanceDialog
@@ -110,7 +114,7 @@ export function CreateStartInstanceDialogs({
         onDialogOpenChange={setStartingInstanceDialogOpen}
         onReady={handleStartInstanceReady}
         onSuccess={handleStartInstanceSuccess}
-        instanceName={createdNameRef.current}
+        instanceName={createdName}
       />
     </>
   );
