@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "0ma",
   "mainBinaryName": "0ma",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "chh.0ma",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -24,7 +24,9 @@
         "titleBarStyle": "Transparent",
         "transparent": true,
         "windowEffects": {
-          "effects": ["underWindowBackground"],
+          "effects": [
+            "underWindowBackground"
+          ],
           "state": "active"
         }
       }
