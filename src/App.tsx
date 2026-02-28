@@ -34,12 +34,34 @@ export function App() {
   const [limaActive, setLimaActive] = useState("");
   const limaNextId = useRef(0);
 
-  // Redirect away from the k8s tab when it's not available
+  // Redirect away from tabs that are not available
   useEffect(() => {
     if (activeTab === "k8s" && !isK8sAvailable) {
       setActiveTab("lima");
     }
-  }, [activeTab, isK8sAvailable, setActiveTab]);
+    if ((activeTab === "lima" || activeTab === "config") && !hasInstance) {
+      setActiveTab("");
+    }
+  }, [activeTab, isK8sAvailable, hasInstance, setActiveTab]);
+
+  // Close all lima terminal tabs when no instance is selected
+  useEffect(() => {
+    if (!hasInstance) {
+      setLimaTabs((prev) => {
+        for (const tab of prev) {
+          for (const term of tab.terminals) {
+            if (term.sessionId) {
+              invoke("close_pty_cmd", { sessionId: term.sessionId }).catch((error) =>
+                log.error("Failed to close PTY:", error),
+              );
+            }
+          }
+        }
+        return [];
+      });
+      setLimaActive("");
+    }
+  }, [hasInstance]);
 
   // Handlers
   const nextId = (counter: React.RefObject<number>) => {
@@ -347,7 +369,7 @@ export function App() {
           <div className="flex items-center">
             <TabsList>
               {hasInstance && <TabsTrigger value="config">Config</TabsTrigger>}
-              <TabsTrigger value="lima">Lima</TabsTrigger>
+              {hasInstance && <TabsTrigger value="lima">Lima</TabsTrigger>}
               {isK8sAvailable && <TabsTrigger value="k8s">K8s</TabsTrigger>}
             </TabsList>
             {hasInstance && !envSetup.envShExists && (
@@ -365,13 +387,15 @@ export function App() {
           <Separator />
 
           {hasInstance && <LimaConfigTabContent tabValue="config" />}
-          <TabsContent value="lima" keepMounted>
-            <ResizableLayout
-              autoSaveId="lima-tabs-content"
-              left={limaLeft}
-              right={limaRight}
-            />
-          </TabsContent>
+          {hasInstance && (
+            <TabsContent value="lima" keepMounted>
+              <ResizableLayout
+                autoSaveId="lima-tabs-content"
+                left={limaLeft}
+                right={limaRight}
+              />
+            </TabsContent>
+          )}
 
           {isK8sAvailable && (
             <TabsContent value="k8s" keepMounted>
