@@ -1,8 +1,9 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useTauriStore, useTauriStoreValue } from "src/providers/tauri-store-provider";
 import type { InstanceTemplate, LimaConfig } from "src/types/LimaConfig";
 import { useDefaultDockerLimaConfig } from "./useDefaultDockerLimaConfig";
 import { useDefaultK0sLimaConfig } from "./useDefaultK0sLimaConfig";
+import { useLimaInstances } from "./useLimaInstances";
 
 const NEW_INSTANCE_DRAFT_KEY = "newLimaInstanceDraft";
 const NEW_INSTANCE_NAME_KEY = "newLimaInstanceName";
@@ -10,7 +11,13 @@ const NEW_INSTANCE_TEMPLATE_KEY = "newLimaInstanceTemplate";
 
 const DEFAULT_TEMPLATE: InstanceTemplate = "docker";
 
-const generateInstanceName = () => `0ma-${Math.random().toString(36).substring(2, 6)}`;
+const generateInstanceName = (existingNames?: Set<string>) => {
+  for (let i = 0; i < 10; i++) {
+    const name = `0ma-${Math.random().toString(36).substring(2, 6)}`;
+    if (!existingNames || !existingNames.has(name)) return name;
+  }
+  return `0ma-${Math.random().toString(36).substring(2, 8)}`;
+};
 
 /**
  * Hook to manage a draft Lima configuration for creating a NEW instance.
@@ -20,6 +27,12 @@ const generateInstanceName = () => `0ma-${Math.random().toString(36).substring(2
  */
 export function useCreateLimaInstanceDraft() {
   const { set } = useTauriStore();
+  const { instances } = useLimaInstances();
+
+  const existingNames = useMemo(
+    () => new Set(instances.map((i) => i.name)),
+    [instances],
+  );
 
   // Fetch both default configurations unconditionally — react-query caches both
   const { defaultConfig: dockerDefault, isLoading: isLoadingDocker } =
@@ -53,12 +66,12 @@ export function useCreateLimaInstanceDraft() {
     }
   }, [currentTemplate, isLoadingStoreTemplate, set]);
 
-  // If store name is missing, initialize it.
+  // If store name is missing or collides with an existing instance, regenerate it.
   useEffect(() => {
-    if (!isLoadingStoreName && !instanceName) {
-      set(NEW_INSTANCE_NAME_KEY, generateInstanceName());
+    if (!isLoadingStoreName && (!instanceName || existingNames.has(instanceName))) {
+      set(NEW_INSTANCE_NAME_KEY, generateInstanceName(existingNames));
     }
-  }, [instanceName, isLoadingStoreName, set]);
+  }, [instanceName, isLoadingStoreName, existingNames, set]);
 
   // Combined loading state
   const isLoading =
@@ -108,15 +121,18 @@ export function useCreateLimaInstanceDraft() {
     const defaultForReset = dockerDefault;
     if (defaultForReset) {
       set(NEW_INSTANCE_DRAFT_KEY, defaultForReset);
-      set(NEW_INSTANCE_NAME_KEY, generateInstanceName());
+      set(NEW_INSTANCE_NAME_KEY, generateInstanceName(existingNames));
       set(NEW_INSTANCE_TEMPLATE_KEY, DEFAULT_TEMPLATE);
     }
-  }, [set, dockerDefault]);
+  }, [set, dockerDefault, existingNames]);
+
+  const nameExists = existingNames.has(instanceName || "");
 
   return {
     draftConfig: draftConfig,
     instanceName: instanceName || "",
     isLoading,
+    nameExists,
     resetDraft,
     setInstanceName,
     setTemplate,

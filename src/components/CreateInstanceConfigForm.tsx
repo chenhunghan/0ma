@@ -55,7 +55,7 @@ function LabelWithTooltip({
 }
 
 export function CreateInstanceConfigForm() {
-  const { draftConfig, isLoading, updateField, updateDraftConfig, instanceName, setInstanceName, template, setTemplate } =
+  const { draftConfig, isLoading, updateField, updateDraftConfig, instanceName, setInstanceName, template, setTemplate, nameExists } =
     useCreateLimaInstanceDraft();
   const { isKrunkitSupported, krunkitMissingReasons } = useSystemCapabilities();
   const isKrunkit = draftConfig?.vmType === "krunkit";
@@ -158,14 +158,19 @@ export function CreateInstanceConfigForm() {
             <Label htmlFor="instanceName" className="text-muted-foreground">
               Name
             </Label>
-            <Input
-              type="text"
-              id="instanceName"
-              value={instanceName}
-              onChange={handlers.instanceName}
-              className="w-full min-w-0"
-              size="sm"
-            />
+            <div className="flex flex-col gap-1 min-w-0">
+              <Input
+                type="text"
+                id="instanceName"
+                value={instanceName}
+                onChange={handlers.instanceName}
+                className="w-full min-w-0"
+                size="sm"
+              />
+              {nameExists && (
+                <p className="text-xs text-red-500">An instance with this name already exists</p>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-[70px_1fr] items-center gap-4">
