@@ -15,7 +15,7 @@ import { Spinner } from "./components/ui/spinner";
 import { invoke } from "@tauri-apps/api/core";
 import * as log from "@tauri-apps/plugin-log";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
-import { useK8sAvailable } from "src/hooks/useK8sAvailable";
+// import { useK8sAvailable } from "src/hooks/useK8sAvailable";
 import { LimaInstanceInfoColumn } from "src/components/LimaInstanceInfoColumn";
 import { useEnvSetup } from "src/hooks/useEnvSetup";
 import { EnvSetupDialog } from "src/components/EnvSetupDialog";
@@ -29,7 +29,7 @@ export function App() {
   const { selectedName, selectedInstance } = useSelectedInstance();
   const hasInstance = Boolean(selectedName);
   const isInstanceRunning = selectedInstance?.status === InstanceStatus.Running;
-  const { data: isK8sAvailable = false } = useK8sAvailable(selectedName);
+  // const { data: isK8sAvailable = false } = useK8sAvailable(selectedName);
   const envSetup = useEnvSetup(selectedName);
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
   const [limaTabs, setLimaTabs] = useState<TabGroup[]>([]);
@@ -38,13 +38,10 @@ export function App() {
 
   // Redirect away from tabs that are not available
   useEffect(() => {
-    if (activeTab === "k8s" && !isK8sAvailable) {
-      setActiveTab("lima");
-    }
     if ((activeTab === "lima" || activeTab === "config") && !hasInstance) {
       setActiveTab("");
     }
-  }, [activeTab, isK8sAvailable, hasInstance, setActiveTab]);
+  }, [activeTab, hasInstance, setActiveTab]);
 
   // Close all lima terminal tabs when no instance is selected
   useEffect(() => {
@@ -305,22 +302,6 @@ export function App() {
 
   const limaLeft = useMemo(() => <LimaInstanceInfoColumn />, []);
 
-  const k8sLeft = useMemo(
-    () => (
-      <div className="flex flex-col h-full overflow-y-auto">
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="font-semibold">K8s Column 1</span>
-        </div>
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="font-semibold">K8s Column 2</span>
-        </div>
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="font-semibold">K8s Column 3</span>
-        </div>
-      </div>
-    ),
-    [],
-  );
 
   const limaRight = useMemo(
     () => (
@@ -374,7 +355,7 @@ export function App() {
             <TabsList>
               {hasInstance && <TabsTrigger value="config">Config</TabsTrigger>}
               {hasInstance && <TabsTrigger value="lima">Lima</TabsTrigger>}
-              {isK8sAvailable && <TabsTrigger value="k8s">K8s</TabsTrigger>}
+              {/* TODO: K8s tab disabled until k8s features are ready */}
             </TabsList>
             {hasInstance && !envSetup.envShExists && (
               <Button
@@ -398,12 +379,6 @@ export function App() {
                 left={limaLeft}
                 right={limaRight}
               />
-            </TabsContent>
-          )}
-
-          {isK8sAvailable && (
-            <TabsContent value="k8s" keepMounted>
-              <ResizableLayout autoSaveId="k8s-tabs-content" left={k8sLeft} right={null} />
             </TabsContent>
           )}
         </Tabs>
