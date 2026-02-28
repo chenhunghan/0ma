@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/* Disable Tailwind v4 automatic content detection (scans entire project root)
+   to prevent .claude/ and other non-src file changes from triggering HMR updates */
+@import "tailwindcss" source(none);
+@source "../src";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/jetbrains-mono";
