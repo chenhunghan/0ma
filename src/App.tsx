@@ -17,6 +17,10 @@ import * as log from "@tauri-apps/plugin-log";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { useK8sAvailable } from "src/hooks/useK8sAvailable";
 import { LimaInstanceInfoColumn } from "src/components/LimaInstanceInfoColumn";
+import { useEnvSetup } from "src/hooks/useEnvSetup";
+import { EnvSetupDialog } from "src/components/EnvSetupDialog";
+import { Button } from "src/components/ui/button";
+import { FileTerminalIcon } from "lucide-react";
 
 // oxlint-disable-next-line max-statements
 export function App() {
@@ -24,6 +28,7 @@ export function App() {
   const { selectedName } = useSelectedInstance();
   const hasInstance = Boolean(selectedName);
   const { data: isK8sAvailable = false } = useK8sAvailable(selectedName);
+  const envSetup = useEnvSetup(selectedName);
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
   const [limaTabs, setLimaTabs] = useState<TabGroup[]>([]);
   const [limaActive, setLimaActive] = useState("");
@@ -329,7 +334,7 @@ export function App() {
 
   return (
     <div className="h-full w-full overflow-hidden pb-[14px] pt-[18px]">
-      <TopBar />
+      <TopBar envSetup={envSetup} />
       <Separator />
       {isLoadingActiveTabs ? (
         <Skeleton className="h-full w-full flex items-center justify-center">
@@ -339,11 +344,24 @@ export function App() {
         </Skeleton>
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full w-full">
-          <TabsList>
-            {hasInstance && <TabsTrigger value="config">Config</TabsTrigger>}
-            <TabsTrigger value="lima">Lima</TabsTrigger>
-            {isK8sAvailable && <TabsTrigger value="k8s">K8s</TabsTrigger>}
-          </TabsList>
+          <div className="flex items-center">
+            <TabsList>
+              {hasInstance && <TabsTrigger value="config">Config</TabsTrigger>}
+              <TabsTrigger value="lima">Lima</TabsTrigger>
+              {isK8sAvailable && <TabsTrigger value="k8s">K8s</TabsTrigger>}
+            </TabsList>
+            {hasInstance && !envSetup.envShExists && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => envSetup.triggerEnvSetup(selectedName!)}
+                title="Environment setup"
+                className="ml-auto size-7 hover:bg-muted"
+              >
+                <FileTerminalIcon className="size-3.5" />
+              </Button>
+            )}
+          </div>
           <Separator />
 
           {hasInstance && <LimaConfigTabContent tabValue="config" />}
@@ -363,6 +381,17 @@ export function App() {
         </Tabs>
       )}
       <OrphanedEnvCleanupDialog />
+      <EnvSetupDialog
+        open={envSetup.dialogOpen}
+        onOpenChange={envSetup.setDialogOpen}
+        instanceName={envSetup.instanceName}
+        envShPath={envSetup.envShPath}
+        onAddToProfile={envSetup.handleAddToProfile}
+        onClose={envSetup.handleClose}
+        profileMessage={envSetup.profileMessage}
+        profileError={envSetup.profileError}
+        isAddingToProfile={envSetup.isAddingToProfile}
+      />
     </div>
   );
 }

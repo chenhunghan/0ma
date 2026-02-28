@@ -19,12 +19,14 @@ import { DeleteInstanceDialog } from "./DeleteInstanceDialog";
 import { DeletingInstanceDialog } from "./DeletingInstanceDialog";
 import { StopInstanceDialogs } from "./StopInstanceDialogs";
 import { ApplyResetDraftDialogs } from "./ApplyResetDraftDialogs";
-import { useEnvSetup } from "src/hooks/useEnvSetup";
-import { EnvSetupDialog } from "./EnvSetupDialog";
+import type { useEnvSetup } from "src/hooks/useEnvSetup";
 
-export function TopBar() {
+export function TopBar({
+  envSetup,
+}: {
+  envSetup: ReturnType<typeof useEnvSetup>;
+}) {
   const [isDeletingDialogOpen, setIsDeletingDialogOpen] = useState(false);
-  const envSetup = useEnvSetup();
 
   return (
     <div className="w-full px-2 pb-2 flex items-center">
@@ -49,18 +51,6 @@ export function TopBar() {
         <StopInstanceDialogs onEnvSetup={envSetup.triggerEnvSetup} />
         <DeleteInstanceButton onDeletingDialogOpenChange={setIsDeletingDialogOpen} />
       </div>
-
-      <EnvSetupDialog
-        open={envSetup.dialogOpen}
-        onOpenChange={envSetup.setDialogOpen}
-        instanceName={envSetup.instanceName}
-        envShPath={envSetup.envShPath}
-        onAddToProfile={envSetup.handleAddToProfile}
-        onClose={envSetup.handleClose}
-        profileMessage={envSetup.profileMessage}
-        profileError={envSetup.profileError}
-        isAddingToProfile={envSetup.isAddingToProfile}
-      />
     </div>
   );
 }

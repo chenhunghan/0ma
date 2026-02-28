@@ -1,11 +1,22 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
-export function useEnvSetup() {
+export function useEnvSetup(selectedName?: string | null) {
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [envShPath, setEnvShPath] = useState("");
   const [instanceName, setInstanceName] = useState<string | null>(null);
+
+  const { data: envShExists } = useQuery({
+    queryKey: ["envShExists", selectedName],
+    queryFn: () =>
+      invoke<boolean>("check_env_sh_exists_cmd", {
+        instanceName: selectedName!,
+      }),
+    enabled: !!selectedName,
+    refetchOnWindowFocus: true,
+  });
 
   const writeEnvSh = useMutation({
     mutationFn: async (name: string) => {
@@ -19,6 +30,7 @@ export function useEnvSetup() {
       if (path) {
         setEnvShPath(path);
         setDialogOpen(true);
+        queryClient.invalidateQueries({ queryKey: ["envShExists"] });
       }
     },
   });
@@ -60,5 +72,6 @@ export function useEnvSetup() {
     profileMessage: appendToProfile.data ?? null,
     profileError: appendToProfile.error,
     isAddingToProfile: appendToProfile.isPending,
+    envShExists: envShExists ?? true,
   };
 }
