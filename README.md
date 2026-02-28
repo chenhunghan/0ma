@@ -14,6 +14,12 @@ A modern, desktop-based GUI for managing [Lima](https://github.com/lima-vm/lima)
 
 ## Installation
 
+### Homebrew (Recommended)
+
+```bash
+brew install chenhunghan/tap/0ma
+```
+
 ### Download
 
 Download the latest release for macOS (Apple Silicon/M1/M2/M3):
@@ -22,7 +28,11 @@ Download the latest release for macOS (Apple Silicon/M1/M2/M3):
 
 1. Download the `.dmg` file from the Releases page.
 2. Open the disk image and drag **0ma** to your **Applications** folder.
-3. Launch 0ma from your Applications directory.
+3. Remove the quarantine attribute (the binary is unsigned):
+   ```bash
+   xattr -cr /Applications/0ma.app
+   ```
+4. Launch 0ma from your Applications directory.
 
 ### Build from Source
 
