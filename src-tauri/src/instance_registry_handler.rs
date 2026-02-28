@@ -31,7 +31,9 @@ pub async fn get_instance_disk_usage_cmd(instance_name: String) -> Result<DiskUs
 
 /// Get the internal IP address of a Lima instance
 #[tauri::command]
-pub async fn get_instance_ip_cmd(instance_name: String) -> Result<String, String> {
+pub async fn get_instance_ip_cmd(
+    instance_name: String,
+) -> Result<Vec<crate::instance_registry_service::NetworkInterface>, String> {
     crate::instance_registry_service::get_instance_ip(&instance_name).await
 }
 

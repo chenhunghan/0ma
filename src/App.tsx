@@ -18,6 +18,7 @@ import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { useK8sAvailable } from "src/hooks/useK8sAvailable";
+import { LimaInstanceInfoColumn } from "src/components/LimaInstanceInfoColumn";
 
 // Initial State Factory
 const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
@@ -275,22 +276,7 @@ export function App() {
     [handleAddLimaTab],
   );
 
-  const limaLeft = useMemo(
-    () => (
-      <div className="flex flex-col h-full overflow-y-auto">
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="font-semibold">Lima Column 1</span>
-        </div>
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="font-semibold">Lima Column 2</span>
-        </div>
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="font-semibold">Lima Column 3</span>
-        </div>
-      </div>
-    ),
-    [],
-  );
+  const limaLeft = useMemo(() => <LimaInstanceInfoColumn />, []);
 
   const k8sLeft = useMemo(
     () => (

@@ -62,6 +62,13 @@ pub struct DiskUsage {
     pub use_percent: String,
 }
 
+/// A network interface with its name and IP address
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NetworkInterface {
+    pub name: String,
+    pub ip: String,
+}
+
 /// Detailed guest diagnostics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GuestDiagnostics {
@@ -222,15 +229,27 @@ pub async fn get_disk_usage(instance_name: &str) -> Result<DiskUsage, String> {
 }
 
 /// Get the internal IP address of a Lima instance (async)
-pub async fn get_instance_ip(instance_name: &str) -> Result<String, String> {
+pub async fn get_instance_ip(instance_name: &str) -> Result<Vec<NetworkInterface>, String> {
     let lima_cmd = find_lima_executable()
         .ok_or_else(|| "Lima (limactl) not found. Please ensure lima is installed.".to_string())?;
 
+    // Use `ip -o addr show` to get interface name + IP in one shot.
+    // Each line: "idx: <iface>  inet <ip>/<prefix> ..."
     let output = Command::new(&lima_cmd)
-        .args(["shell", instance_name, "hostname", "-I"])
+        .args([
+            "shell",
+            instance_name,
+            "ip",
+            "-o",
+            "-4",
+            "addr",
+            "show",
+            "scope",
+            "global",
+        ])
         .output()
         .await
-        .map_err(|e| format!("Failed to run hostname command: {}", e))?;
+        .map_err(|e| format!("Failed to run ip command: {}", e))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -238,7 +257,22 @@ pub async fn get_instance_ip(instance_name: &str) -> Result<String, String> {
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(stdout.trim().to_string())
+    let interfaces: Vec<NetworkInterface> = stdout
+        .lines()
+        .filter_map(|line| {
+            // Format: "2: eth0    inet 192.168.5.15/24 brd ..."
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 4 && parts[2] == "inet" {
+                let name = parts[1].to_string();
+                let ip = parts[3].split('/').next().unwrap_or("").to_string();
+                Some(NetworkInterface { name, ip })
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    Ok(interfaces)
 }
 
 /// Get instance uptime (async)
