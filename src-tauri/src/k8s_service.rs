@@ -131,6 +131,21 @@ pub struct LoadBalancerIngress {
     pub hostname: Option<String>,
 }
 
+pub fn check_k0s_available(instance_name: &str) -> Result<bool, String> {
+    let lima_cmd = find_lima_executable().ok_or_else(|| "Lima (limactl) not found".to_string())?;
+    let output = Command::new(&lima_cmd)
+        .args([
+            "shell",
+            instance_name,
+            "sh",
+            "-c",
+            "command -v k0s >/dev/null 2>&1 || command -v kubectl >/dev/null 2>&1",
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute limactl shell: {}", e))?;
+    Ok(output.status.success())
+}
+
 pub fn get_k8s_pods(instance_name: &str) -> Result<Vec<Pod>, String> {
     let lima_cmd = find_lima_executable().ok_or_else(|| "Lima (limactl) not found".to_string())?;
 

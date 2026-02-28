@@ -27,6 +27,7 @@ export function useInstanceLifecycleEvents() {
     const unlistenPromises = LIFECYCLE_EVENTS.map((event) =>
       listen(event, () => {
         queryClient.invalidateQueries({ queryKey: ["instances"] });
+        queryClient.invalidateQueries({ queryKey: ["k8s-available"] });
       }),
     );
 

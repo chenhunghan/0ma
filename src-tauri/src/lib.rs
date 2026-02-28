@@ -123,6 +123,7 @@ pub fn run() {
             lima_instance_handler::start_lima_instance_cmd,
             lima_instance_handler::stop_lima_instance_cmd,
             lima_instance_handler::delete_lima_instance_cmd,
+            k8s_handler::check_k0s_available_cmd,
             k8s_handler::get_k8s_pods_cmd,
             k8s_handler::get_k8s_services_cmd,
             terminal_manager::spawn_pty_cmd,

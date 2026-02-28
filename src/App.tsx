@@ -17,6 +17,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+import { useK8sAvailable } from "src/hooks/useK8sAvailable";
 
 // Initial State Factory
 const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
@@ -43,6 +44,7 @@ export function App() {
   useInstanceLifecycleEvents();
   const { selectedName } = useSelectedInstance();
   const hasInstance = Boolean(selectedName);
+  const { data: isK8sAvailable = false } = useK8sAvailable(selectedName);
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
   const { restoredState, isFetched: isSessionsFetched, persist } = useTerminalSessionStorage();
   const restoredRef = useRef(false);
@@ -80,6 +82,13 @@ export function App() {
       cleanupTauriListener(unlisten);
     };
   }, [limaTabs, limaActive, limaMaxTabId, limaMaxTermId, persist]);
+
+  // Redirect away from the k8s tab when it's not available
+  useEffect(() => {
+    if (activeTab === "k8s" && !isK8sAvailable) {
+      setActiveTab("lima");
+    }
+  }, [activeTab, isK8sAvailable, setActiveTab]);
 
   // Handlers
   // oxlint-disable-next-line max-params
@@ -341,7 +350,7 @@ export function App() {
           <TabsList>
             {hasInstance && <TabsTrigger value="config">Config</TabsTrigger>}
             <TabsTrigger value="lima">Lima</TabsTrigger>
-            <TabsTrigger value="k8s">K8s</TabsTrigger>
+            {isK8sAvailable && <TabsTrigger value="k8s">K8s</TabsTrigger>}
           </TabsList>
           <Separator />
 
@@ -354,9 +363,11 @@ export function App() {
             />
           </TabsContent>
 
-          <TabsContent value="k8s" keepMounted>
-            <ResizableLayout autoSaveId="k8s-tabs-content" left={k8sLeft} right={null} />
-          </TabsContent>
+          {isK8sAvailable && (
+            <TabsContent value="k8s" keepMounted>
+              <ResizableLayout autoSaveId="k8s-tabs-content" left={k8sLeft} right={null} />
+            </TabsContent>
+          )}
         </Tabs>
       )}
       <OrphanedEnvCleanupDialog />
