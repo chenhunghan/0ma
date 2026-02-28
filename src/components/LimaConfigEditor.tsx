@@ -82,7 +82,7 @@ export function LimaConfigEditor() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background border-l border-border relative">
+    <div className="flex flex-col h-full bg-background border-border relative">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
           {error ? (

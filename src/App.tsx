@@ -266,37 +266,41 @@ export function App() {
     [handleAddLimaTab],
   );
 
-  const limaColumns = useMemo(
-    () => [
-      <div className="flex h-full w-full items-center justify-center" key="1">
-        <span className="font-semibold">Lima Column 1</span>
-      </div>,
-      <div className="flex h-full w-full items-center justify-center" key="2">
-        <span className="font-semibold">Lima Column 2</span>
-      </div>,
-      <div className="flex h-full w-full items-center justify-center" key="3">
-        <span className="font-semibold">Lima Column 3</span>
-      </div>,
-    ],
+  const limaLeft = useMemo(
+    () => (
+      <div className="flex flex-col h-full overflow-y-auto">
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="font-semibold">Lima Column 1</span>
+        </div>
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="font-semibold">Lima Column 2</span>
+        </div>
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="font-semibold">Lima Column 3</span>
+        </div>
+      </div>
+    ),
     [],
   );
 
-  const k8sColumns = useMemo(
-    () => [
-      <div className="flex h-full w-full items-center justify-center" key="1">
-        <span className="font-semibold">K8s Column 1</span>
-      </div>,
-      <div className="flex h-full w-full items-center justify-center" key="2">
-        <span className="font-semibold">K8s Column 2</span>
-      </div>,
-      <div className="flex h-full w-full items-center justify-center" key="3">
-        <span className="font-semibold">K8s Column 3</span>
-      </div>,
-    ],
+  const k8sLeft = useMemo(
+    () => (
+      <div className="flex flex-col h-full overflow-y-auto">
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="font-semibold">K8s Column 1</span>
+        </div>
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="font-semibold">K8s Column 2</span>
+        </div>
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="font-semibold">K8s Column 3</span>
+        </div>
+      </div>
+    ),
     [],
   );
 
-  const limaBottom = useMemo(
+  const limaRight = useMemo(
     () => (
       <TermTabs
         tabs={limaTabs}
@@ -345,13 +349,13 @@ export function App() {
           <TabsContent value="lima" keepMounted>
             <ResizableLayout
               autoSaveId="lima-tabs-content"
-              columns={limaColumns}
-              bottom={limaBottom}
+              left={limaLeft}
+              right={limaRight}
             />
           </TabsContent>
 
           <TabsContent value="k8s" keepMounted>
-            <ResizableLayout autoSaveId="k8s-tabs-content" columns={k8sColumns} bottom={null} />
+            <ResizableLayout autoSaveId="k8s-tabs-content" left={k8sLeft} right={null} />
           </TabsContent>
         </Tabs>
       )}
