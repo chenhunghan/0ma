@@ -113,15 +113,18 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
             });
         }
 
-        // Stream stderr
-        if let Some(stderr) = child.stderr.take() {
+        // Stream stderr and collect lines for error reporting
+        let stderr_lines = std::sync::Arc::new(tokio::sync::Mutex::new(Vec::<String>::new()));
+        let stderr_task = if let Some(stderr) = child.stderr.take() {
             let app_handle_stderr = app_handle.clone();
             let instance_name_stderr = instance_name_clone.clone();
-            tokio::spawn(async move {
+            let stderr_lines_clone = stderr_lines.clone();
+            Some(tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 let mut essential_ready = false;
 
                 while let Ok(Some(line)) = reader.next_line().await {
+                    stderr_lines_clone.lock().await.push(line.clone());
                     let _ = app_handle_stderr.emit(
                         "lima-instance-start-stderr",
                         create_log_payload(instance_name_stderr.clone(), line.clone()),
@@ -143,11 +146,17 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
                         );
                     }
                 }
-            });
-        }
+            }))
+        } else {
+            None
+        };
 
         // Wait for process to complete
-        match child.wait().await {
+        let wait_result = child.wait().await;
+        if let Some(task) = stderr_task {
+            let _ = task.await;
+        }
+        match wait_result {
             Ok(status) => {
                 if status.success() {
                     let _ = app_handle.emit(
@@ -155,13 +164,15 @@ pub async fn start_lima_instance(app: AppHandle, instance_name: String) -> Resul
                         create_log_payload(instance_name_clone, "Started".to_string()),
                     );
                 } else {
-                    let error_msg = format!(
-                        "Failed to start Lima instance. Exit code: {:?}",
-                        status.code()
-                    );
+                    let collected = stderr_lines.lock().await;
+                    let detail = if collected.is_empty() {
+                        format!("Exit code: {}", status.code().unwrap_or(-1))
+                    } else {
+                        collected.join("\n")
+                    };
                     let _ = app_handle.emit(
                         "lima-instance-start-error",
-                        create_log_payload(instance_name_clone, error_msg),
+                        create_log_payload(instance_name_clone, detail),
                     );
                 }
             }
@@ -243,23 +254,32 @@ pub async fn stop_lima_instance(app: AppHandle, instance_name: String) -> Result
             });
         }
 
-        // Stream stderr
-        if let Some(stderr) = child.stderr.take() {
+        // Stream stderr and collect lines for error reporting
+        let stderr_lines = std::sync::Arc::new(tokio::sync::Mutex::new(Vec::<String>::new()));
+        let stderr_task = if let Some(stderr) = child.stderr.take() {
             let app_handle_stderr = app_handle.clone();
             let instance_name_stderr = instance_name_clone.clone();
-            tokio::spawn(async move {
+            let stderr_lines_clone = stderr_lines.clone();
+            Some(tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
+                    stderr_lines_clone.lock().await.push(line.clone());
                     let _ = app_handle_stderr.emit(
                         "lima-instance-stop-stderr",
                         create_log_payload(instance_name_stderr.clone(), line),
                     );
                 }
-            });
-        }
+            }))
+        } else {
+            None
+        };
 
         // Wait for process to complete
-        match child.wait().await {
+        let wait_result = child.wait().await;
+        if let Some(task) = stderr_task {
+            let _ = task.await;
+        }
+        match wait_result {
             Ok(status) => {
                 if status.success() {
                     let _ = app_handle.emit(
@@ -267,13 +287,15 @@ pub async fn stop_lima_instance(app: AppHandle, instance_name: String) -> Result
                         create_log_payload(instance_name_clone, "Stopped".to_string()),
                     );
                 } else {
-                    let error_msg = format!(
-                        "Failed to stop Lima instance. Exit code: {:?}",
-                        status.code()
-                    );
+                    let collected = stderr_lines.lock().await;
+                    let detail = if collected.is_empty() {
+                        format!("Exit code: {}", status.code().unwrap_or(-1))
+                    } else {
+                        collected.join("\n")
+                    };
                     let _ = app_handle.emit(
                         "lima-instance-stop-error",
-                        create_log_payload(instance_name_clone, error_msg),
+                        create_log_payload(instance_name_clone, detail),
                     );
                 }
             }
@@ -355,23 +377,32 @@ pub async fn delete_lima_instance(app: AppHandle, instance_name: String) -> Resu
             });
         }
 
-        // Stream stderr
-        if let Some(stderr) = child.stderr.take() {
+        // Stream stderr and collect lines for error reporting
+        let stderr_lines = std::sync::Arc::new(tokio::sync::Mutex::new(Vec::<String>::new()));
+        let stderr_task = if let Some(stderr) = child.stderr.take() {
             let app_handle_stderr = app_handle.clone();
             let instance_name_stderr = instance_name_clone.clone();
-            tokio::spawn(async move {
+            let stderr_lines_clone = stderr_lines.clone();
+            Some(tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
+                    stderr_lines_clone.lock().await.push(line.clone());
                     let _ = app_handle_stderr.emit(
                         "lima-instance-delete-stderr",
                         create_log_payload(instance_name_stderr.clone(), line),
                     );
                 }
-            });
-        }
+            }))
+        } else {
+            None
+        };
 
         // Wait for process to complete
-        match child.wait().await {
+        let wait_result = child.wait().await;
+        if let Some(task) = stderr_task {
+            let _ = task.await;
+        }
+        match wait_result {
             Ok(status) => {
                 if status.success() {
                     // Clean up shell profile and ~/.kube symlink before emitting success
@@ -384,13 +415,15 @@ pub async fn delete_lima_instance(app: AppHandle, instance_name: String) -> Resu
                         create_log_payload(instance_name_clone, "Deleted".to_string()),
                     );
                 } else {
-                    let error_msg = format!(
-                        "Failed to delete Lima instance. Exit code: {:?}",
-                        status.code()
-                    );
+                    let collected = stderr_lines.lock().await;
+                    let detail = if collected.is_empty() {
+                        format!("Exit code: {}", status.code().unwrap_or(-1))
+                    } else {
+                        collected.join("\n")
+                    };
                     let _ = app_handle.emit(
                         "lima-instance-delete-error",
-                        create_log_payload(instance_name_clone, error_msg),
+                        create_log_payload(instance_name_clone, detail),
                     );
                 }
             }
@@ -497,23 +530,33 @@ pub async fn create_lima_instance(
             });
         }
 
-        // Stream stderr
-        if let Some(stderr) = child.stderr.take() {
+        // Stream stderr and collect lines for error reporting
+        let stderr_lines = std::sync::Arc::new(tokio::sync::Mutex::new(Vec::<String>::new()));
+        let stderr_task = if let Some(stderr) = child.stderr.take() {
             let app_handle_stderr = app_handle.clone();
             let instance_name_stderr = instance_name_clone.clone();
-            tokio::spawn(async move {
+            let stderr_lines_clone = stderr_lines.clone();
+            Some(tokio::spawn(async move {
                 let mut reader = BufReader::new(stderr).lines();
                 while let Ok(Some(line)) = reader.next_line().await {
+                    stderr_lines_clone.lock().await.push(line.clone());
                     let _ = app_handle_stderr.emit(
                         "lima-instance-create-stderr",
                         create_log_payload(instance_name_stderr.clone(), line),
                     );
                 }
-            });
-        }
+            }))
+        } else {
+            None
+        };
 
         // Wait for process to complete
-        match child.wait().await {
+        let wait_result = child.wait().await;
+        // Ensure stderr is fully read before checking collected lines
+        if let Some(task) = stderr_task {
+            let _ = task.await;
+        }
+        match wait_result {
             Ok(status) => {
                 if status.success() {
                     let _ = app_handle.emit(
@@ -521,13 +564,15 @@ pub async fn create_lima_instance(
                         create_log_payload(instance_name_clone, "Created".to_string()),
                     );
                 } else {
-                    let error_msg = format!(
-                        "Failed to create Lima instance. Exit code: {:?}",
-                        status.code()
-                    );
+                    let collected = stderr_lines.lock().await;
+                    let detail = if collected.is_empty() {
+                        format!("Exit code: {}", status.code().unwrap_or(-1))
+                    } else {
+                        collected.join("\n")
+                    };
                     let _ = app_handle.emit(
                         "lima-instance-create-error",
-                        create_log_payload(instance_name_clone, error_msg),
+                        create_log_payload(instance_name_clone, detail),
                     );
                 }
             }
