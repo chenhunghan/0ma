@@ -21,12 +21,14 @@ import { useEnvSetup } from "src/hooks/useEnvSetup";
 import { EnvSetupDialog } from "src/components/EnvSetupDialog";
 import { Button } from "src/components/ui/button";
 import { FileTerminalIcon } from "lucide-react";
+import { InstanceStatus } from "src/types/InstanceStatus";
 
 // oxlint-disable-next-line max-statements
 export function App() {
   useInstanceLifecycleEvents();
-  const { selectedName } = useSelectedInstance();
+  const { selectedName, selectedInstance } = useSelectedInstance();
   const hasInstance = Boolean(selectedName);
+  const isInstanceRunning = selectedInstance?.status === InstanceStatus.Running;
   const { data: isK8sAvailable = false } = useK8sAvailable(selectedName);
   const envSetup = useEnvSetup(selectedName);
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
@@ -297,8 +299,8 @@ export function App() {
   );
 
   const limaEmptyState = useMemo(
-    () => <EmptyTerminalState onAdd={handleAddLimaTab} />,
-    [handleAddLimaTab],
+    () => <EmptyTerminalState onAdd={handleAddLimaTab} disabled={!isInstanceRunning} />,
+    [handleAddLimaTab, isInstanceRunning],
   );
 
   const limaLeft = useMemo(() => <LimaInstanceInfoColumn />, []);
@@ -336,6 +338,7 @@ export function App() {
         onRemoveTab={handleRemoveLimaTab}
         onRemoveTerminal={handleRemoveLimaTerminal}
         emptyState={limaEmptyState}
+        addDisabled={!isInstanceRunning}
       />
     ),
     [
@@ -346,6 +349,7 @@ export function App() {
       handleLimaTitleChanged,
       handleRemoveLimaTab,
       handleRemoveLimaTerminal,
+      isInstanceRunning,
       limaActive,
       limaArgs,
       limaCommand,

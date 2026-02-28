@@ -2,7 +2,7 @@ import { SquarePlusIcon, TerminalIcon } from "lucide-react";
 import { useIsMobile } from "src/hooks/useMediaQuery";
 import { Button } from "./ui/button";
 
-export function EmptyTerminalState({ onAdd }: { onAdd: () => void }) {
+export function EmptyTerminalState({ onAdd, disabled }: { onAdd: () => void; disabled?: boolean }) {
   const isMobile = useIsMobile();
   return (
     <div className="flex flex-col h-full w-full items-center justify-center gap-4 px-6 animate-in fade-in duration-500">
@@ -20,6 +20,7 @@ export function EmptyTerminalState({ onAdd }: { onAdd: () => void }) {
         size={isMobile ? "xs" : "sm"}
         className="h-7 px-4 text-[10px] gap-2"
         onClick={onAdd}
+        disabled={disabled}
         title="New Terminal"
       >
         <SquarePlusIcon className="size-3" />

@@ -31,6 +31,8 @@ interface Props {
   onCwdChanged: (tabId: string, termId: number, cwd: string) => void;
   onTitleChanged: (tabId: string, termId: number, title: string) => void;
   emptyState: ReactNode;
+  /** Disable adding new terminals (e.g. when instance is not running) */
+  addDisabled?: boolean;
 }
 
 function deriveTabDisplayName(tab: TabGroup): string | null {
@@ -52,6 +54,7 @@ function TermTabsInner({
   onCwdChanged,
   onTitleChanged,
   emptyState,
+  addDisabled,
 }: Props) {
   const isMobile = useIsMobile();
   const { onDragStart, onDragEnd } = useTerminalResizeContext();
@@ -100,7 +103,7 @@ function TermTabsInner({
           variant="ghost"
           size="icon-xs"
           onClick={onAddTab}
-          disabled={tabs.length >= 10}
+          disabled={addDisabled || tabs.length >= 10}
           title="New Terminal"
           className="size-7 hover:bg-muted"
         >
@@ -114,7 +117,7 @@ function TermTabsInner({
             size="icon-xs"
             onClick={handleAddSideBySide}
             disabled={
-              !activeTabId || (tabs.find((t) => t.id === activeTabId)?.terminals.length ?? 0) >= 10
+              addDisabled || !activeTabId || (tabs.find((t) => t.id === activeTabId)?.terminals.length ?? 0) >= 10
             }
             title="Side-by-side"
             className="size-7 hover:bg-muted"
