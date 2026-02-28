@@ -19,13 +19,13 @@ export function ResizableLayout({ left, right, autoSaveId }: ResizableLayoutProp
       autoSaveId={autoSaveId}
       storage={resizableLayoutStorage}
     >
-      <ResizablePanel defaultSize={30} minSize={20}>
+      <ResizablePanel defaultSize={30} minSize={15}>
         {left}
       </ResizablePanel>
 
       <ResizableHandle />
 
-      <ResizablePanel defaultSize={70} minSize={20}>
+      <ResizablePanel defaultSize={70} minSize={15}>
         {right}
       </ResizablePanel>
     </ResizablePanelGroup>
