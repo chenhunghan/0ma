@@ -73,7 +73,7 @@ export function CreateInstanceDialog({
   onClickCreate,
 }: Props) {
   const [step, setStep] = useState<Step>("template");
-  const { setTemplate } = useCreateLimaInstanceDraft();
+  const { setTemplate, nameExists } = useCreateLimaInstanceDraft();
 
   // Reset to template step each time the dialog opens
   useEffect(() => {
@@ -135,7 +135,7 @@ export function CreateInstanceDialog({
                   Cancel
                 </Button>
               )}
-              <Button variant="default" onClick={handleCreate}>
+              <Button variant="default" onClick={handleCreate} disabled={nameExists}>
                 Create
               </Button>
             </DialogFooter>
