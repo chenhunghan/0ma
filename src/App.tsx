@@ -20,18 +20,6 @@ import { useSelectedInstance } from "src/hooks/useSelectedInstance";
 import { useK8sAvailable } from "src/hooks/useK8sAvailable";
 import { LimaInstanceInfoColumn } from "src/components/LimaInstanceInfoColumn";
 
-// Initial State Factory
-const createInitialTab = (prefix: string, tabId: string): TabGroup => ({
-  id: tabId,
-  name: `${prefix} Tab 1`,
-  terminals: [
-    {
-      id: 1,
-      name: `${prefix} Terminal 1`,
-    },
-  ],
-});
-
 function cleanupTauriListener(unlistenPromise: Promise<() => void>) {
   void unlistenPromise
     .then((unlisten) => Promise.resolve(unlisten()))
@@ -50,10 +38,10 @@ export function App() {
   const { restoredState, isFetched: isSessionsFetched, persist } = useTerminalSessionStorage();
   const restoredRef = useRef(false);
 
-  const [limaTabs, setLimaTabs] = useState<TabGroup[]>(() => [createInitialTab("Lima", "tab-1")]);
-  const [limaActive, setLimaActive] = useState("tab-1");
-  const [limaMaxTabId, setLimaMaxTabId] = useState(1);
-  const [limaMaxTermId, setLimaMaxTermId] = useState(1);
+  const [limaTabs, setLimaTabs] = useState<TabGroup[]>([]);
+  const [limaActive, setLimaActive] = useState("");
+  const [limaMaxTabId, setLimaMaxTabId] = useState(0);
+  const [limaMaxTermId, setLimaMaxTermId] = useState(0);
 
   // Restore persisted terminal state on first load
   useEffect(() => {
