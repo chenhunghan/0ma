@@ -34,3 +34,4 @@ uuid = { version = "1", features = ["v4"] }
 tauri-plugin-log = "2"
 log = "0.4"
 ctrlc = { version = "3.4.5", features = ["termination"] }
+fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
