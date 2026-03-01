@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.3](https://github.com/chenhunghan/0ma/compare/v0.4.2...v0.4.3) (2026-03-01)
+
+
+### Bug Fixes
+
+* fix release me watch path ([b5867fe](https://github.com/chenhunghan/0ma/commit/b5867feebe8959248e21a1675c65126c80a7d7ed))
+* reconfigure release-please to watch all repo paths ([4bbc92e](https://github.com/chenhunghan/0ma/commit/4bbc92e44e9db107bdcc3ba6cb1c6d27fd476cff))
+* write env.sh after instance fully provisioned ([733cda5](https://github.com/chenhunghan/0ma/commit/733cda5c3384aeeff7bb7cbd18c535da51234df8))
+
 ## [0.4.2](https://github.com/chenhunghan/0ma/compare/v0.4.1...v0.4.2) (2026-03-01)
 
 
