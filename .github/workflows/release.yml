@@ -47,6 +47,10 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
 
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
       - run: npm ci
 
       - run: npx tauri build --target ${{ matrix.target }}
