@@ -1,3 +1,4 @@
+use crate::k8s_service::check_k0s_available;
 use crate::lima_config::{get_default_docker_lima_config, get_default_k0s_lima_config, LimaConfig};
 use crate::lima_config_service;
 use crate::lima_config_service::{
@@ -109,13 +110,11 @@ pub fn convert_config_to_yaml_cmd(config: LimaConfig) -> Result<String, String> 
         .map_err(|e| format!("Failed to convert config to YAML: {}", e))
 }
 
-/// Write env.sh for the given instance and return its absolute path
+/// Write env.sh for the given instance and return its absolute path.
+/// Automatically detects whether k8s (k0s/kubectl) is available in the instance.
 #[tauri::command]
-pub fn write_env_sh_cmd(
-    app: AppHandle,
-    instance_name: String,
-    k8s_available: bool,
-) -> Result<String, String> {
+pub async fn write_env_sh_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
+    let k8s_available = check_k0s_available(&instance_name).unwrap_or(false);
     write_env_sh(&app, &instance_name, k8s_available)
 }
 

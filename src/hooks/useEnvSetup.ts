@@ -21,8 +21,8 @@ export function useEnvSetup(selectedName?: string | null) {
   });
 
   const writeEnvSh = useMutation({
-    mutationFn: async ({ name, k8sAvailable }: { name: string; k8sAvailable: boolean }) =>
-      invoke<string>("write_env_sh_cmd", { instanceName: name, k8sAvailable }),
+    mutationFn: async (name: string) =>
+      invoke<string>("write_env_sh_cmd", { instanceName: name }),
     onSuccess: (path) => {
       setEnvShPath(path);
       setDialogOpen(true);
@@ -40,9 +40,9 @@ export function useEnvSetup(selectedName?: string | null) {
   const triggerEnvSetup = useCallback(
     (name: string) => {
       setInstanceName(name);
-      writeEnvSh.mutate({ name, k8sAvailable: isK8sAvailable });
+      writeEnvSh.mutate(name);
     },
-    [writeEnvSh, isK8sAvailable],
+    [writeEnvSh],
   );
 
   const handleAddToProfile = useCallback(() => {
