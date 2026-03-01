@@ -71,16 +71,13 @@ export function CreateStartInstanceDialogs({
     resetDraft();
   }, [resetDraft]);
 
-  const handleStartInstanceReady = useCallback(() => {
-    if (createdName) {
-      onEnvSetup(createdName);
-    }
-  }, [createdName, onEnvSetup]);
-
   const handleStartInstanceSuccess = useCallback(() => {
     setStartingInstanceDialogOpen(false);
     setActiveTab("lima");
-  }, [setActiveTab]);
+    if (createdName) {
+      onEnvSetup(createdName);
+    }
+  }, [setActiveTab, createdName, onEnvSetup]);
 
   return (
     <>
@@ -112,7 +109,6 @@ export function CreateStartInstanceDialogs({
       <StartingInstanceDialog
         open={startingInstanceDialogOpen}
         onDialogOpenChange={setStartingInstanceDialogOpen}
-        onReady={handleStartInstanceReady}
         onSuccess={handleStartInstanceSuccess}
         instanceName={createdName}
       />

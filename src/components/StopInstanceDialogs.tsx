@@ -52,15 +52,12 @@ export function StopInstanceDialogs({
     setStoppingInstanceDialogOpen(false);
   }, []);
 
-  const handleStartReady = useCallback(() => {
+  const handleStartSuccess = useCallback(() => {
+    setStartingInstanceDialogOpen(false);
     if (selectedName) {
       onEnvSetup(selectedName);
     }
   }, [selectedName, onEnvSetup]);
-
-  const handleStartSuccess = useCallback(() => {
-    setStartingInstanceDialogOpen(false);
-  }, []);
 
   const isRunning = selectedInstance?.status === InstanceStatus.Running;
   const isStopped = selectedInstance?.status === InstanceStatus.Stopped;
@@ -115,7 +112,6 @@ export function StopInstanceDialogs({
         open={startingInstanceDialogOpen}
         onDialogOpenChange={setStartingInstanceDialogOpen}
         instanceName={selectedName}
-        onReady={handleStartReady}
         onSuccess={handleStartSuccess}
       />
     </>
