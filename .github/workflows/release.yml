@@ -25,6 +25,7 @@ jobs:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     strategy:
+      fail-fast: false
       matrix:
         include:
           - target: aarch64-apple-darwin
