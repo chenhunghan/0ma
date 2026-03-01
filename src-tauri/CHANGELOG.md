@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/chenhunghan/0ma/compare/v0.4.1...v0.4.2) (2026-03-01)
+
+
+### Bug Fixes
+
+* detect k8s availability server-side when writing env.sh ([acabbce](https://github.com/chenhunghan/0ma/commit/acabbce20f808590cd7c2085224447c745899080))
+
 ## [0.4.1](https://github.com/chenhunghan/0ma/compare/v0.4.0...v0.4.1) (2026-03-01)
 
 
