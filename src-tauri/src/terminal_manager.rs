@@ -367,8 +367,8 @@ impl PtyManager {
 // -- Tauri Commands --
 
 #[tauri::command]
-pub fn spawn_pty_cmd(
-    manager: tauri::State<PtyManager>,
+pub async fn spawn_pty_cmd(
+    manager: tauri::State<'_, PtyManager>,
     app: AppHandle,
     command: String,
     args: Vec<String>,
@@ -380,8 +380,8 @@ pub fn spawn_pty_cmd(
 }
 
 #[tauri::command]
-pub fn attach_pty_cmd(
-    manager: tauri::State<PtyManager>,
+pub async fn attach_pty_cmd(
+    manager: tauri::State<'_, PtyManager>,
     session_id: String,
     channel: Channel<PtyEvent>,
 ) -> Result<(), String> {
@@ -389,8 +389,8 @@ pub fn attach_pty_cmd(
 }
 
 #[tauri::command]
-pub fn write_pty_cmd(
-    manager: tauri::State<PtyManager>,
+pub async fn write_pty_cmd(
+    manager: tauri::State<'_, PtyManager>,
     session_id: String,
     data: String,
 ) -> Result<(), String> {
@@ -398,8 +398,8 @@ pub fn write_pty_cmd(
 }
 
 #[tauri::command]
-pub fn resize_pty_cmd(
-    manager: tauri::State<PtyManager>,
+pub async fn resize_pty_cmd(
+    manager: tauri::State<'_, PtyManager>,
     session_id: String,
     rows: u16,
     cols: u16,
@@ -408,6 +408,9 @@ pub fn resize_pty_cmd(
 }
 
 #[tauri::command]
-pub fn close_pty_cmd(manager: tauri::State<PtyManager>, session_id: String) -> Result<(), String> {
+pub async fn close_pty_cmd(
+    manager: tauri::State<'_, PtyManager>,
+    session_id: String,
+) -> Result<(), String> {
     manager.close(&session_id)
 }

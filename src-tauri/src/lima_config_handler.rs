@@ -9,13 +9,13 @@ use tauri::AppHandle;
 
 /// Detect orphaned 0ma env entries in shell profiles (instances that no longer exist)
 #[tauri::command]
-pub fn detect_orphaned_env_entries_cmd(app: AppHandle) -> Result<Vec<String>, String> {
+pub async fn detect_orphaned_env_entries_cmd(app: AppHandle) -> Result<Vec<String>, String> {
     lima_config_service::detect_orphaned_env_entries(&app)
 }
 
 /// Clean up orphaned env entries for the given instance names
 #[tauri::command]
-pub fn cleanup_orphaned_env_entries_cmd(
+pub async fn cleanup_orphaned_env_entries_cmd(
     app: AppHandle,
     instance_names: Vec<String>,
 ) -> Result<(), String> {
@@ -25,7 +25,10 @@ pub fn cleanup_orphaned_env_entries_cmd(
 /// Read the Lima YAML configuration (LIMA_CONFIG_FILENAME) for a specific instance by instance name
 /// If the file does not exist, generate the default k0s config
 #[tauri::command]
-pub fn read_lima_yaml_cmd(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
+pub async fn read_lima_yaml_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<LimaConfig, String> {
     let yaml_path = get_lima_yaml_path(&app, &instance_name)?;
 
     // If the file exists, read it
@@ -42,7 +45,7 @@ pub fn read_lima_yaml_cmd(app: AppHandle, instance_name: String) -> Result<LimaC
 
 /// Write YAML with for a specific instance
 #[tauri::command]
-pub fn write_lima_yaml_cmd(
+pub async fn write_lima_yaml_cmd(
     app: AppHandle,
     config: LimaConfig,
     instance_name: String,
@@ -52,14 +55,20 @@ pub fn write_lima_yaml_cmd(
 
 /// Get the path to the Lima YAML configuration file for an instance
 #[tauri::command]
-pub fn get_lima_yaml_path_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
+pub async fn get_lima_yaml_path_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<String, String> {
     let path = get_lima_yaml_path(&app, &instance_name)?;
     Ok(path.to_string_lossy().to_string())
 }
 
 /// Reset the instance's Lima YAML configuration to the default k0s config
 #[tauri::command]
-pub fn reset_lima_yaml_cmd(app: AppHandle, instance_name: String) -> Result<LimaConfig, String> {
+pub async fn reset_lima_yaml_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<LimaConfig, String> {
     // Generate the default config
     let default_config = get_default_k0s_lima_config(&app, &instance_name, true, true)?;
 
@@ -72,7 +81,7 @@ pub fn reset_lima_yaml_cmd(app: AppHandle, instance_name: String) -> Result<Lima
 
 /// Get the default k0s Lima configuration for an instance
 #[tauri::command]
-pub fn get_default_k0s_lima_config_yaml_cmd(
+pub async fn get_default_k0s_lima_config_yaml_cmd(
     app: AppHandle,
     instance_name: String,
     install_helm: Option<bool>,
@@ -88,7 +97,7 @@ pub fn get_default_k0s_lima_config_yaml_cmd(
 
 /// Get the default Docker-only Lima configuration for an instance (no k0s/Kubernetes)
 #[tauri::command]
-pub fn get_default_docker_lima_config_yaml_cmd(
+pub async fn get_default_docker_lima_config_yaml_cmd(
     app: AppHandle,
     instance_name: String,
 ) -> Result<LimaConfig, String> {
@@ -97,14 +106,17 @@ pub fn get_default_docker_lima_config_yaml_cmd(
 
 /// Get the kubeconfig path for a specific instance
 #[tauri::command]
-pub fn get_kubeconfig_path_cmd(app: AppHandle, instance_name: String) -> Result<String, String> {
+pub async fn get_kubeconfig_path_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<String, String> {
     let kubeconfig_path = get_kubeconfig_path(&app, &instance_name)?;
     Ok(kubeconfig_path.to_string_lossy().to_string())
 }
 
 /// Convert LimaConfig to YAML string for display
 #[tauri::command]
-pub fn convert_config_to_yaml_cmd(config: LimaConfig) -> Result<String, String> {
+pub async fn convert_config_to_yaml_cmd(config: LimaConfig) -> Result<String, String> {
     config
         .to_yaml_pretty()
         .map_err(|e| format!("Failed to convert config to YAML: {}", e))
@@ -120,13 +132,16 @@ pub async fn write_env_sh_cmd(app: AppHandle, instance_name: String) -> Result<S
 
 /// Check whether env.sh already exists for the given instance
 #[tauri::command]
-pub fn check_env_sh_exists_cmd(app: AppHandle, instance_name: String) -> Result<bool, String> {
+pub async fn check_env_sh_exists_cmd(
+    app: AppHandle,
+    instance_name: String,
+) -> Result<bool, String> {
     check_env_sh_exists(&app, &instance_name)
 }
 
 /// Append env.sh source line to the user's shell profile
 #[tauri::command]
-pub fn append_env_to_shell_profile_cmd(
+pub async fn append_env_to_shell_profile_cmd(
     app: AppHandle,
     instance_name: String,
 ) -> Result<String, String> {
