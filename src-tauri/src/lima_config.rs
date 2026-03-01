@@ -169,6 +169,7 @@ impl Default for LimaConfig {
         Self {
             minimum_lima_version: None,
             vm_type: None,
+
             images: Some(vec![]),
             mounts: Some(vec![]),
             containerd: Some(ContainerdConfig {
@@ -217,6 +218,7 @@ impl LimaConfig {
         if other.vm_type.is_some() {
             self.vm_type = other.vm_type;
         }
+
         if other.cpus.is_some() {
             self.cpus = other.cpus;
         }
@@ -277,14 +279,22 @@ pub fn get_default_k0s_lima_config<R: tauri::Runtime>(
     let base_config = LimaConfig {
         minimum_lima_version: Some("2.0.0".to_string()),
         vm_type: Some("vz".to_string()),
+
         cpus: Some(vm_cpus),
         memory: Some(vm_memory),
         disk: Some("40GiB".to_string()),
-        images: Some(vec![Image {
-            location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
-            arch: Some("aarch64".to_string()),
-            digest: None,
-        }]),
+        images: Some(vec![
+            Image {
+                location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
+                arch: Some("aarch64".to_string()),
+                digest: None,
+            },
+            Image {
+                location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-amd64.img".to_string(),
+                arch: Some("x86_64".to_string()),
+                digest: None,
+            },
+        ]),
         mounts: Some(vec![]),
         containerd: Some(ContainerdConfig {
             system: false,
@@ -502,14 +512,22 @@ pub fn get_default_docker_lima_config<R: tauri::Runtime>(
     let base_config = LimaConfig {
         minimum_lima_version: Some("2.0.0".to_string()),
         vm_type: Some("vz".to_string()),
+
         cpus: Some(vm_cpus),
         memory: Some(vm_memory),
         disk: Some("40GiB".to_string()),
-        images: Some(vec![Image {
-            location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
-            arch: Some("aarch64".to_string()),
-            digest: None,
-        }]),
+        images: Some(vec![
+            Image {
+                location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
+                arch: Some("aarch64".to_string()),
+                digest: None,
+            },
+            Image {
+                location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-amd64.img".to_string(),
+                arch: Some("x86_64".to_string()),
+                digest: None,
+            },
+        ]),
         mounts: Some(vec![]),
         containerd: Some(ContainerdConfig {
             system: false,
@@ -595,6 +613,7 @@ mod tests {
         let mut config = LimaConfig {
             minimum_lima_version: Some("2.0.0".to_string()),
             vm_type: Some("vz".to_string()),
+
             images: Some(vec![Image {
                 location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
                 arch: Some("aarch64".to_string()),
@@ -804,6 +823,7 @@ probes:
         let config = LimaConfig {
             minimum_lima_version: None,
             vm_type: Some("vz".to_string()),
+
             images: Some(vec![]),
             cpus: Some(4),
             memory: None,
@@ -913,6 +933,8 @@ disk: '40GiB'
 images:
 - location: https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img
   arch: aarch64
+- location: https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-amd64.img
+  arch: x86_64
 containerd:
   system: false
   user: false

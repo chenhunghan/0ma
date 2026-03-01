@@ -24,7 +24,14 @@ jobs:
   build:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -38,15 +45,15 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          target: aarch64-apple-darwin
+          target: ${{ matrix.target }}
 
       - run: npm ci
 
-      - run: npx tauri build --target aarch64-apple-darwin
+      - run: npx tauri build --target ${{ matrix.target }}
 
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
 
   update-homebrew:
     needs: [release-please, build]
@@ -58,20 +65,28 @@ jobs:
         env:
           TAG: ${{ needs.release-please.outputs.tag_name }}
 
-      - id: sha
+      - id: sha-arm
         run: |
-          curl -fSL -o 0ma.dmg "https://github.com/chenhunghan/0ma/releases/download/v${{ steps.version.outputs.version }}/0ma_${{ steps.version.outputs.version }}_aarch64.dmg"
-          echo "sha256=$(shasum -a 256 0ma.dmg | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          curl -fSL -o 0ma-arm.dmg "https://github.com/chenhunghan/0ma/releases/download/v${{ steps.version.outputs.version }}/0ma_${{ steps.version.outputs.version }}_aarch64.dmg"
+          echo "sha256=$(shasum -a 256 0ma-arm.dmg | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - id: sha-intel
+        run: |
+          curl -fSL -o 0ma-intel.dmg "https://github.com/chenhunghan/0ma/releases/download/v${{ steps.version.outputs.version }}/0ma_${{ steps.version.outputs.version }}_x64.dmg"
+          echo "sha256=$(shasum -a 256 0ma-intel.dmg | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA_ARM: ${{ steps.sha-arm.outputs.sha256 }}
+          SHA_INTEL: ${{ steps.sha-intel.outputs.sha256 }}
+        shell: bash
         run: |
           git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/chenhunghan/homebrew-tap.git"
           cd homebrew-tap
-          sed -i "s/version \".*\"/version \"${{ steps.version.outputs.version }}\"/" Casks/0ma.rb
-          sed -i "s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha256 }}\"/" Casks/0ma.rb
+          printf 'cask "0ma" do\n  version "%s"\n\n  on_arm do\n    sha256 "%s"\n    url "https://github.com/chenhunghan/0ma/releases/download/v#{version}/0ma_#{version}_aarch64.dmg"\n  end\n\n  on_intel do\n    sha256 "%s"\n    url "https://github.com/chenhunghan/0ma/releases/download/v#{version}/0ma_#{version}_x64.dmg"\n  end\n\n  name "0ma"\n  desc "Desktop GUI for managing Lima instances and Kubernetes clusters"\n  homepage "https://github.com/chenhunghan/0ma"\n\n  app "0ma.app"\nend\n' "$VERSION" "$SHA_ARM" "$SHA_INTEL" > Casks/0ma.rb
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/0ma.rb
-          git commit -m "chore: update 0ma to ${{ steps.version.outputs.version }}"
+          git commit -m "chore: update 0ma to $VERSION"
           git push
