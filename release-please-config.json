@@ -1,16 +1,21 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "plugins": ["cargo-workspace"],
   "packages": {
-    "src-tauri": {
-      "release-type": "rust",
+    ".": {
+      "release-type": "node",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
-      "include-paths": ["src-tauri/", "src/", "public/", "index.html", "package.json", "package-lock.json", "vite.config.ts", "tsconfig.json", "tsconfig.node.json", "postcss.config.js"],
       "extra-files": [
         {
           "type": "json",
-          "path": "tauri.conf.json",
+          "path": "src-tauri/tauri.conf.json",
           "jsonpath": "$.version"
+        },
+        {
+          "type": "toml",
+          "path": "src-tauri/Cargo.toml",
+          "jsonpath": "$.package.version"
         }
       ]
     }
