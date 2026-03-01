@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/chenhunghan/0ma/compare/v0.4.0...v0.4.1) (2026-03-01)
+
+
+### Bug Fixes
+
+* restore shell PATH when launched from Finder ([5544ecb](https://github.com/chenhunghan/0ma/commit/5544ecb7677c907d5039e2f77601798481ce59ed))
+
 ## [0.4.0](https://github.com/chenhunghan/0ma/compare/v0.3.0...v0.4.0) (2026-03-01)
 
 
