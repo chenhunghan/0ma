@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/chenhunghan/0ma/compare/v0.4.3...v0.4.4) (2026-03-01)
+
+
+### Bug Fixes
+
+* fix release workflow outputs for root package path ([2b8074c](https://github.com/chenhunghan/0ma/commit/2b8074c61035eeb163fa47b770b0768ca50e6c24))
+
 ## [0.4.3](https://github.com/chenhunghan/0ma/compare/v0.4.2...v0.4.3) (2026-03-01)
 
 
