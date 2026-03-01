@@ -89,7 +89,7 @@ jobs:
         run: |
           git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/chenhunghan/homebrew-tap.git"
           cd homebrew-tap
-          printf 'cask "0ma" do\n  version "%s"\n\n  on_arm do\n    sha256 "%s"\n    url "https://github.com/chenhunghan/0ma/releases/download/v#{version}/0ma_#{version}_aarch64.dmg"\n  end\n\n  on_intel do\n    sha256 "%s"\n    url "https://github.com/chenhunghan/0ma/releases/download/v#{version}/0ma_#{version}_x64.dmg"\n  end\n\n  name "0ma"\n  desc "Desktop GUI for managing Lima instances and Kubernetes clusters"\n  homepage "https://github.com/chenhunghan/0ma"\n\n  app "0ma.app"\nend\n' "$VERSION" "$SHA_ARM" "$SHA_INTEL" > Casks/0ma.rb
+          printf 'cask "0ma" do\n  version "%s"\n\n  on_arm do\n    sha256 "%s"\n    url "https://github.com/chenhunghan/0ma/releases/download/v#{version}/0ma_#{version}_aarch64.dmg"\n  end\n\n  on_intel do\n    sha256 "%s"\n    url "https://github.com/chenhunghan/0ma/releases/download/v#{version}/0ma_#{version}_x64.dmg"\n  end\n\n  name "0ma"\n  desc "Desktop GUI for managing Lima instances and Kubernetes clusters"\n  homepage "https://github.com/chenhunghan/0ma"\n\n  app "0ma.app"\n\n  postflight do\n    system "xattr", "-cr", "#{appdir}/0ma.app"\n  end\nend\n' "$VERSION" "$SHA_ARM" "$SHA_INTEL" > Casks/0ma.rb
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/0ma.rb
