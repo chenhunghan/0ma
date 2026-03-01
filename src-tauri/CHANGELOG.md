@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/chenhunghan/0ma/compare/v0.3.0...v0.4.0) (2026-03-01)
+
+
+### Features
+
+* add Rosetta support for x86_64 emulation on ARM hosts ([#21](https://github.com/chenhunghan/0ma/issues/21)) ([a1c158d](https://github.com/chenhunghan/0ma/commit/a1c158ded6f55770c2ed8fbcaded2181e792e08f))
+
 ## [0.3.0](https://github.com/chenhunghan/0ma/compare/v0.2.0...v0.3.0) (2026-03-01)
 
 
