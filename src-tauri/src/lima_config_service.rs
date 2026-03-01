@@ -13,7 +13,12 @@ pub fn write_lima_yaml<R: tauri::Runtime>(
     config: &LimaConfig,
     instance_name: &str,
 ) -> Result<(), String> {
-    // Write the config
+    // Rosetta is only valid with vmType "vz"; clear it for other vm types
+    let mut config = config.clone();
+    if config.vm_type.as_deref() != Some("vz") {
+        config.rosetta = None;
+    }
+
     let yaml_content = config
         .to_yaml_pretty()
         .map_err(|e| format!("Failed to serialize YAML: {}", e))?;
