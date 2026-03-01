@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/chenhunghan/0ma/compare/v0.4.4...v0.4.5) (2026-03-01)
+
+
+### Bug Fixes
+
+* remove unused Cargo workspace and cargo-workspace plugin ([2aa386e](https://github.com/chenhunghan/0ma/commit/2aa386e41fd509a0c4a83908c1e62199b1984240))
+
 ## [0.4.4](https://github.com/chenhunghan/0ma/compare/v0.4.3...v0.4.4) (2026-03-01)
 
 
