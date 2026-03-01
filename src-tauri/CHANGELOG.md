@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/chenhunghan/0ma/compare/v0.2.0...v0.3.0) (2026-03-01)
+
+
+### Features
+
+* support Intel Mac builds and dual-arch Lima images ([1f36d03](https://github.com/chenhunghan/0ma/commit/1f36d03cf3f9c26558c991b68995daa623f29020))
+
 ## [0.2.0](https://github.com/chenhunghan/0ma/compare/v0.1.0...v0.2.0) (2026-02-28)
 
 
