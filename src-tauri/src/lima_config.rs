@@ -22,6 +22,15 @@ pub struct Image {
     pub digest: Option<String>,
 }
 
+/// Rosetta configuration for running x86_64 binaries on ARM hosts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RosettaConfig {
+    /// Whether Rosetta is enabled
+    pub enabled: bool,
+    /// Whether to register Rosetta as a binfmt handler
+    pub binfmt: bool,
+}
+
 /// Represents a complete Lima configuration file
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimaConfig {
@@ -31,6 +40,9 @@ pub struct LimaConfig {
     /// VM type (e.g., "vz", "qemu", "krunkit")
     #[serde(rename = "vmType", skip_serializing_if = "Option::is_none")]
     pub vm_type: Option<String>,
+    /// Rosetta configuration for x86_64 emulation on ARM hosts
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rosetta: Option<RosettaConfig>,
     /// CPU configuration (e.g., 4)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cpus: Option<u32>,
@@ -169,7 +181,7 @@ impl Default for LimaConfig {
         Self {
             minimum_lima_version: None,
             vm_type: None,
-
+            rosetta: None,
             images: Some(vec![]),
             mounts: Some(vec![]),
             containerd: Some(ContainerdConfig {
@@ -218,7 +230,9 @@ impl LimaConfig {
         if other.vm_type.is_some() {
             self.vm_type = other.vm_type;
         }
-
+        if other.rosetta.is_some() {
+            self.rosetta = other.rosetta;
+        }
         if other.cpus.is_some() {
             self.cpus = other.cpus;
         }
@@ -279,7 +293,10 @@ pub fn get_default_k0s_lima_config<R: tauri::Runtime>(
     let base_config = LimaConfig {
         minimum_lima_version: Some("2.0.0".to_string()),
         vm_type: Some("vz".to_string()),
-
+        rosetta: Some(RosettaConfig {
+            enabled: true,
+            binfmt: true,
+        }),
         cpus: Some(vm_cpus),
         memory: Some(vm_memory),
         disk: Some("40GiB".to_string()),
@@ -512,7 +529,10 @@ pub fn get_default_docker_lima_config<R: tauri::Runtime>(
     let base_config = LimaConfig {
         minimum_lima_version: Some("2.0.0".to_string()),
         vm_type: Some("vz".to_string()),
-
+        rosetta: Some(RosettaConfig {
+            enabled: true,
+            binfmt: true,
+        }),
         cpus: Some(vm_cpus),
         memory: Some(vm_memory),
         disk: Some("40GiB".to_string()),
@@ -613,7 +633,7 @@ mod tests {
         let mut config = LimaConfig {
             minimum_lima_version: Some("2.0.0".to_string()),
             vm_type: Some("vz".to_string()),
-
+            rosetta: None,
             images: Some(vec![Image {
                 location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img".to_string(),
                 arch: Some("aarch64".to_string()),
@@ -823,7 +843,7 @@ probes:
         let config = LimaConfig {
             minimum_lima_version: None,
             vm_type: Some("vz".to_string()),
-
+            rosetta: None,
             images: Some(vec![]),
             cpus: Some(4),
             memory: None,
@@ -927,6 +947,9 @@ probes:
             r#"
 minimumLimaVersion: '2.0.0'
 vmType: vz
+rosetta:
+  enabled: true
+  binfmt: true
 cpus: {cpus}
 memory: '{memory}'
 disk: '40GiB'
