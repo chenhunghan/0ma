@@ -2,16 +2,15 @@
 
 Fast, light, and fully open-source. Run Docker containers and Kubernetes on macOS in a ~15 MB desktop app — powered by [Lima](https://github.com/lima-vm/lima).
 
-<img width="1111" height="1118" alt="0ma Screenshot" src="https://github.com/user-attachments/assets/c9c5a346-c511-40e3-b63e-1ae2c1333612" />
+<img width="1277" height="1063" alt="Screenshot 2026-03-31 at 20 59 46" src="https://github.com/user-attachments/assets/8b00e8e6-c14c-49d0-b9ac-21807b663f74" />
 
 ## Why 0ma?
 
-- **~15 MB** — Not a 2 GB install. Built with Tauri and Rust.
+- **~15 MB** — Not a 1 GB install. Built with Tauri and Rust.
 - **Docker & Kubernetes** — One-click setup for both. Same workflow, without the overhead.
-- **Built-in Terminal** — SSH into your VM with multiple tabs and split panes. No separate terminal needed.
+- **Built-in Terminal** — Multiple tabs and split panes.
 - **Auto Environment Setup** — One click sets `DOCKER_HOST` and `KUBECONFIG` in your shell. Your local `docker` and `kubectl` just work.
-- **Visual Config Editor** — Edit Lima YAML with Monaco, or use visual controls for CPUs, memory, port forwards, mounts, and provisioning.
-- **100% Open Source** — MIT / Apache-2.0. Powered by Lima — the same engine behind Colima and Rancher Desktop. No account required, no telemetry.
+- **Visual Config Editor** — Edit Lima YAML, or use visual controls for CPUs, memory, port forwards, mounts, and provisioning.
 
 ## Installation
 
