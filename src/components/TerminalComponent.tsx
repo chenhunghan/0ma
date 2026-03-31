@@ -7,6 +7,7 @@ import {
 } from "../hooks/terminal";
 import { listen } from "@tauri-apps/api/event";
 import * as log from "@tauri-apps/plugin-log";
+import { useTerminalFontSize } from "src/hooks/useTerminalFontSize";
 
 interface Props {
   sessionId?: string;
@@ -38,7 +39,8 @@ export function TerminalComponent({
   isUpperRow,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { term, geometry } = useXterm(containerRef);
+  const fontSize = useTerminalFontSize();
+  const { term, geometry } = useXterm(containerRef, fontSize);
   const spawnedRef = useRef(false);
 
   // Session management (spawn/connect) — uses initial geometry for spawn dims

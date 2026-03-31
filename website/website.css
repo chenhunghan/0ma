@@ -1,0 +1,111 @@
+/* Import the shared app styles (theme, Tailwind, fonts) */
+@import "../src/index.css";
+/* Also scan website directory for Tailwind classes */
+@source "../website";
+
+/* Website-specific animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes grid-fade {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.08; }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+/* Scroll reveal: hidden by default, revealed by IntersectionObserver */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children */
+.scroll-reveal.is-visible > .stagger-child:nth-child(1) { transition-delay: 0ms; }
+.scroll-reveal.is-visible > .stagger-child:nth-child(2) { transition-delay: 80ms; }
+.scroll-reveal.is-visible > .stagger-child:nth-child(3) { transition-delay: 160ms; }
+.scroll-reveal.is-visible > .stagger-child:nth-child(4) { transition-delay: 240ms; }
+.scroll-reveal.is-visible > .stagger-child:nth-child(5) { transition-delay: 320ms; }
+.scroll-reveal.is-visible > .stagger-child:nth-child(6) { transition-delay: 400ms; }
+
+.stagger-child {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal.is-visible > .stagger-child {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* App frame depth shadow */
+.app-frame-shadow {
+  box-shadow:
+    0 0 0 1px oklch(1 0 0 / 5%),
+    0 4px 6px -1px oklch(0 0 0 / 20%),
+    0 25px 50px -12px oklch(0 0 0 / 40%);
+}
+
+.app-frame-shadow:hover {
+  box-shadow:
+    0 0 0 1px oklch(1 0 0 / 8%),
+    0 4px 6px -1px oklch(0 0 0 / 25%),
+    0 30px 60px -12px oklch(0 0 0 / 50%);
+  transform: translateY(-2px);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Demo app containers — natural width, fixed height */
+.demo-app-container {
+  height: 600px;
+  overflow: hidden;
+}
+
+.demo-app-container-sm {
+  height: 500px;
+  overflow: hidden;
+}
+
+/* Nav blur */
+.nav-blur {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}

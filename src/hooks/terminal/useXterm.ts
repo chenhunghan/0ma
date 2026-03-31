@@ -20,18 +20,22 @@ export interface TermGeometry {
  * - Attaches to the container div via term.open()
  * - Returns the term instance and initial geometry
  */
-export function useXterm(containerRef: RefObject<HTMLDivElement | null>) {
+export function useXterm(containerRef: RefObject<HTMLDivElement | null>, fontSize?: number) {
   const [term, setTerm] = useState<Terminal | null>(null);
   const [geometry, setGeometry] = useState<TermGeometry | null>(null);
   const disposedRef = useRef(false);
+  const fontSizeRef = useRef(fontSize);
 
+  // Create terminal once (fontSize used only for initial creation)
   // oxlint-disable-next-line max-statements
   useEffect(() => {
     disposedRef.current = false;
     const container = containerRef.current;
     if (!container) return;
 
-    const t = new Terminal(XTERM_OPTIONS);
+    const initialFontSize = fontSizeRef.current;
+    const options = initialFontSize ? { ...XTERM_OPTIONS, fontSize: initialFontSize } : XTERM_OPTIONS;
+    const t = new Terminal(options);
     t.open(container);
 
     // GPU-accelerated rendering via WebGL, falls back to DOM if unavailable
@@ -70,6 +74,14 @@ export function useXterm(containerRef: RefObject<HTMLDivElement | null>) {
       setGeometry(null);
     };
   }, [containerRef]);
+
+  // Update font size at runtime without recreating the terminal
+  useEffect(() => {
+    if (!term || !fontSize || fontSize === fontSizeRef.current) return;
+    fontSizeRef.current = fontSize;
+    term.options.fontSize = fontSize;
+    term.refresh(0, term.rows - 1);
+  }, [term, fontSize]);
 
   return { term, geometry };
 }

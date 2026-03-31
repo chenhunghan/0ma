@@ -23,28 +23,39 @@ import { Button } from "src/components/ui/button";
 import { FileTerminalIcon } from "lucide-react";
 import { InstanceStatus } from "src/types/InstanceStatus";
 
+export interface AppProps {
+  /** Pre-populate terminal tabs on mount (for website demo) */
+  initialLimaTabs?: TabGroup[];
+  /** Which tab ID to activate initially */
+  initialLimaActive?: string;
+  /** Auto-cycle through lima terminal tabs at this interval (ms). 0 = disabled. */
+  autoSwitchInterval?: number;
+}
+
 // oxlint-disable-next-line max-statements
-export function App() {
+export function App({ initialLimaTabs, initialLimaActive, autoSwitchInterval = 0 }: AppProps = {}) {
   useInstanceLifecycleEvents();
-  const { selectedName, selectedInstance } = useSelectedInstance();
+  const { selectedName, selectedInstance, isLoading: isLoadingInstance } = useSelectedInstance();
   const hasInstance = Boolean(selectedName);
   const isInstanceRunning = selectedInstance?.status === InstanceStatus.Running;
   // const { data: isK8sAvailable = false } = useK8sAvailable(selectedName);
   const envSetup = useEnvSetup(selectedName);
   const { activeTab, setActiveTab, isLoadingActiveTabs } = useLayoutStorage();
-  const [limaTabs, setLimaTabs] = useState<TabGroup[]>([]);
-  const [limaActive, setLimaActive] = useState("");
-  const limaNextId = useRef(0);
+  const [limaTabs, setLimaTabs] = useState<TabGroup[]>(initialLimaTabs ?? []);
+  const [limaActive, setLimaActive] = useState(initialLimaActive ?? "");
+  const limaNextId = useRef(initialLimaTabs ? initialLimaTabs.reduce((max, tab) => Math.max(max, ...tab.terminals.map(t => t.id)), 0) + 1 : 0);
 
   // Redirect away from tabs that are not available
   useEffect(() => {
+    if (isLoadingInstance) return; // Don't redirect while still loading
     if ((activeTab === "lima" || activeTab === "config") && !hasInstance) {
       setActiveTab("");
     }
-  }, [activeTab, hasInstance, setActiveTab]);
+  }, [activeTab, hasInstance, isLoadingInstance, setActiveTab]);
 
   // Close all lima terminal tabs when no instance is selected
   useEffect(() => {
+    if (isLoadingInstance) return; // Don't wipe tabs while still loading
     if (!hasInstance) {
       setLimaTabs((prev) => {
         for (const tab of prev) {
@@ -60,7 +71,20 @@ export function App() {
       });
       setLimaActive("");
     }
-  }, [hasInstance]);
+  }, [hasInstance, isLoadingInstance]);
+
+  // Auto-cycle through terminal tabs (for website demo)
+  useEffect(() => {
+    if (!autoSwitchInterval || limaTabs.length < 2) return;
+    const interval = setInterval(() => {
+      setLimaActive((current) => {
+        const idx = limaTabs.findIndex((t) => t.id === current);
+        const nextIdx = (idx + 1) % limaTabs.length;
+        return limaTabs[nextIdx].id;
+      });
+    }, autoSwitchInterval);
+    return () => clearInterval(interval);
+  }, [autoSwitchInterval, limaTabs]);
 
   // Handlers
   const nextId = (counter: React.RefObject<number>) => {
