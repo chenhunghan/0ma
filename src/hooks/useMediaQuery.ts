@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLayoutOverride } from "src/contexts/LayoutOverrideContext";
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => {
@@ -20,5 +21,9 @@ export function useMediaQuery(query: string): boolean {
 }
 
 export function useIsMobile() {
-  return useMediaQuery("(max-width: 767px)");
+  const override = useLayoutOverride();
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  // When forceDesktop is set, always report as non-mobile
+  if (override?.forceDesktop) return false;
+  return isMobile;
 }

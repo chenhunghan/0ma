@@ -93,10 +93,17 @@
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
-/* Demo app containers — natural width, fixed height */
+/* Demo app containers — fixed height, min-width ensures desktop layout on mobile */
 .demo-app-container {
   height: 600px;
+  min-width: 800px;
   overflow: hidden;
+}
+
+/* Scrollable wrapper for mobile — lets users pan the desktop-sized demo */
+.demo-scroll-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .demo-app-container-sm {

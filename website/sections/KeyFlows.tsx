@@ -57,7 +57,7 @@ export function KeyFlows() {
                   </p>
                 </div>
 
-                {/* Outer: border + shadow (not clipped) */}
+                {/* Outer: border + shadow */}
                 <div
                   className="rounded-[10px] border border-[oklch(1_0_0/15%)]"
                   style={{

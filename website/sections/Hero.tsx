@@ -68,13 +68,14 @@ export function Hero() {
         </p>
       </div>
 
-      {/* App demo right below the hero copy */}
-      <div className="relative z-10 max-w-6xl mx-auto mt-16 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+      {/* App demo — scrollable on mobile, desktop layout forced */}
+      <div className="relative z-10 max-w-6xl mx-auto mt-16 animate-fade-in-up demo-scroll-wrapper" style={{ animationDelay: "600ms" }}>
         <AppFrame title="0ma" className="demo-app-container">
           <IsolatedApp
             initialLimaTabs={DEMO_INITIAL_TABS}
             initialLimaActive="tab-1"
             autoSwitchInterval={8000}
+            forceDesktop
           />
         </AppFrame>
       </div>
