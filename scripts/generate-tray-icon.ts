@@ -47,23 +47,21 @@ function parseArgs(argv: string[]): { text: string; size: number } {
 }
 
 function createTrayIconSvg(text: string, size: number): string {
-  // Use a system monospace font stack. sharp's librsvg picks these up from
-  // the system fontconfig. On macOS: "SF Mono" and "Menlo" are always
-  // available. JetBrains Mono will be used if installed.
+  // Apple HIG: menu bar icons are 22pt with ~18pt content area (~82%).
+  // Use dominant-baseline to vertically center the text precisely.
   const fontStack = `"JetBrains Mono", "SF Mono", "Menlo", monospace`;
-  const fontSize = Math.round(size * 0.52);
-  const yOffset = Math.round(size * 0.64);
+  const fontSize = Math.round(size * 0.82);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <text
     x="50%"
-    y="${yOffset}"
+    y="50%"
     text-anchor="middle"
+    dominant-baseline="central"
     font-family='${fontStack}'
     font-size="${fontSize}"
     font-weight="600"
     fill="#000000"
-    letter-spacing="-0.5"
   >${text}</text>
 </svg>`;
 }

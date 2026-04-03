@@ -5,13 +5,20 @@ use std::time::Instant;
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Listener, Manager};
+use tauri::{AppHandle, Emitter, Listener, Manager};
 
 pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let dashboard_i = MenuItem::with_id(app, "dashboard", "Dashboard", true, None::<&str>)?;
+    let check_update_i = MenuItem::with_id(
+        app,
+        "check-update",
+        "Check for Updates…",
+        true,
+        None::<&str>,
+    )?;
     let hide_i = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&dashboard_i, &hide_i, &quit_i])?;
+    let menu = Menu::with_items(app, &[&dashboard_i, &check_update_i, &hide_i, &quit_i])?;
 
     let _tray = TrayIconBuilder::with_id("main")
         .icon(
@@ -43,6 +50,9 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                             let _ = refresh_tray_menu(&handle).await;
                         });
                     }
+                }
+                "check-update" => {
+                    let _ = app.emit("check-for-updates", ());
                 }
                 "hide" => {
                     if let Some(window) = app.get_webview_window("main") {
@@ -142,11 +152,19 @@ pub async fn refresh_tray_menu(app: &AppHandle) -> Result<(), Box<dyn std::error
         .unwrap_or_default();
 
     let dashboard_i = MenuItem::with_id(app, "dashboard", "Dashboard", true, None::<&str>)?;
+    let check_update_i = MenuItem::with_id(
+        app,
+        "check-update",
+        "Check for Updates…",
+        true,
+        None::<&str>,
+    )?;
     let hide_i = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
     let menu = Menu::new(app)?;
     menu.append(&dashboard_i)?;
+    menu.append(&check_update_i)?;
 
     // Only show "Hide" if the window is currently visible
     let is_visible = state

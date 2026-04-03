@@ -19,6 +19,9 @@ export default defineConfig(async () => ({
             "@tauri-apps/api/event": path.resolve(__dirname, "website/mock/tauri-event.ts"),
             "@tauri-apps/plugin-store": path.resolve(__dirname, "website/mock/tauri-store.ts"),
             "@tauri-apps/plugin-log": path.resolve(__dirname, "website/mock/tauri-log.ts"),
+            "@tauri-apps/plugin-updater": path.resolve(__dirname, "website/mock/tauri-plugin-updater.ts"),
+            "@tauri-apps/plugin-process": path.resolve(__dirname, "website/mock/tauri-plugin-process.ts"),
+            "@tauri-apps/plugin-dialog": path.resolve(__dirname, "website/mock/tauri-plugin-dialog.ts"),
           }
         : {}),
     },

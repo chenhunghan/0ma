@@ -35,8 +35,17 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJDQjZCRTlEMzVBMTBGRUYKUldUdkQ2RTFuYjYydlB0MGNQK0xxUEwySkJXSG05VGpnU1ZBMlhYbWhYUFlaTjRERlppc1QzLzEK",
+      "endpoints": [
+        "https://github.com/chenhunghan/0ma/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "copyright": "Copyright © 2025 Hung-Han Chen <chenhungh@gmail.com>. Licensed under MIT or Apache-2.0.",
     "icon": [

@@ -20,6 +20,7 @@ import { useLimaInstalled } from "src/hooks/useLimaInstalled";
 // import { useK8sAvailable } from "src/hooks/useK8sAvailable";
 import { LimaInstanceInfoColumn } from "src/components/LimaInstanceInfoColumn";
 import { useEnvSetup } from "src/hooks/useEnvSetup";
+import { useAutoUpdater } from "src/hooks/useAutoUpdater";
 import { EnvSetupDialog } from "src/components/EnvSetupDialog";
 import { Button } from "src/components/ui/button";
 import { FileTerminalIcon } from "lucide-react";
@@ -37,6 +38,7 @@ export interface AppProps {
 // oxlint-disable-next-line max-statements
 export function App({ initialLimaTabs, initialLimaActive, autoSwitchInterval = 0 }: AppProps = {}) {
   useInstanceLifecycleEvents();
+  useAutoUpdater();
   const { isLimaInstalled } = useLimaInstalled();
   const limaNotInstalled = !isLimaInstalled;
   const { selectedName, selectedInstance, isLoading: isLoadingInstance } = useSelectedInstance();
