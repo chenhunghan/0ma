@@ -50,7 +50,7 @@ function createTrayIconSvg(text: string, size: number): string {
   // Apple HIG: menu bar icons are 22pt with ~18pt content area (~82%).
   // Use dominant-baseline to vertically center the text precisely.
   const fontStack = `"JetBrains Mono", "SF Mono", "Menlo", monospace`;
-  const fontSize = Math.round(size * 0.82);
+  const fontSize = Math.round(size * 0.78);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <text
@@ -60,7 +60,7 @@ function createTrayIconSvg(text: string, size: number): string {
     dominant-baseline="central"
     font-family='${fontStack}'
     font-size="${fontSize}"
-    font-weight="600"
+    font-weight="300"
     fill="#000000"
   >${text}</text>
 </svg>`;
