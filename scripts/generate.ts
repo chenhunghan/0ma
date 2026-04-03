@@ -88,17 +88,12 @@ async function generateImage(
 
 async function applySquircleMask(inputPath: string, outputPath: string): Promise<void> {
   const canvasSize = 1024;
-  const margin = Math.round(canvasSize * 0.04);
+  // Apple's macOS icon spec: 824x824 squircle on 1024x1024 canvas, 100px margin
+  const margin = 100;
   const iconSize = canvasSize - margin * 2;
 
-  // Trim outer background, then over-scale by 8% so any light border/glow
-  // Gemini adds falls outside the squircle mask boundary
-  const trimmed = await sharp(inputPath).trim({ threshold: 20 }).toBuffer();
-  const overScale = Math.round(iconSize * 1.08);
-  const cropOffset = Math.round((overScale - iconSize) / 2);
-  const resized = await sharp(trimmed)
-    .resize(overScale, overScale, { fit: "cover" })
-    .extract({ left: cropOffset, top: cropOffset, width: iconSize, height: iconSize })
+  const resized = await sharp(inputPath)
+    .resize(iconSize, iconSize, { fit: "cover" })
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
