@@ -1,8 +1,9 @@
-# Project Notes
-
-## UI Components
-
 - UI library: `@base-ui/react` (not Radix)
 - Styling: shadcn with `base-lyra` style (see `components.json`)
 - Add new components via CLI: `npx shadcn@latest add <component>`
 - Fix utils import path after generation: use `src/lib/utils` (CLI may generate `src/components/lib/utils`)
+- **All Tauri commands must be `async`**. Sync commands block the main thread and freeze the UI. No exceptions.
+- **Handlers are thin**. `_handler.rs` files only delegate to `_service.rs`. No business logic in handlers.
+- **Never rely on PATH for executables**. This is a GUI app — Finder/Spotlight launches omit Homebrew paths. Always check absolute paths first, fall back to bare name last. See `find_lima_executable()` pattern.
+- **Every new Tauri command needs a website mock** in `website/mock/tauri-core.ts`.
+- **Never match error strings for control flow**.
