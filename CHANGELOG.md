@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/chenhunghan/0ma/compare/v0.5.0...v0.5.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* bump tauri and tauri-plugin-updater Rust crates to 2.10.x ([1a28aed](https://github.com/chenhunghan/0ma/commit/1a28aed90a719281c7d879c5e17fc25b449562b1))
+
 ## [0.5.0](https://github.com/chenhunghan/0ma/compare/v0.4.5...v0.5.0) (2026-04-03)
 
 
