@@ -48,9 +48,8 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
 
-      - uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
+      # No Rust cache for release builds — cache can cause stale version
+      # strings when only tauri.conf.json version changes between releases.
 
       - run: npm ci
 
