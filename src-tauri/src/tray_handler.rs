@@ -18,6 +18,7 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
                 .expect("tray icon not found"),
         )
+        .icon_as_template(true)
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| {
