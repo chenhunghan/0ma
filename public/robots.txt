@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://chenhunghan.github.io/0ma/sitemap.xml

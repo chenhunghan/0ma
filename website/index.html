@@ -2,12 +2,50 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="0ma — a modern desktop GUI for managing Lima virtual machines and Kubernetes on macOS" />
-    <meta property="og:title" content="0ma — Lima VM Manager" />
-    <meta property="og:description" content="A desktop-class UI for Lima virtual machines with terminal multiplexing, YAML configuration, and one-click lifecycle management." />
-    <title>0ma — Lima VM Manager</title>
+
+    <title>0ma — Open-Source Docker Desktop Alternative for macOS</title>
+    <meta name="description" content="0ma is a free, open-source Docker Desktop alternative for macOS. Run Docker and Kubernetes locally with Lima — ~15 MB, no account required. Powered by Rust and Tauri." />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://chenhunghan.github.io/0ma/" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/0ma/icon.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://chenhunghan.github.io/0ma/" />
+    <meta property="og:title" content="0ma — Open-Source Docker Desktop Alternative for macOS" />
+    <meta property="og:description" content="Run Docker and Kubernetes on macOS with a ~15 MB native app. No account, no bloat. Powered by Lima, built with Rust." />
+    <meta property="og:image" content="https://chenhunghan.github.io/0ma/icon.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="0ma — Open-Source Docker Desktop Alternative for macOS" />
+    <meta name="twitter:description" content="Run Docker and Kubernetes on macOS with a ~15 MB native app. No account, no bloat. Powered by Lima, built with Rust." />
+    <meta name="twitter:image" content="https://chenhunghan.github.io/0ma/icon.png" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "0ma",
+      "operatingSystem": "macOS",
+      "applicationCategory": "DeveloperApplication",
+      "description": "Open-source Docker Desktop alternative for macOS. Run Docker and Kubernetes locally with Lima.",
+      "url": "https://chenhunghan.github.io/0ma/",
+      "downloadUrl": "https://github.com/chenhunghan/0ma/releases",
+      "softwareVersion": "0.5.1",
+      "license": "https://opensource.org/licenses/MIT",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
     <style>
       html, body {
         background-color: #1a1a1a;
@@ -28,6 +66,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="max-width:640px;margin:80px auto;padding:0 24px;color:#a1a1aa;font-family:system-ui,sans-serif">
+        <h1 style="color:#fafafa;font-size:2rem">0ma</h1>
+        <p>Open-source Docker Desktop alternative for macOS. Run Docker and Kubernetes locally with Lima — ~15 MB, no account required.</p>
+        <p><a href="https://github.com/chenhunghan/0ma" style="color:#fafafa">View on GitHub</a></p>
+        <p>Install via Homebrew: <code>brew install chenhunghan/tap/0ma</code></p>
+      </div>
+    </noscript>
     <script type="module" src="./main.tsx"></script>
   </body>
 </html>
