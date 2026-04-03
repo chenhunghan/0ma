@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src-tauri/icons/icon.png" width="128" height="128" alt="0ma icon" />
+</p>
+
 # 0ma
 
 Fast, light, and fully open-source. Run Docker containers and Kubernetes on macOS in a ~15 MB desktop app — powered by [Lima](https://github.com/lima-vm/lima).

@@ -29,6 +29,14 @@ export function Hero() {
       <AnimatedBackground />
 
       <div className="relative z-10 max-w-3xl mx-auto text-center">
+        <img
+          src={`${import.meta.env.BASE_URL}icon.png`}
+          alt="0ma"
+          width={96}
+          height={96}
+          className="mx-auto mb-6 animate-fade-in-up"
+        />
+
         <p className="text-xs text-muted-foreground/60 font-medium tracking-widest uppercase mb-4 animate-fade-in-up">
           Open-source Docker Desktop alternative
         </p>
