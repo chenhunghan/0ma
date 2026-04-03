@@ -88,8 +88,8 @@ async function generateImage(
 
 async function applySquircleMask(inputPath: string, outputPath: string): Promise<void> {
   const canvasSize = 1024;
-  // Apple's macOS icon spec: 824x824 squircle on 1024x1024 canvas, 100px margin
-  const margin = 100;
+  // Measured from real macOS app icons: 72px margin at center of each side on 1024x1024
+  const margin = 72;
   const iconSize = canvasSize - margin * 2;
 
   const resized = await sharp(inputPath)
