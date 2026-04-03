@@ -1,5 +1,3 @@
-# 0ma
-
 <p align="center">
   <img src="src-tauri/icons/icon.png" width="128" height="128" alt="0ma icon" />
 </p>
