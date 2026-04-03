@@ -1,6 +1,7 @@
 import { AnimatedBackground } from "../components/AnimatedBackground";
 import { AppFrame } from "../components/AppFrame";
 import { IsolatedApp } from "../components/IsolatedApp";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "src/components/ui/tooltip";
 import type { TabGroup } from "src/components/TermTabs";
 
 const DEMO_INITIAL_TABS: TabGroup[] = [
@@ -52,23 +53,38 @@ export function Hero() {
           Open source, powered by Lima — no account required, no gigabyte installs.
         </p>
 
-        <div className="mt-10 flex items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
-          <a
-            href="https://github.com/chenhunghan/0ma/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-2.5 text-xs font-medium bg-foreground text-background hover:opacity-90 transition-opacity"
-          >
-            Download for macOS
-          </a>
-          <a
-            href="https://github.com/chenhunghan/0ma"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-2.5 text-xs font-medium border border-border text-foreground hover:bg-secondary transition-colors"
-          >
-            View on GitHub
-          </a>
+        <div className="mt-10 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+          <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-secondary/80 border border-border rounded-md font-mono text-xs text-foreground select-all">
+            brew install chenhunghan/tap/0ma
+          </div>
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger render={
+                  <a
+                    href="https://github.com/chenhunghan/0ma/releases"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+                  >
+                    Download from GitHub Releases
+                  </a>
+                } />
+                <TooltipContent>
+                  You may need to run: xattr -cr /Applications/0ma.app
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span className="text-muted-foreground/30">|</span>
+            <a
+              href="https://github.com/chenhunghan/0ma"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+            >
+              View on GitHub
+            </a>
+          </div>
         </div>
 
         <p className="mt-4 text-[10px] text-muted-foreground/50 animate-fade-in" style={{ animationDelay: "500ms" }}>
