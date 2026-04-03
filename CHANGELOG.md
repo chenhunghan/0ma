@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/chenhunghan/0ma/compare/v0.5.1...v0.5.2) (2026-04-03)
+
+
+### Bug Fixes
+
+* repair TermTabs tests by mocking TerminalComponent and resize context ([3841335](https://github.com/chenhunghan/0ma/commit/384133584ecc20787a0f696b6b3fecb5ff8ad141))
+
 ## [0.5.1](https://github.com/chenhunghan/0ma/compare/v0.5.0...v0.5.1) (2026-04-03)
 
 
