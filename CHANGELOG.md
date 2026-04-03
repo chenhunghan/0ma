@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/chenhunghan/0ma/compare/v0.5.2...v0.6.0) (2026-04-03)
+
+
+### Features
+
+* **website:** improve SEO with meta tags, structured data, and sitemap ([bcbfce5](https://github.com/chenhunghan/0ma/commit/bcbfce5410dd3981dcf317abfda43303d86061d5))
+* **website:** recommend Homebrew install and add xattr tooltip for direct downloads ([2628ff1](https://github.com/chenhunghan/0ma/commit/2628ff1ad6f446e200257a81ab675a86ffa9e1b2))
+
+
+### Bug Fixes
+
+* remove Rust cache from release workflow to prevent stale binaries ([827fcea](https://github.com/chenhunghan/0ma/commit/827fcea93e93b03a72d69bd18312b8968bef2775))
+
 ## [0.5.2](https://github.com/chenhunghan/0ma/compare/v0.5.1...v0.5.2) (2026-04-03)
 
 
