@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::Command;
+use tokio::process::Command as AsyncCommand;
 
 /// System capabilities relevant to VM type selection
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,6 +69,22 @@ pub fn get_system_capabilities() -> SystemCapabilities {
     }
 }
 
+const COMMON_BREW_PATHS: &[&str] = &["/opt/homebrew/bin/brew", "/usr/local/bin/brew", "brew"];
+
+/// Find the Homebrew executable in common installation paths
+pub fn find_brew_executable() -> Option<String> {
+    for path in COMMON_BREW_PATHS {
+        if *path == "brew" {
+            if Command::new(path).arg("--version").output().is_ok() {
+                return Some(path.to_string());
+            }
+        } else if Path::new(path).exists() {
+            return Some(path.to_string());
+        }
+    }
+    None
+}
+
 // Note: We use limactl directly instead of lima wrapper script
 pub const COMMON_LIMA_EXEC_PATHS: &[&str] = &[
     "/opt/homebrew/bin/limactl",
@@ -126,4 +143,23 @@ pub fn get_lima_version() -> Result<String, String> {
         }
         Err(e) => Err(format!("Failed to execute lima command: {}", e)),
     }
+}
+
+pub async fn install_lima() -> Result<String, String> {
+    let brew_path = find_brew_executable().ok_or_else(|| {
+        "Homebrew is not installed. Please install Homebrew first: https://brew.sh".to_string()
+    })?;
+
+    let output = AsyncCommand::new(&brew_path)
+        .args(["install", "lima"])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to run brew install lima: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        return Err(format!("Failed to install Lima: {}", stderr));
+    }
+
+    Ok("Lima installed successfully".to_string())
 }

@@ -170,6 +170,9 @@ export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Pr
     case "lima_version_cmd":
       return "1.0.2" as T;
 
+    case "check_lima_installed_cmd":
+      return true as T;
+
     // Config
     case "read_lima_yaml_cmd": {
       const name = args?.instanceName as string;

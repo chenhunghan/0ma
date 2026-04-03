@@ -14,9 +14,11 @@ import { useLayoutStorage } from "src/hooks/useLayoutStorage";
 export function CreateStartInstanceDialogs({
   isDeletingDialogOpen,
   onEnvSetup,
+  limaNotInstalled,
 }: {
   isDeletingDialogOpen?: boolean;
   onEnvSetup: (instanceName: string) => void;
+  limaNotInstalled?: boolean;
 }) {
   const [createDialogUserOpen, setCreateDialogUserOpen] = useState(false);
   const [creatingInstanceDialogOpen, setCreatingInstanceDialogOpen] = useState(false);
@@ -37,7 +39,8 @@ export function CreateStartInstanceDialogs({
   // (but not while the "Instance Deleted" dialog is still open)
   const hasNoInstances = !isLoadingInstances && instances.length === 0;
   const createInstanceDialogOpen =
-    createDialogUserOpen || (hasNoInstances && !isDeletingDialogOpen);
+    !limaNotInstalled &&
+    (createDialogUserOpen || (hasNoInstances && !isDeletingDialogOpen));
 
   const handleCreateInstance = useCallback(() => {
     if (!draftConfig || !instanceName) {
@@ -81,13 +84,15 @@ export function CreateStartInstanceDialogs({
 
   return (
     <>
-      <CreateInstanceDialog
-        buttonClassName="ml-[6px]"
-        open={createInstanceDialogOpen}
-        dismissible={!hasNoInstances}
-        onDialogOpenChange={setCreateDialogUserOpen}
-        onClickCreate={handleCreateInstance}
-      />
+      {!limaNotInstalled && (
+        <CreateInstanceDialog
+          buttonClassName="ml-[6px]"
+          open={createInstanceDialogOpen}
+          dismissible={!hasNoInstances}
+          onDialogOpenChange={setCreateDialogUserOpen}
+          onClickCreate={handleCreateInstance}
+        />
+      )}
       <CreatingInstanceDialog
         open={creatingInstanceDialogOpen}
         onDialogOpenChange={setCreatingInstanceDialogOpen}

@@ -23,8 +23,10 @@ import type { useEnvSetup } from "src/hooks/useEnvSetup";
 
 export function TopBar({
   envSetup,
+  limaNotInstalled,
 }: {
   envSetup: ReturnType<typeof useEnvSetup>;
+  limaNotInstalled?: boolean;
 }) {
   const [isDeletingDialogOpen, setIsDeletingDialogOpen] = useState(false);
 
@@ -37,6 +39,7 @@ export function TopBar({
         <CreateStartInstanceDialogs
           isDeletingDialogOpen={isDeletingDialogOpen}
           onEnvSetup={envSetup.triggerEnvSetup}
+          limaNotInstalled={limaNotInstalled}
         />
       </div>
 

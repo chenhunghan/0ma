@@ -100,6 +100,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             lima_handler::lima_version_cmd,
             lima_handler::get_system_capabilities_cmd,
+            lima_handler::check_lima_installed_cmd,
+            lima_handler::install_lima_cmd,
             lima_config_handler::read_lima_yaml_cmd,
             lima_config_handler::write_lima_yaml_cmd,
             lima_config_handler::get_lima_yaml_path_cmd,

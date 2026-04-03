@@ -15,6 +15,8 @@ import { Spinner } from "./components/ui/spinner";
 import { invoke } from "@tauri-apps/api/core";
 import * as log from "@tauri-apps/plugin-log";
 import { useSelectedInstance } from "src/hooks/useSelectedInstance";
+import { LimaNotInstalledBanner } from "src/components/LimaNotInstalledBanner";
+import { useLimaInstalled } from "src/hooks/useLimaInstalled";
 // import { useK8sAvailable } from "src/hooks/useK8sAvailable";
 import { LimaInstanceInfoColumn } from "src/components/LimaInstanceInfoColumn";
 import { useEnvSetup } from "src/hooks/useEnvSetup";
@@ -35,6 +37,8 @@ export interface AppProps {
 // oxlint-disable-next-line max-statements
 export function App({ initialLimaTabs, initialLimaActive, autoSwitchInterval = 0 }: AppProps = {}) {
   useInstanceLifecycleEvents();
+  const { isLimaInstalled } = useLimaInstalled();
+  const limaNotInstalled = !isLimaInstalled;
   const { selectedName, selectedInstance, isLoading: isLoadingInstance } = useSelectedInstance();
   const hasInstance = Boolean(selectedName);
   const isInstanceRunning = selectedInstance?.status === InstanceStatus.Running;
@@ -376,9 +380,11 @@ export function App({ initialLimaTabs, initialLimaActive, autoSwitchInterval = 0
 
   return (
     <div className="h-full w-full overflow-hidden pb-[14px] pt-[18px]">
-      <TopBar envSetup={envSetup} />
+      <TopBar envSetup={envSetup} limaNotInstalled={limaNotInstalled} />
       <Separator />
-      {isLoadingActiveTabs ? (
+      {limaNotInstalled ? (
+        <LimaNotInstalledBanner />
+      ) : isLoadingActiveTabs ? (
         <Skeleton className="h-full w-full flex items-center justify-center">
           <div title="Loading tabs...">
             <Spinner />
