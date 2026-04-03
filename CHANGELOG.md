@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.0](https://github.com/chenhunghan/0ma/compare/v0.4.5...v0.5.0) (2026-04-03)
+
+
+### Features
+
+* add AI icon generation script with macOS squircle support ([b40d9ad](https://github.com/chenhunghan/0ma/commit/b40d9adbd23bcf3de655c9fd2ee7fa0eda5cef21))
+* add app icon to README and website hero ([68c3ffb](https://github.com/chenhunghan/0ma/commit/68c3ffb6fe8c1f43cd83a570678da10d2fca0ef7))
+* add Lima installation check and auto-install banner for missing dependencies ([0812f8a](https://github.com/chenhunghan/0ma/commit/0812f8abf77d964a67f93cb5e47548e05ace2121))
+* add marketing website with interactive app demos ([4a8e76e](https://github.com/chenhunghan/0ma/commit/4a8e76e0f2e3aef308a5bd258aa8e28d78583296))
+* add tray icon generation script and generate new tray icon ([e02842d](https://github.com/chenhunghan/0ma/commit/e02842dec210a0eee671679b21aaeb323419d6d0))
+* implement auto-updater functionality with tray integration and automated release workflows ([4bae068](https://github.com/chenhunghan/0ma/commit/4bae0686a510c9486c963653e61f55e6a150a374))
+* **website:** force desktop layout in demos on mobile viewports ([fe86bc7](https://github.com/chenhunghan/0ma/commit/fe86bc77f7f55f805992210124bd25bd864d9558))
+
+
+### Bug Fixes
+
+* reduce tray icon font size and weight for better visual balance ([6d89f49](https://github.com/chenhunghan/0ma/commit/6d89f49d1a916e5303690a00977973275a8ec71f))
+* use Apple's exact macOS icon spec (100px margin, 824x824 squircle) ([6a3920e](https://github.com/chenhunghan/0ma/commit/6a3920e874055911b71dd031237e3fbf5e4e01b3))
+* use pixel-perfect macOS squircle margin (72px measured from system icons) ([ca73af4](https://github.com/chenhunghan/0ma/commit/ca73af4cca428af888b313dac3e6b5399a8e59a7))
+
 ## [0.4.5](https://github.com/chenhunghan/0ma/compare/v0.4.4...v0.4.5) (2026-03-01)
 
 
