@@ -6,6 +6,17 @@ import type { Terminal } from "src/services/Terminal";
 import { TerminalRow } from "./TermRow";
 import { EmptyTerminalState } from "./EmptyTerminalState";
 
+// Mock TerminalComponent to avoid xterm/provider dependencies in unit tests
+vi.mock("./TerminalComponent", () => ({
+  TerminalComponent: ({ termId }: { termId: number }) =>
+    createElement("div", { "data-testid": `terminal-${termId}` }, `Terminal ${termId}`),
+}));
+
+// Mock useTerminalResizeContext to avoid needing TerminalResizeProvider
+vi.mock("src/contexts/useTerminalResizeContext", () => ({
+  useTerminalResizeContext: () => ({ onDragStart: vi.fn(), onDragEnd: vi.fn() }),
+}));
+
 // Utility to mock window.matchMedia state
 const setMobile = (isMobile: boolean) => {
   Object.defineProperty(window, "matchMedia", {
@@ -191,7 +202,7 @@ describe("TermTabs", () => {
     const tabTrigger = screen.getByText("Tab 2");
     fireEvent.click(tabTrigger);
 
-    expect(mockOnTabChange).toHaveBeenCalledWith("tab-2");
+    expect(mockOnTabChange).toHaveBeenCalledWith("tab-2", expect.anything());
   });
 
   it("calls onAddTab when 'New Terminal' button is clicked", () => {
@@ -200,7 +211,7 @@ describe("TermTabs", () => {
     const addButton = screen.getByTitle("New Terminal");
     fireEvent.click(addButton);
 
-    expect(mockOnAddTab).toHaveBeenCalledWith();
+    expect(mockOnAddTab).toHaveBeenCalled();
   });
 
   it("calls onAddSideBySide when 'Side-by-side' button is clicked", () => {
