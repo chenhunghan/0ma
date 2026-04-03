@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-website
+
 *.local
 
 # Editor directories and files
@@ -22,4 +24,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+*.pruner
 target/
