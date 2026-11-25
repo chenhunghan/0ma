@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/chenhunghan/0ma/compare/v0.6.0...v0.6.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* write the Homebrew cask with postflight_steps, as postflight is deprecated ([e5e50fd](https://github.com/chenhunghan/0ma/commit/e5e50fd0dce737c3719c913f8ff83142a599ea77))
+
 ## [0.6.0](https://github.com/chenhunghan/0ma/compare/v0.5.2...v0.6.0) (2026-04-03)
 
 
